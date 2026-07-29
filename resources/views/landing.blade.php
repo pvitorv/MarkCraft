@@ -151,7 +151,7 @@
     @include('partials.dark_site_navbar', ['context' => 'landing'])
 
     {{-- Hero: uma composição — marca, frase, CTA, visual de produto --}}
-    <section class="mc-hero-stage relative overflow-hidden min-h-[min(92vh,820px)]">
+    <section class="mc-hero-stage relative overflow-hidden min-h-[min(60vh,533px)]">
         <div class="mc-hero-grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
         <div class="relative mx-auto max-w-6xl px-4 pt-10 pb-12 sm:pt-14 sm:pb-16 md:pt-20 md:pb-24 grid lg:grid-cols-[1.05fr_0.95fr] gap-8 sm:gap-10 lg:gap-14 items-center">
             <div class="relative z-10">

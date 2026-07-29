@@ -8,7 +8,8 @@ Documento de continuidade para retomar o trabalho no chat sem perder contexto.
 ## Estado atual do repositório
 
 - **Remoto:** https://github.com/pvitorv/MarkCraft (privado)
-- **Branch desta entrega:** `feature/2026-07-28-hub-navbar-ferramentas`
+- **Branch desta entrega:** `001-hub-navbar-ferramentas`
+- **Padrão de branches:** numeração sequencial `001`, `002`, `003`… (ex.: `001-hub-navbar-ferramentas`, `002-...`)
 - **Base anterior em `main`:** landing dark, Studio autenticado, hub em modais glass, `.gitignore` reforçado
 
 ### Como rodar local
@@ -103,7 +104,9 @@ Botões **Packs · Apoiar · Studio** padronizados com a classe compartilhada:
 
 Cole ou cite este arquivo no início, por exemplo:
 
-> Continuar a partir de `docs/HISTORICO_PROGRESSO.md` na branch `feature/2026-07-28-hub-navbar-ferramentas`.
+> Continuar a partir de `docs/HISTORICO_PROGRESSO.md` na branch `001-hub-navbar-ferramentas`.
+>
+> Preferência de branches: sempre `001`, `002`, `003`… (nunca nomes longos tipo `feature/data-...`).
 
 Checklist rápido para o agente:
 - [ ] Ler este histórico
