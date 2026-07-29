@@ -11,23 +11,31 @@ return [
     'tools' => [
         'encurtador' => [
             'name' => 'Encurtador de URL',
+            'short' => 'Encurtar',
             'blurb' => 'Encurte links de campanha com UTM opcional.',
-            'status' => 'em breve',
+            'status' => 'pronta',
+            'icon' => 'link',
         ],
         'conversor-imagens' => [
             'name' => 'Conversor de imagens',
-            'blurb' => 'PNG ↔ JPG ↔ WebP em lote simples.',
-            'status' => 'em breve',
+            'short' => 'Imagens',
+            'blurb' => 'PNG ↔ JPG ↔ WebP em lote no navegador.',
+            'status' => 'pronta',
+            'icon' => 'image',
         ],
         'conversor-pdf' => [
             'name' => 'Conversor de PDF',
-            'blurb' => 'PDF ↔ imagens para posts e propostas.',
-            'status' => 'em breve',
+            'short' => 'PDF',
+            'blurb' => 'PDF → imagens ou imagens → PDF.',
+            'status' => 'pronta',
+            'icon' => 'file',
         ],
         'compressor-pdf' => [
             'name' => 'Compressor de PDF',
-            'blurb' => 'Reduza tamanho mantendo legibilidade.',
-            'status' => 'em breve',
+            'short' => 'Compactar',
+            'blurb' => 'Reduza tamanho reexportando as páginas.',
+            'status' => 'pronta',
+            'icon' => 'compress',
         ],
     ],
     'affiliate_packs' => [

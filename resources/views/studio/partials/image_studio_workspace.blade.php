@@ -3,13 +3,13 @@
     @keydown.escape.window="imageStudioExpanded && !imageStudioElementsModalOpen && !imageStudioDimensionsModalOpen && !imageStudioTemplatesModalOpen && !imageStudioPacksModalOpen && closeImageStudioExpanded()"
 >
     <div
-        class="flex gap-3 min-h-0 w-full min-w-0"
+        class="is-workspace-row flex flex-col lg:flex-row gap-3 min-h-0 w-full min-w-0"
         :class="imageStudioExpanded ? 'w-[94vw] h-[94vh] rounded-xl border border-zinc-700 bg-zinc-950 p-3 shadow-2xl overflow-hidden' : ''"
     >
         {{-- Barra lateral esquerda --}}
         <aside
-            class="w-[268px] shrink-0 overflow-y-auto overscroll-contain space-y-3 pr-1 border-r border-zinc-800/80"
-            :class="imageStudioExpanded ? 'max-h-full' : 'max-h-[min(82vh,920px)]'"
+            class="is-workspace-aside w-full lg:w-[268px] shrink-0 overflow-y-auto overscroll-contain space-y-3 pr-1 border-b border-zinc-800/80 lg:border-b-0 lg:border-r pb-3 lg:pb-0"
+            :class="imageStudioExpanded ? 'max-h-full' : 'max-h-[min(42vh,380px)] lg:max-h-[min(82vh,920px)]'"
         >
             <div class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
                 <p class="text-xs font-medium text-zinc-300">Ferramentas</p>

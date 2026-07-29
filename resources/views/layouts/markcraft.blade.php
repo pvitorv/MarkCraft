@@ -55,23 +55,89 @@
         }
     </script>
     <style>[x-cloak]{display:none!important}</style>
-    <header class="relative z-50 border-b border-zinc-900/10 bg-white/50 backdrop-blur-md">
-        <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="mc-brand text-2xl font-extrabold text-zinc-900">
+    <header class="sticky top-0 z-50 border-b border-zinc-900/10 bg-white/70 backdrop-blur-md">
+        <div class="mx-auto max-w-6xl px-4 py-3.5 flex items-center justify-between gap-3">
+            <a href="{{ route('home') }}" class="mc-brand text-xl sm:text-2xl font-extrabold text-zinc-900 shrink-0">
                 MarkCraft
-                <span class="ms-2 align-middle text-[10px] font-semibold tracking-wide uppercase text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5">CriaSys</span>
+                <span class="ms-1.5 sm:ms-2 align-middle text-[9px] sm:text-[10px] font-semibold tracking-wide uppercase text-teal-700 bg-teal-50 border border-teal-200 px-1.5 sm:px-2 py-0.5">CriaSys</span>
             </a>
-            <nav class="flex flex-wrap items-center gap-3 text-sm font-medium text-zinc-700">
+
+            <nav class="hidden lg:flex flex-wrap items-center justify-end gap-3 text-sm font-medium text-zinc-700">
                 @auth
-                    <a href="{{ route('studio') }}" class="hover:text-teal-800">Studio</a>
-                    <button type="button" @click="openHub('ferramentas')" class="hover:text-teal-800">Ferramentas</button>
-                    <button type="button" @click="openHub('packs')" class="hover:text-teal-800">Packs</button>
+                    <a href="{{ route('profile.edit') }}" class="hover:text-teal-800" title="{{ Auth::user()->email }}">{{ Auth::user()->name }}</a>
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="hover:text-teal-800">Desconectar</button>
+                    </form>
                 @else
                     <a href="{{ route('login') }}" class="hover:text-teal-800">Entrar</a>
                     <a href="{{ route('register') }}" class="rounded-md bg-teal-700 px-3 py-1.5 text-white hover:bg-teal-800 mc-cta-pulse transition">Começar grátis</a>
                 @endauth
-                <button type="button" @click="openHub('apoiar')" class="hover:text-teal-800">Apoiar</button>
+                <a href="{{ route('home') }}#ferramentas" class="hover:text-teal-800">Ferramentas</a>
+                <button type="button" @click="openHub('packs')" class="inline-flex items-center gap-1.5 hover:text-teal-800" title="Packs">
+                    <span class="text-amber-600">@include('partials.tool_icon', ['icon' => 'packs', 'size' => 16])</span>
+                    Packs
+                </button>
+                <button type="button" @click="openHub('apoiar')" class="inline-flex items-center gap-1.5 hover:text-teal-800" title="Apoiar">
+                    <span class="text-rose-600">@include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])</span>
+                    Apoiar
+                </button>
+                <a href="{{ auth()->check() ? route('studio') : route('login') }}"
+                   class="inline-flex items-center gap-1.5 rounded-md border border-emerald-500 px-3 py-1.5 font-semibold text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.45)] hover:bg-emerald-50 transition">
+                    Studio
+                </a>
             </nav>
+
+            <div class="flex lg:hidden items-center gap-2">
+                <a href="{{ auth()->check() ? route('studio') : route('login') }}"
+                   class="inline-flex items-center gap-1 rounded-md border border-emerald-500 px-2.5 py-1 text-xs font-semibold text-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.35)]">
+                    Studio
+                </a>
+                <button
+                    type="button"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-300 bg-white text-zinc-800"
+                    :class="{ 'border-teal-500 bg-teal-50 text-teal-800': navOpen }"
+                    @click="toggleNav()"
+                    :aria-expanded="navOpen.toString()"
+                    aria-controls="mc-light-mobile-nav"
+                    aria-label="Abrir menu"
+                >
+                    <svg x-show="!navOpen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                    <svg x-show="navOpen" x-cloak class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div
+            id="mc-light-mobile-nav"
+            x-show="navOpen"
+            x-cloak
+            class="lg:hidden border-t border-zinc-900/10 bg-white/95"
+        >
+            <div class="mx-auto max-w-6xl px-4 py-4 space-y-2 text-sm font-medium text-zinc-700 max-h-[min(78vh,640px)] overflow-y-auto">
+                @auth
+                    <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 mb-3">
+                        <p class="font-semibold text-zinc-900 truncate">{{ Auth::user()->name }}</p>
+                        <p class="mt-0.5 text-xs text-zinc-500 truncate">{{ Auth::user()->email }}</p>
+                    </div>
+                    <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2.5 hover:bg-teal-50" @click="closeNav()">Perfil</a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full text-left rounded-lg px-3 py-2.5 text-rose-700 hover:bg-rose-50">Desconectar</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="block rounded-lg px-3 py-2.5 hover:bg-teal-50" @click="closeNav()">Entrar</a>
+                    <a href="{{ route('register') }}" class="block rounded-lg bg-teal-700 px-3 py-2.5 text-center text-white" @click="closeNav()">Começar grátis</a>
+                @endauth
+                <a href="{{ route('home') }}#ferramentas" class="block rounded-lg px-3 py-2.5 hover:bg-teal-50" @click="closeNav()">Ferramentas</a>
+                <button type="button" @click="openHub('packs')" class="w-full text-left rounded-lg px-3 py-2.5 hover:bg-amber-50">Packs</button>
+                <button type="button" @click="openHub('apoiar')" class="w-full text-left rounded-lg px-3 py-2.5 hover:bg-rose-50">Apoiar</button>
+                <a href="{{ auth()->check() ? route('studio') : route('login') }}" class="block rounded-lg border border-emerald-500 px-3 py-2.5 text-center font-semibold text-emerald-700" @click="closeNav()">Abrir Studio</a>
+            </div>
         </div>
     </header>
 

@@ -81,6 +81,61 @@
                 0 0 0 1px rgba(255, 255, 255, 0.06),
                 0 40px 80px rgba(0, 0, 0, 0.55);
         }
+        .mc-studio-neon {
+            border: 1px solid #39ff14;
+            background: rgba(57, 255, 20, 0.06);
+            box-shadow:
+                0 0 8px rgba(57, 255, 20, 0.45),
+                0 0 18px rgba(57, 255, 20, 0.22),
+                inset 0 0 10px rgba(57, 255, 20, 0.06);
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+        }
+        .mc-studio-neon:hover {
+            background: rgba(57, 255, 20, 0.12);
+            box-shadow:
+                0 0 12px rgba(57, 255, 20, 0.65),
+                0 0 28px rgba(57, 255, 20, 0.35),
+                inset 0 0 12px rgba(57, 255, 20, 0.1);
+            color: #b8ff9a;
+        }
+        /* Packs · Apoiar · Studio — mesma caixa na navbar */
+        .mc-nav-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding: 0 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+        .mc-nav-action--sm {
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding: 0 0.75rem;
+            font-size: 0.875rem;
+        }
+        .mc-nav-action-icon {
+            width: 1rem;
+            height: 1rem;
+        }
+        .mc-nav-action-icon svg {
+            width: 1rem;
+            height: 1rem;
+            display: block;
+        }
+        @media (max-width: 639px) {
+            .mc-hero-stage { min-height: auto; }
+            .mc-preview-phone { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .mc-rise, .mc-rise-2, .mc-rise-3, .mc-float { animation: none; }
+        }
     </style>
 </head>
 <body class="mc-landing antialiased min-h-screen" x-data="markCraftHub">
@@ -93,47 +148,29 @@
     </script>
     <style>[x-cloak]{display:none!important}</style>
 
-    <header class="sticky top-0 z-50 border-b border-white/5 bg-[#07090c]/80 backdrop-blur-md">
-        <div class="mx-auto max-w-6xl px-4 py-3.5 flex items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="mc-brand text-xl font-extrabold text-white tracking-tight">
-                MarkCraft
-                <span class="ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-teal-300/90 border border-teal-500/30 px-1.5 py-0.5">CriaSys</span>
-            </a>
-            <nav class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-sm text-zinc-300">
-                @auth
-                    <a href="{{ route('studio') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Studio</a>
-                @else
-                    <a href="{{ route('login') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Entrar</a>
-                    <a href="{{ route('register') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-3.5 py-1.5 font-semibold text-zinc-950 hover:bg-teal-400">Criar conta</a>
-                @endauth
-                <button type="button" @click="openHub('ferramentas')" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Ferramentas</button>
-                <button type="button" @click="openHub('packs')" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Packs</button>
-                <button type="button" @click="openHub('apoiar')" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Apoiar</button>
-            </nav>
-        </div>
-    </header>
+    @include('partials.dark_site_navbar', ['context' => 'landing'])
 
     {{-- Hero: uma composição — marca, frase, CTA, visual de produto --}}
-    <section class="mc-hero-stage relative overflow-hidden min-h-[min(92vh,820px)]">
+    <section class="mc-hero-stage relative overflow-hidden min-h-[min(60vh,533px)]">
         <div class="mc-hero-grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
-        <div class="relative mx-auto max-w-6xl px-4 pt-14 pb-16 md:pt-20 md:pb-24 grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-14 items-center">
+        <div class="relative mx-auto max-w-6xl px-4 pt-10 pb-12 sm:pt-14 sm:pb-16 md:pt-20 md:pb-24 grid lg:grid-cols-[1.05fr_0.95fr] gap-8 sm:gap-10 lg:gap-14 items-center">
             <div class="relative z-10">
-                <p class="mc-rise mc-brand text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[0.92]">
+                <p class="mc-rise mc-brand text-[2.75rem] leading-[0.92] sm:text-6xl md:text-7xl font-extrabold text-white">
                     MarkCraft
                 </p>
-                <p class="mc-rise-2 mt-5 max-w-md text-lg md:text-xl text-zinc-300 leading-relaxed">
+                <p class="mc-rise-2 mt-4 sm:mt-5 max-w-md text-base sm:text-lg md:text-xl text-zinc-300 leading-relaxed">
                     Do blank ao post pronto — layouts, elementos e export no navegador.
                 </p>
-                <div class="mc-rise-3 mt-8 flex flex-wrap items-center gap-3">
+                <div class="mc-rise-3 mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                     @auth
-                        <a href="{{ route('studio') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
+                        <a href="{{ route('studio') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
                             Abrir Studio
                         </a>
                     @else
-                        <a href="{{ route('register') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
+                        <a href="{{ route('register') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
                             Começar grátis
                         </a>
-                        <a href="{{ route('login') }}" class="inline-flex rounded-md border border-white/15 bg-white/5 px-5 py-3.5 text-base font-medium text-zinc-100 hover:bg-white/10 transition">
+                        <a href="{{ route('login') }}" class="inline-flex justify-center rounded-md border border-white/15 bg-white/5 px-5 py-3.5 text-base font-medium text-zinc-100 hover:bg-white/10 transition">
                             Já tenho conta
                         </a>
                     @endauth
@@ -144,7 +181,7 @@
             </div>
 
             {{-- Visual âncora: mock de prancheta (produto), full-bleed no eixo direito --}}
-            <div class="mc-rise-2 mc-float relative lg:justify-self-end w-full max-w-lg mx-auto lg:mx-0" aria-hidden="true">
+            <div class="mc-rise-2 mc-float relative lg:justify-self-end w-full max-w-md sm:max-w-lg mx-auto lg:mx-0" aria-hidden="true">
                 <div class="mc-preview-frame relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-[#121820]">
                     <div class="absolute inset-0 bg-[linear-gradient(145deg,#134e4a_0%,#0f172a_48%,#1c1917_100%)]"></div>
                     <div class="absolute inset-[12%] border border-white/10 bg-zinc-950/40 backdrop-blur-[2px]">
@@ -154,7 +191,7 @@
                         <div class="absolute bottom-[18%] left-[10%] right-[10%] aspect-square rounded-sm bg-gradient-to-br from-amber-500/30 via-teal-500/20 to-transparent border border-white/10"></div>
                         <div class="absolute bottom-[10%] left-[10%] text-[10px] tracking-widest uppercase text-zinc-400">1080 × 1350</div>
                     </div>
-                    <div class="absolute -right-6 top-1/4 w-28 aspect-[9/16] rounded-sm border border-white/10 bg-zinc-900/90 shadow-2xl rotate-3">
+                    <div class="mc-preview-phone absolute -right-6 top-1/4 w-28 aspect-[9/16] rounded-sm border border-white/10 bg-zinc-900/90 shadow-2xl rotate-3">
                         <div class="m-2 h-full rounded-sm bg-gradient-to-b from-teal-700/50 to-zinc-900"></div>
                     </div>
                 </div>
@@ -162,13 +199,9 @@
         </div>
     </section>
 
-    <div class="mx-auto max-w-6xl px-4 -mt-4 relative z-10">
-        <x-ad-slot slot-id="ad_landing_hero" class="!border-white/10 !bg-zinc-900/50 !text-zinc-500" />
-    </div>
-
     {{-- Atalhos (inspiração Canva: “o que você quer criar”) --}}
-    <section class="mx-auto max-w-6xl px-4 pt-16 pb-8">
-        <h2 class="mc-brand text-2xl md:text-3xl font-bold text-white">O que você quer criar agora?</h2>
+    <section class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-8">
+        <h2 class="mc-brand text-xl sm:text-2xl md:text-3xl font-bold text-white">O que você quer criar agora?</h2>
         <p class="mt-2 max-w-xl text-zinc-400">
             Escolha um formato e
             @guest
@@ -178,14 +211,14 @@
             @endguest
         </p>
 
-        <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
             @foreach($shortcuts as $item)
                 @php
                     $href = auth()->check()
                         ? route('studio', ['preset' => $item['preset']])
                         : route('register', ['preset' => $item['preset']]);
                 @endphp
-                <a href="{{ $href }}" class="mc-shortcut group block rounded-lg border border-white/10 bg-white/[0.03] p-4 text-left">
+                <a href="{{ $href }}" class="mc-shortcut group block rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:p-4 text-left">
                     <span class="block h-1.5 w-8 rounded-sm mb-4
                         @if($item['tone'] === 'teal') bg-teal-400
                         @elseif($item['tone'] === 'amber') bg-amber-400
@@ -209,32 +242,29 @@
         @endguest
     </section>
 
-    {{-- Hub: atalhos em modal glass (não páginas separadas) --}}
-    <section class="mx-auto max-w-6xl px-4 pt-6 pb-10">
-        <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">Hub CriaSys</p>
-        <div class="mt-3 flex flex-wrap gap-2">
-            <button type="button" @click="openHub('ferramentas')"
-                    class="mc-shortcut inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-zinc-100">
-                <span class="h-1.5 w-1.5 rounded-full bg-teal-400"></span>
-                Ferramentas
-            </button>
-            <button type="button" @click="openHub('packs')"
-                    class="mc-shortcut inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-zinc-100">
-                <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
-                Packs
-            </button>
-            <button type="button" @click="openHub('apoiar')"
-                    class="mc-shortcut inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-zinc-100">
-                <span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span>
-                Apoiar
-            </button>
+    {{-- Ferramentas + Packs + Apoiar com ícones destacados --}}
+    <section class="mx-auto max-w-6xl px-4 pt-6 pb-10" id="ferramentas">
+        <div>
+            <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">Hub CriaSys</p>
+            <h2 class="mc-brand mt-1 text-2xl font-bold text-white">Atalhos do hub</h2>
+            <p class="mt-1 max-w-xl text-sm text-zinc-400">Ferramentas, packs e apoio — cada atalho com ícone claro.</p>
+        </div>
+        <div class="mt-6">
+            @include('partials.tool_shortcut_buttons', ['variant' => 'grid'])
+        </div>
+        <div class="mt-3">
+            @include('partials.hub_shortcut_buttons', ['variant' => 'grid'])
         </div>
     </section>
 
-    <section class="mx-auto max-w-6xl px-4 py-14 border-t border-white/5">
-        <h2 class="mc-brand text-2xl font-bold text-white">Feito para publicar, não para enrolar</h2>
-        <p class="mt-2 max-w-2xl text-zinc-400">Presets de redes, texto, formas, remover fundo e export. Sem vídeo, sem áudio — foco em imagem e texto.</p>
-        <ul class="mt-10 grid gap-10 md:grid-cols-3">
+    <div class="mx-auto max-w-6xl px-4 pb-6 relative z-10">
+        <x-ad-slot slot-id="ad_landing_hero" class="!border-white/10 !bg-zinc-900/50 !text-zinc-500" />
+    </div>
+
+    <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
+        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">Feito para publicar, não para enrolar</h2>
+        <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">Presets de redes, texto, formas, remover fundo e export. Sem vídeo, sem áudio — foco em imagem e texto.</p>
+        <ul class="mt-8 sm:mt-10 grid gap-8 sm:gap-10 md:grid-cols-3">
             <li>
                 <p class="text-sm font-semibold tracking-wide uppercase text-teal-300/90">Layouts & pacotes</p>
                 <p class="mt-2 text-zinc-300 leading-relaxed">Comece por um formato de rede ou um pacote pronto e ajuste no canvas.</p>
@@ -251,21 +281,21 @@
     </section>
 
     {{-- Bloco de conversão --}}
-    <section class="relative mx-auto max-w-6xl px-4 py-16">
-        <div class="relative overflow-hidden rounded-xl border border-white/10 px-6 py-12 md:px-12 md:py-14"
+    <section class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
+        <div class="relative overflow-hidden rounded-xl border border-white/10 px-5 py-10 sm:px-6 sm:py-12 md:px-12 md:py-14"
              style="background: radial-gradient(800px 280px at 20% 0%, rgba(20,184,166,0.18), transparent 55%), #0c1118;">
-            <p class="mc-brand text-3xl md:text-4xl font-bold text-white max-w-lg leading-tight">
+            <p class="mc-brand text-2xl sm:text-3xl md:text-4xl font-bold text-white max-w-lg leading-tight">
                 Sua próxima arte começa com uma conta grátis.
             </p>
             <p class="mt-3 max-w-md text-zinc-400">
                 Cadastro rápido. Studio no navegador. Sem instalar nada.
             </p>
-            <div class="mt-8 flex flex-wrap gap-3">
+            <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
                 @auth
-                    <a href="{{ route('studio') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Ir para o Studio</a>
+                    <a href="{{ route('studio') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Ir para o Studio</a>
                 @else
-                    <a href="{{ route('register') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Criar minha conta</a>
-                    <a href="{{ route('login') }}" class="inline-flex rounded-md border border-white/15 px-5 py-3 font-medium text-zinc-200 hover:bg-white/5 transition">Entrar</a>
+                    <a href="{{ route('register') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Criar minha conta</a>
+                    <a href="{{ route('login') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3 font-medium text-zinc-200 hover:bg-white/5 transition">Entrar</a>
                 @endauth
             </div>
         </div>
@@ -280,9 +310,15 @@
             <p class="mc-brand text-lg text-white">MarkCraft</p>
             <p class="mt-2 max-w-2xl">Família CriaSys · contribuições opcionais mantêm o projeto vivo</p>
             <div class="mt-5 flex flex-wrap gap-5">
-                <button type="button" @click="openHub('apoiar')" class="hover:text-teal-300 transition">Apoiar a partir de R$ 2</button>
-                <button type="button" @click="openHub('ferramentas')" class="hover:text-teal-300 transition">Ferramentas</button>
-                <button type="button" @click="openHub('packs')" class="hover:text-teal-300 transition">Packs</button>
+                <button type="button" @click="openHub('apoiar')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
+                    <span class="text-rose-300">@include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])</span>
+                    Apoiar a partir de R$ 2
+                </button>
+                <button type="button" @click="openHub('packs')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
+                    <span class="text-amber-300">@include('partials.tool_icon', ['icon' => 'packs', 'size' => 16])</span>
+                    Packs
+                </button>
+                <a href="#ferramentas" class="hover:text-teal-300 transition">Ferramentas</a>
                 @guest
                     <a href="{{ route('register') }}" class="hover:text-teal-300 transition">Criar conta</a>
                 @else

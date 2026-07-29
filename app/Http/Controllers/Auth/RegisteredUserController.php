@@ -58,6 +58,6 @@ class RegisteredUserController extends Controller
             return redirect()->route('studio', ['preset' => $preset]);
         }
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('home');
     }
 }
