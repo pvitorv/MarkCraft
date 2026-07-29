@@ -22,8 +22,8 @@ Ferramenta web gratuita da família **CriaSys** para criadores, marketing de ven
 APP_NAME=MarkCraft
 DB_CONNECTION=mysql
 DB_DATABASE=mark_craft
-DB_USERNAME=vitor
-# senha local: ver 01-image-studio-kit/PROMPT_NOVO_PROJETO.md §0
+DB_USERNAME=root
+DB_PASSWORD=
 ```
 
 O database `mark_craft` deve existir vazio antes das migrations.

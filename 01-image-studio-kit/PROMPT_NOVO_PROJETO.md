@@ -14,8 +14,7 @@
 | **Branding** | MarkCraft em destaque + selo/rodapé “CriaSys” |
 | **Banco de dados** | `mark_craft` (MySQL/MariaDB — **já criado vazio** pelo dono antes do projeto) |
 | **Usuário DB (local)** | `vitor` |
-| **Senha DB (local)** | `Da1985790grs` — **somente desenvolvimento local**; o dono troca em produção |
-| **`.env` local (referência)** | `DB_DATABASE=mark_craft` · `DB_USERNAME=vitor` · `DB_PASSWORD=Da1985790grs` |
+| **DB local** | Use valores do seu `.env` (nunca commitar senha/usuário reais). Ex.: `DB_DATABASE=mark_craft` · `DB_USERNAME=root` · `DB_PASSWORD=` |
 
 Notas:
 
