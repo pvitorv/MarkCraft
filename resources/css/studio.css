@@ -7,7 +7,14 @@
 html,
 body {
     height: 100%;
-    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none;
+}
+
+html {
+    overflow-x: clip;
 }
 
 body.studio-body {
@@ -17,10 +24,33 @@ body.studio-body {
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Container global do app — esconde barra horizontal no rodapé da janela */
+.mc-app,
+.mc-app-shell,
+.studio-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
 .studio-shell {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* Área do canvas: scroll vertical ok; horizontal fica no zoom/ajustar, não na janela */
+.is-canvas-dropzone {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.is-canvas-dropzone.is-canvas-dropzone--active {
+    outline: 2px dashed rgba(52, 211, 153, 0.85);
+    outline-offset: -6px;
+    background: rgba(16, 185, 129, 0.08);
 }
 
 .studio-topbar {
@@ -146,12 +176,14 @@ body.studio-body {
 /* Toolbar do canvas */
 .studio-canvas-toolbar {
     display: grid;
-    grid-template-columns: minmax(220px, 1.1fr) minmax(240px, 1fr) minmax(260px, 1.2fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr);
     gap: 0.65rem;
     padding: 0.7rem 0.8rem;
     border: 1px solid #27272a;
     border-radius: 0.85rem;
     background: #0c0c10;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .studio-toolbar-block {

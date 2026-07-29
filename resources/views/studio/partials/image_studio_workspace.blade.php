@@ -76,10 +76,29 @@
             </div>
 
             <div
-                class="rounded-xl border border-zinc-700 bg-zinc-950 p-4 overflow-auto min-h-[320px] flex justify-center items-start relative flex-1 min-h-0"
-                :class="imageStudioExpanded ? 'max-h-none' : 'max-h-[min(85vh,920px)]'"
+                class="is-canvas-dropzone rounded-xl border border-zinc-700 bg-zinc-950 p-4 min-h-[320px] flex justify-center items-start relative flex-1 min-h-0"
+                :class="{
+                    'max-h-none': imageStudioExpanded,
+                    'max-h-[min(85vh,920px)]': !imageStudioExpanded,
+                    'is-canvas-dropzone--active': imageStudioFileDragOver,
+                }"
                 x-ref="imageStudioCanvasWrap"
+                @dragenter.prevent="imageStudioOnFileDragEnter($event)"
+                @dragover.prevent="imageStudioOnFileDragOver($event)"
+                @dragleave="imageStudioOnFileDragLeave($event)"
+                @drop.prevent="imageStudioOnFileDrop($event)"
             >
+                <div
+                    x-show="imageStudioFileDragOver"
+                    x-cloak
+                    class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-emerald-950/55"
+                    aria-hidden="true"
+                >
+                    <div class="rounded-xl border border-emerald-400/70 bg-zinc-950/90 px-5 py-4 text-center shadow-xl">
+                        <p class="text-sm font-semibold text-emerald-200">Solte a imagem aqui</p>
+                        <p class="mt-1 text-[11px] text-zinc-400">PNG · JPG · WebP · GIF · SVG</p>
+                    </div>
+                </div>
                 <div
                     x-show="imageStudioBgRemoving"
                     x-cloak
@@ -99,7 +118,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="inline-block shrink-0" :style="imageStudioCanvasViewportStyle()">
+                <div class="inline-block shrink-0 overflow-hidden" :style="imageStudioCanvasViewportStyle()">
                     <div
                         x-ref="imageStudioCanvasScaler"
                         class="relative shadow-2xl shadow-black/40 ring-2 ring-violet-500/40 inline-block"

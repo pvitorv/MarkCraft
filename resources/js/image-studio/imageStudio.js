@@ -2421,6 +2421,8 @@ export function imageStudioMethods() {
         _imageStudioElementsModalShown: false,
         imageStudioExpanded: false,
         imageStudioLocalWatch: null,
+        imageStudioFileDragOver: false,
+        imageStudioFileDragDepth: 0,
 
         normalizeImageStudioElementList(source) {
             if (Array.isArray(source)) {
@@ -4205,26 +4207,124 @@ export function imageStudioMethods() {
             }
         },
 
-        async imageStudioUploadImage(event) {
-            const file = event?.target?.files?.[0];
-            if (!file) return;
+        imageStudioIsImageFile(file) {
+            if (!file) {
+                return false;
+            }
+            if (file.type && file.type.startsWith('image/')) {
+                return true;
+            }
+
+            return /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(file.name || '');
+        },
+
+        imageStudioDragHasImageFiles(event) {
+            const types = event?.dataTransfer?.types;
+            if (!types) {
+                return false;
+            }
+            const list = typeof types.includes === 'function'
+                ? types
+                : Array.from(types);
+
+            return list.includes('Files');
+        },
+
+        imageStudioOnFileDragEnter(event) {
+            if (!this.imageStudioDragHasImageFiles(event)) {
+                return;
+            }
+            this.imageStudioFileDragDepth = (this.imageStudioFileDragDepth || 0) + 1;
+            this.imageStudioFileDragOver = true;
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        },
+
+        imageStudioOnFileDragOver(event) {
+            if (!this.imageStudioDragHasImageFiles(event)) {
+                return;
+            }
+            this.imageStudioFileDragOver = true;
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+        },
+
+        imageStudioOnFileDragLeave(event) {
+            if (!this.imageStudioDragHasImageFiles(event)) {
+                return;
+            }
+            this.imageStudioFileDragDepth = Math.max(0, (this.imageStudioFileDragDepth || 0) - 1);
+            if (this.imageStudioFileDragDepth === 0) {
+                this.imageStudioFileDragOver = false;
+            }
+        },
+
+        async imageStudioAddImageFromFile(file) {
+            if (!this.imageStudioIsImageFile(file)) {
+                return false;
+            }
             if (!this.imageStudioEngine?.canvas) {
                 await this.initImageStudio();
             }
             if (!this.imageStudioEngine?.canvas) {
                 this.error = 'Canvas não carregou — recarregue a página (F5)';
-                event.target.value = '';
+
+                return false;
+            }
+            const localUrl = URL.createObjectURL(file);
+            await this.imageStudioEngine.addImageFromUrl(localUrl, file.name || 'Imagem');
+            this.refreshImageStudioLayers();
+
+            return true;
+        },
+
+        async imageStudioOnFileDrop(event) {
+            this.imageStudioFileDragOver = false;
+            this.imageStudioFileDragDepth = 0;
+
+            const files = Array.from(event?.dataTransfer?.files || []).filter((file) =>
+                this.imageStudioIsImageFile(file)
+            );
+            if (!files.length) {
+                this.error = 'Solte um arquivo de imagem (PNG, JPG, WebP…)';
+
                 return;
             }
+
+            this.error = '';
+            let added = 0;
             try {
-                const localUrl = URL.createObjectURL(file);
-                await this.imageStudioEngine.addImageFromUrl(localUrl, file.name);
-                this.refreshImageStudioLayers();
-                this.message = 'Imagem adicionada ao canvas';
+                for (const file of files) {
+                    if (await this.imageStudioAddImageFromFile(file)) {
+                        added += 1;
+                    }
+                }
+                if (added > 0) {
+                    this.message = added === 1
+                        ? 'Imagem adicionada ao canvas'
+                        : `${added} imagens adicionadas ao canvas`;
+                }
+            } catch (e) {
+                this.error = e.message || 'Erro ao adicionar imagem';
+            }
+        },
+
+        async imageStudioUploadImage(event) {
+            const file = event?.target?.files?.[0];
+            if (!file) return;
+            try {
+                const ok = await this.imageStudioAddImageFromFile(file);
+                if (ok) {
+                    this.message = 'Imagem adicionada ao canvas';
+                }
             } catch (e) {
                 this.error = e.message || 'Erro ao adicionar imagem';
             } finally {
-                event.target.value = '';
+                if (event?.target) {
+                    event.target.value = '';
+                }
             }
         },
 

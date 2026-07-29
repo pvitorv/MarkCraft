@@ -1,16 +1,16 @@
 # Histórico de progresso — MarkCraft
 
 Documento de continuidade para retomar o trabalho no chat sem perder contexto.  
-**Última atualização:** 29/07/2026 — landing UX + Studio (sidebar, `\n`, créditos, limpar prancheta).
+**Última atualização:** 29/07/2026 — scroll horizontal oculto + drag-and-drop de imagem no canvas.
 
 ---
 
 ## Estado atual do repositório
 
 - **Remoto:** https://github.com/pvitorv/MarkCraft (privado)
-- **Branch de trabalho atual:** `002-continuidade-produto` (padrão: `001`, `002`, `003`…)
-- **Última branch com entrega:** `001-hub-navbar-ferramentas` (PR #2)
-- **PR:** https://github.com/pvitorv/MarkCraft/pull/2
+- **Branch de trabalho atual:** `003-studio-canvas-ux` (padrão: `001`, `002`, `003`…)
+- **Última branch com entrega:** `002-continuidade-produto`
+- **PR anterior:** https://github.com/pvitorv/MarkCraft/pull/2 (`001-hub-navbar-ferramentas`)
 
 ```bash
 php artisan serve
@@ -44,7 +44,7 @@ Sem AdSense genérico — vitrine CriaSys. Prova social só com feedback real.
 
 ---
 
-## Entregas acumuladas (até 001 + sessão atual)
+## Entregas acumuladas
 
 ### Hub / landing
 - Hub: 4 ferramentas + Packs/Apoiar em modais glass; encurtador `short_links`
@@ -55,6 +55,7 @@ Sem AdSense genérico — vitrine CriaSys. Prova social só com feedback real.
 - Placeholder **prova social reservado** (`#prova-social`) — sem números inventados
 - Microcopy hero única: “Sem cartão · 100% grátis · Artes privadas…”
 - Promo slots (`x-promo-slot`); ads legados off
+- Landing com `overflow-x: hidden` no shell global
 
 ### Studio / Image Studio
 - Sidebar abas verticais: Ferramentas · Texto · Mídia · Fundo · Camadas · Exportar (`image_studio_aside`)
@@ -62,13 +63,17 @@ Sem AdSense genérico — vitrine CriaSys. Prova social só com feedback real.
 - rembg destacado (badge GRÁTIS) na aba Mídia
 - CTA “Usar no Blog CriaSys” no topo e Exportar
 - Expandido: z-index acima do navbar; modais acima do expand
-- `overflow-x: hidden` no shell
 - **Limpar workspace** = prancheta de verdade (branco, sem objetos, sem underlay, limpa draft)
 - Modal **Créditos** (home rodapé + Studio + menu mobile) + `docs/CREDITS.md`
+- **Scroll horizontal:** shell `.mc-app` / `.mc-app-shell` com `overflow-x: hidden`; viewport do canvas com `overflow: hidden` (corta vazamento do `transform: scale`); dropzone `overflow-x: hidden`
+- **Drag-and-drop:** soltar imagem(ns) da pasta na área do canvas (PNG/JPG/WebP/GIF/SVG); highlight “Solte a imagem aqui”; reutiliza `imageStudioAddImageFromFile`
 
-### Arquivos-chave novos / centrais
+### Arquivos-chave
 - `resources/views/partials/credits_modal.blade.php`, `hero_blog_panel`, `bridge_blog_section`, `social_proof_placeholder`
 - `resources/views/studio/partials/image_studio_aside.blade.php`
+- `resources/views/studio/partials/image_studio_workspace.blade.php` (dropzone + clip do scale)
+- `resources/js/image-studio/imageStudio.js` (drag/drop + upload compartilhado)
+- `resources/css/studio.css` (overflow global + dropzone)
 - `docs/CREDITS.md`, `docs/HISTORICO_PROGRESSO.md`
 
 ---

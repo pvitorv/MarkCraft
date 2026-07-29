@@ -20,10 +20,22 @@
             --mc-accent-deep: #0f766e;
             --mc-warm: #f59e0b;
         }
+        html {
+            overflow-x: clip;
+            max-width: 100%;
+        }
         body.mc-landing {
             font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
             background: var(--mc-bg);
             color: var(--mc-text);
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+        .mc-app-shell {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: hidden;
         }
         .mc-brand {
             font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
@@ -483,7 +495,7 @@
         }
     </style>
 </head>
-<body class="mc-landing antialiased min-h-screen" x-data="markCraftHub">
+<body class="mc-landing antialiased min-h-screen overflow-x-hidden" x-data="markCraftHub">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {

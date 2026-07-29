@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="overflow-x-hidden">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,6 +15,8 @@
     <link href="https://fonts.bunny.net/css?family=sora:600,700|dm-sans:400,500&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/css/studio.css', 'resources/js/image-studio/app-studio.js'])
     <style>
+        html, body { overflow-x: hidden !important; max-width: 100% !important; }
+        .mc-app { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
         [x-cloak] { display: none !important; }
         body { font-family: 'DM Sans', system-ui, sans-serif; }
         .mc-brand { font-family: 'Sora', system-ui, sans-serif; letter-spacing: -0.03em; }
@@ -114,7 +116,7 @@
         }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen overflow-x-hidden" x-data="markCraftHub">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen overflow-x-hidden max-w-full" x-data="markCraftHub">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -122,10 +124,11 @@
             }).catch(() => {});
         }
     </script>
+    <div class="mc-app">
     @include('partials.dark_site_navbar', ['context' => 'studio'])
 
     <div
-        class="mx-auto max-w-[1600px] px-3 py-3 overflow-x-hidden"
+        class="mc-app-shell mx-auto max-w-[1600px] px-3 py-3 overflow-x-hidden min-w-0 w-full"
         x-data="markCraftStudio"
         x-init="init()"
     >
@@ -160,8 +163,8 @@
         <p x-show="message" x-cloak x-text="message" class="mb-2 text-xs text-emerald-300"></p>
         <p x-show="error" x-cloak x-text="error" class="mb-2 text-xs text-red-300"></p>
 
-        <div class="flex gap-3 items-start">
-            <div class="flex-1 min-w-0">
+        <div class="flex gap-3 items-start min-w-0 w-full overflow-x-hidden">
+            <div class="flex-1 min-w-0 overflow-x-hidden">
                 @include('studio.partials.image_studio_workspace')
             </div>
             <div class="hidden xl:block w-52 shrink-0 sticky top-16 space-y-3">
@@ -186,5 +189,6 @@
     <script type="application/json" id="criasys-image-studio-packs">@json($c['packs'] ?? [])</script>
 
     @include('partials.hub_glass_modals')
+    </div>
 </body>
 </html>
