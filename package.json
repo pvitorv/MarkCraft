@@ -1,0 +1,30 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite",
+        "icons:sync": "node scripts/sync-bootstrap-icons.mjs"
+    },
+    "devDependencies": {
+        "@tailwindcss/forms": "^0.5.2",
+        "@tailwindcss/vite": "^4.0.0",
+        "alpinejs": "^3.15.12",
+        "autoprefixer": "^10.4.2",
+        "axios": "^1.11.0",
+        "concurrently": "^9.0.1",
+        "laravel-vite-plugin": "^2.0.0",
+        "postcss": "^8.4.31",
+        "tailwindcss": "^3.1.0",
+        "vite": "^7.0.7"
+    },
+    "dependencies": {
+        "@alpinejs/sort": "^3.15.12",
+        "@imgly/background-removal": "^1.7.0",
+        "ag-psd": "^31.0.2",
+        "bootstrap-icons": "^1.13.1",
+        "fabric": "^7.4.0",
+        "jspdf": "^4.2.1"
+    }
+}
