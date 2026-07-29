@@ -287,7 +287,7 @@ return [
             'background' => ['color' => '#1e3a5f', 'opacity' => 100],
             'objects' => [
                 ['kind' => 'circle', 'name' => 'Destaque', 'x' => 0.08, 'y' => 0.5, 'r' => 0.12, 'fill' => '#2563eb', 'opacity' => 100],
-                ['kind' => 'text', 'name' => 'Data', 'x' => 0.08, 'y' => 0.5, 'text' => '15\nJUL', 'fontSize' => 28, 'fill' => '#ffffff', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'center', 'originY' => 'center'],
+                ['kind' => 'text', 'name' => 'Data', 'x' => 0.08, 'y' => 0.5, 'text' => '15' . chr(10) . 'JUL', 'fontSize' => 28, 'fill' => '#ffffff', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'center', 'originY' => 'center'],
                 ['kind' => 'text', 'name' => 'Evento', 'x' => 0.28, 'y' => 0.42, 'text' => 'Nome do evento', 'fontSize' => 42, 'fill' => '#ffffff', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'left', 'originY' => 'top'],
                 ['kind' => 'text', 'name' => 'Local', 'x' => 0.28, 'y' => 0.62, 'text' => 'Local · Horário', 'fontSize' => 22, 'fill' => '#93c5fd', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'left', 'originY' => 'top'],
             ],
@@ -508,7 +508,7 @@ return [
             'background' => ['color' => '#fef2f2', 'opacity' => 100],
             'objects' => [
                 ['kind' => 'rect', 'name' => 'Header', 'x' => 0, 'y' => 0, 'w' => 1, 'h' => 0.18, 'fill' => '#dc2626', 'opacity' => 100],
-                ['kind' => 'text', 'name' => 'Mega', 'x' => 0.5, 'y' => 0.45, 'text' => 'MEGA\nSALE', 'fontSize' => 96, 'fill' => '#991b1b', 'fontFamily' => 'Impact, Arial Black, sans-serif', 'originX' => 'center', 'originY' => 'center'],
+                ['kind' => 'text', 'name' => 'Mega', 'x' => 0.5, 'y' => 0.45, 'text' => 'MEGA' . chr(10) . 'SALE', 'fontSize' => 96, 'fill' => '#991b1b', 'fontFamily' => 'Impact, Arial Black, sans-serif', 'originX' => 'center', 'originY' => 'center'],
                 ['kind' => 'text', 'name' => 'Detalhe', 'x' => 0.5, 'y' => 0.72, 'text' => 'Válido até domingo', 'fontSize' => 32, 'fill' => '#7f1d1d', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'center', 'originY' => 'center'],
             ],
         ],
@@ -595,7 +595,7 @@ return [
             'group' => 'whatsapp',
             'background' => ['color' => '#14532d', 'opacity' => 100],
             'objects' => [
-                ['kind' => 'text', 'name' => 'Promo', 'x' => 0.5, 'y' => 0.4, 'text' => 'OFERTA\nHOJE', 'fontSize' => 72, 'fill' => '#ffffff', 'fontFamily' => 'Impact, Arial Black, sans-serif', 'originX' => 'center', 'originY' => 'center'],
+                ['kind' => 'text', 'name' => 'Promo', 'x' => 0.5, 'y' => 0.4, 'text' => 'OFERTA' . chr(10) . 'HOJE', 'fontSize' => 72, 'fill' => '#ffffff', 'fontFamily' => 'Impact, Arial Black, sans-serif', 'originX' => 'center', 'originY' => 'center'],
                 ['kind' => 'text', 'name' => 'Chame', 'x' => 0.5, 'y' => 0.88, 'text' => 'Responda este status', 'fontSize' => 24, 'fill' => '#bbf7d0', 'fontFamily' => 'Arial, sans-serif', 'originX' => 'center', 'originY' => 'center'],
             ],
         ],

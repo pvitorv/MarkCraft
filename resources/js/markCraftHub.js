@@ -8,6 +8,7 @@ export default function markCraftHub() {
 
         open: null,
         navOpen: false,
+        creditsOpen: false,
 
         init() {
             const params = new URLSearchParams(window.location.search);
@@ -19,8 +20,16 @@ export default function markCraftHub() {
             if (tool && ['encurtador', 'conversor-imagens', 'conversor-pdf', 'compressor-pdf'].includes(tool)) {
                 this.openTool(tool);
             }
+            if (params.get('credits') === '1' || window.location.hash === '#creditos') {
+                this.$nextTick(() => this.openCredits());
+            }
+            window.addEventListener('mc-open-credits', () => this.openCredits());
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
+                    if (this.creditsOpen) {
+                        this.closeCredits();
+                        return;
+                    }
                     if (this.navOpen) {
                         this.closeNav();
                         return;
@@ -41,14 +50,29 @@ export default function markCraftHub() {
             });
         },
 
+        syncBodyScrollLock() {
+            document.body.classList.toggle('overflow-hidden', this.navOpen || this.creditsOpen);
+        },
+
         toggleNav() {
             this.navOpen = !this.navOpen;
-            document.body.classList.toggle('overflow-hidden', this.navOpen);
+            this.syncBodyScrollLock();
         },
 
         closeNav() {
             this.navOpen = false;
-            document.body.classList.remove('overflow-hidden');
+            this.syncBodyScrollLock();
+        },
+
+        openCredits() {
+            this.navOpen = false;
+            this.creditsOpen = true;
+            this.syncBodyScrollLock();
+        },
+
+        closeCredits() {
+            this.creditsOpen = false;
+            this.syncBodyScrollLock();
         },
 
         openHub(id) {

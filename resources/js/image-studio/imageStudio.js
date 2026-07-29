@@ -1,4 +1,4 @@
-import { Canvas, FabricText, IText, FabricImage, Rect, Circle, Ellipse, Line, Gradient, loadSVGFromURL, util, filters, Shadow, ActiveSelection } from 'fabric';
+import { Canvas, FabricText, IText, Textbox, FabricImage, Rect, Circle, Ellipse, Line, Gradient, loadSVGFromURL, util, filters, Shadow, ActiveSelection } from 'fabric';
 import { writePsdBuffer } from 'ag-psd';
 import { jsPDF } from 'jspdf';
 import {
@@ -43,7 +43,87 @@ function normalizeFabricType(obj) {
 }
 
 function isFabricText(obj) {
-    return !!obj && (obj instanceof IText || obj instanceof FabricText || isTextLikeType(obj?.type));
+    return !!obj && (
+        obj instanceof Textbox
+        || obj instanceof IText
+        || obj instanceof FabricText
+        || isTextLikeType(obj?.type)
+    );
+}
+
+const LITERAL_LF = String.fromCharCode(92, 110); // "\" + "n"
+const LITERAL_CR = String.fromCharCode(92, 114); // "\" + "r"
+const LITERAL_CRLF = String.fromCharCode(92, 114, 92, 110); // "\r\n" literal
+const REAL_LF = String.fromCharCode(10);
+const REAL_CR = String.fromCharCode(13);
+
+/**
+ * Converte sequências literais \n / \r\n (dois chars) em Line Feed real.
+ * Usa fromCharCode para não depender de escapes no bundler.
+ */
+export function normalizeMultilineText(text) {
+    if (typeof text !== 'string' || text === '') {
+        return text;
+    }
+    let out = text;
+    for (let pass = 0; pass < 4; pass += 1) {
+        if (!out.includes(LITERAL_LF) && !out.includes(LITERAL_CR)) {
+            break;
+        }
+        out = out
+            .split(LITERAL_CRLF)
+            .join(REAL_LF)
+            .split(LITERAL_LF)
+            .join(REAL_LF)
+            .split(LITERAL_CR)
+            .join(REAL_LF);
+    }
+    return out
+        .split(REAL_CR + REAL_LF)
+        .join(REAL_LF)
+        .split(REAL_CR)
+        .join(REAL_LF);
+}
+
+/** Normaliza text em specs de template/pack antes de criar objetos Fabric. */
+export function normalizeTemplateTextFields(template) {
+    if (!template || typeof template !== 'object') {
+        return template;
+    }
+    const objects = Array.isArray(template.objects) ? template.objects : null;
+    if (!objects) {
+        return template;
+    }
+    template.objects = objects.map((spec) => {
+        if (!spec || typeof spec !== 'object') {
+            return spec;
+        }
+        const kind = spec.kind || spec.type;
+        if (kind === 'text' && typeof spec.text === 'string') {
+            return { ...spec, text: normalizeMultilineText(spec.text) };
+        }
+        return spec;
+    });
+    return template;
+}
+
+export function normalizeTemplatesList(list) {
+    if (!Array.isArray(list)) {
+        return list;
+    }
+    return list.map((tpl) => normalizeTemplateTextFields(tpl));
+}
+
+function createMultilineTextObject(text, options = {}) {
+    const content = normalizeMultilineText(text ?? '');
+    const width = Math.max(80, Number(options.width) || 400);
+    return new Textbox(content, {
+        ...options,
+        text: content,
+        width,
+        editable: options.editable !== false,
+        splitByGrapheme: false,
+    });
 }
 
 function isFabricImage(obj) {
@@ -747,6 +827,7 @@ export class ImageStudioEngine {
                 this.applyFiltersToObject(obj, obj.criasysFilters);
             }
         });
+        this.repairEscapedNewlinesOnCanvas();
 
         if (savedBg?.color !== undefined) {
             const transparency = savedBg.transparency ?? savedBg.opacity;
@@ -1112,9 +1193,11 @@ export class ImageStudioEngine {
     }
 
     addText(text = 'Seu texto', options = {}) {
-        const textObj = new IText(text, {
-            left: (this.designWidth / 2) - 120,
+        const boxW = Math.max(160, Math.round(this.designWidth * 0.55));
+        const textObj = createMultilineTextObject(text, {
+            left: (this.designWidth / 2) - (boxW / 2),
             top: (this.designHeight / 2) - 30,
+            width: boxW,
             fontFamily: options.fontFamily || 'Impact, Arial Black, sans-serif',
             fontSize: options.fontSize || 64,
             fill: normalizeColorInput(options.fill, '#ffffff'),
@@ -1127,7 +1210,6 @@ export class ImageStudioEngine {
             textAlign: options.textAlign || 'left',
             lineHeight: options.lineHeight || 1.16,
             charSpacing: options.charSpacing || 0,
-            editable: true,
             name: options.name || 'Texto',
             criasysId: options.criasysId || ('text_' + Date.now()),
             criasysFontSlug: options.fontSlug || null,
@@ -1149,15 +1231,54 @@ export class ImageStudioEngine {
         return textObj;
     }
 
+    /**
+     * Corrige \n literal em qualquer texto já no canvas (rascunho antigo / templates).
+     */
+    repairEscapedNewlinesOnCanvas() {
+        if (!this.canvas) {
+            return false;
+        }
+        let changed = false;
+        this.canvas.getObjects().forEach((obj) => {
+            if (!isFabricText(obj) || typeof obj.text !== 'string') {
+                return;
+            }
+            const next = normalizeMultilineText(obj.text);
+            if (next === obj.text) {
+                return;
+            }
+            obj.set('text', next);
+            if (typeof obj.initDimensions === 'function') {
+                obj.initDimensions();
+            }
+            obj.set('dirty', true);
+            changed = true;
+        });
+        if (changed) {
+            this.canvas.requestRenderAll();
+        }
+        return changed;
+    }
+
     getTextStyleFromObject(obj) {
         if (!isFabricText(obj)) {
             return null;
+        }
+        const rawContent = obj.text || '';
+        const content = normalizeMultilineText(rawContent);
+        if (content !== rawContent) {
+            obj.set('text', content);
+            if (typeof obj.initDimensions === 'function') {
+                obj.initDimensions();
+            }
+            obj.set('dirty', true);
+            this.canvas?.requestRenderAll?.();
         }
         const fw = obj.fontWeight;
         const bold = fw === 'bold' || fw === 700 || fw === '700' || Number(fw) >= 600;
         return {
             fontSlug: obj.criasysFontSlug || 'bebas_neue',
-            content: obj.text || '',
+            content,
             fontSize: obj.fontSize || 48,
             fill: normalizeColorInput(obj.fill, '#ffffff'),
             stroke: normalizeColorInput(obj.stroke, '#000000'),
@@ -1207,7 +1328,7 @@ export class ImageStudioEngine {
             linethrough: !!style.linethrough,
         });
         if (style.content != null && style.content !== object.text) {
-            object.set('text', style.content);
+            object.set('text', normalizeMultilineText(String(style.content)));
         }
         if (style.shadow) {
             object.set('shadow', new Shadow({
@@ -1370,6 +1491,7 @@ export class ImageStudioEngine {
             );
 
             const fontList = Object.values(fontMap || {});
+            normalizeTemplateTextFields(template);
             const specs = Array.isArray(template.objects) ? template.objects : [];
 
             // 1) Formas de fundo primeiro (faixas, caixas, círculos)
@@ -1392,6 +1514,7 @@ export class ImageStudioEngine {
                 await this.addTemplateTextObject(spec, idx, width, height, fontMap, fontList);
             }
 
+            this.repairEscapedNewlinesOnCanvas();
             this.organizeCanvasForClient(template);
             this.canvas.requestRenderAll();
         } finally {
@@ -1578,9 +1701,10 @@ export class ImageStudioEngine {
             }
         }
 
-        const textObj = new IText(spec.text || 'Seu texto aqui', {
+        const textObj = createMultilineTextObject(spec.text || 'Seu texto aqui', {
             left: (spec.x ?? 0.5) * width,
             top: (spec.y ?? 0.5) * height,
+            width: Math.max(120, Math.round((spec.w ?? 0.88) * width)),
             fontFamily,
             fontSize,
             fill: spec.fill || '#ffffff',
@@ -2245,6 +2369,7 @@ export function imageStudioMethods() {
         imageStudioTextShadowColor: '#000000',
         imageStudioTextShadowBlur: 8,
         _syncingTextUi: false,
+        imageStudioSidebarTab: 'tools',
         imageStudioBgRemoval: false,
         imageStudioBgRemovalDriver: 'rembg',
         imageStudioBgRemovalLabel: '',
@@ -2409,6 +2534,7 @@ export function imageStudioMethods() {
 
         toggleImageStudioExpanded() {
             this.imageStudioExpanded = !this.imageStudioExpanded;
+            document.body.classList.toggle('overflow-hidden', this.imageStudioExpanded);
             this.$nextTick(() => this.fitImageStudioCanvas());
         },
 
@@ -2417,6 +2543,7 @@ export function imageStudioMethods() {
                 return;
             }
             this.imageStudioExpanded = false;
+            document.body.classList.remove('overflow-hidden');
             this.$nextTick(() => this.fitImageStudioCanvas());
         },
 
@@ -2805,7 +2932,7 @@ export function imageStudioMethods() {
         imageStudioTextStylePayload() {
             return {
                 fontSlug: this.imageStudioTextFontSlug,
-                content: this.imageStudioTextContent,
+                content: normalizeMultilineText(this.imageStudioTextContent || ''),
                 fontSize: this.imageStudioTextSize,
                 fill: this.imageStudioTextFill,
                 stroke: this.imageStudioTextStroke,
@@ -2855,7 +2982,7 @@ export function imageStudioMethods() {
                 this.imageStudioGroupOrder = groupOrder;
             }
             if (Array.isArray(templates) && templates.length) {
-                this.imageStudioTemplates = templates;
+                this.imageStudioTemplates = normalizeTemplatesList(templates);
             }
             if (Array.isArray(packs) && packs.length) {
                 this.imageStudioPacks = packs;
@@ -3025,7 +3152,7 @@ export function imageStudioMethods() {
                 }
                 this.imageStudioGroups = data.groups || {};
                 this.imageStudioExportFormats = data.export_formats || [];
-                this.imageStudioTemplates = data.templates || [];
+                this.imageStudioTemplates = normalizeTemplatesList(data.templates || []);
                 this.imageStudioPacks = data.packs || this.imageStudioPacks || [];
                 this.imageStudioPackCategories = data.pack_categories || this.imageStudioPackCategories || [];
                 this.imageStudioBrand = data.brand || this.imageStudioBrand || null;
@@ -3855,6 +3982,13 @@ export function imageStudioMethods() {
             await this.imageStudioOnTextControlChange();
         },
 
+        setImageStudioSidebarTab(tab) {
+            const allowed = ['tools', 'text', 'media', 'bg', 'layers', 'export'];
+            if (allowed.includes(tab)) {
+                this.imageStudioSidebarTab = tab;
+            }
+        },
+
         async imageStudioOnTextControlChange() {
             if (this._syncingTextUi) {
                 return;
@@ -4445,6 +4579,7 @@ export function imageStudioMethods() {
                 }
             }
             full = full || template;
+            normalizeTemplateTextFields(full);
             if (this.imageStudioLayers?.length && !confirm('Aplicar layout substitui o conteúdo do canvas. Continuar?')) {
                 return false;
             }

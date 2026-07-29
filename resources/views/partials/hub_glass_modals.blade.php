@@ -266,8 +266,8 @@
                     @include('partials.tool_icon', ['icon' => 'packs', 'size' => 22])
                 </span>
                 <div>
-                    <h2 id="hub-packs-title" class="mc-brand text-xl font-bold text-white">Packs</h2>
-                    <p class="mt-1 text-sm text-zinc-400">Compre fora, importe PSD/PNG no Studio, edite e baixe.</p>
+                    <h2 id="hub-packs-title" class="mc-brand text-xl font-bold text-white">Packs CriaSys</h2>
+                    <p class="mt-1 text-sm text-zinc-400">Produtos da linha CriaSys — Blog, packs e planos. Sem anúncios genéricos.</p>
                 </div>
             </div>
             <button type="button" class="text-zinc-400 hover:text-white text-sm px-2 py-1" @click="closeHub()" aria-label="Fechar">✕</button>
@@ -310,14 +310,14 @@
                 </span>
                 <div>
                     <h2 id="hub-apoiar-title" class="mc-brand text-xl font-bold text-white">Apoiar o MarkCraft</h2>
-                    <p class="mt-1 text-sm text-zinc-400">Contribuição opcional a partir de R$ {{ number_format(config('markcraft.donations.min_brl', 2), 2, ',', '.') }}.</p>
+                    <p class="mt-1 text-sm text-zinc-400">Contribuição opcional a partir de R$ {{ number_format(config('markcraft.donations.min_brl', 2), 2, ',', '.') }} — ajuda a manter o studio gratuito no ar.</p>
                 </div>
             </div>
             <button type="button" class="text-zinc-400 hover:text-white text-sm px-2 py-1" @click="closeHub()" aria-label="Fechar">✕</button>
         </div>
         <div class="mt-4 space-y-3 text-sm text-zinc-300 leading-relaxed">
-            <p>O MarkCraft é gratuito. Manter servidores e melhorias tem custo — um “obrigado” opcional ajuda o projeto a continuar.</p>
-            <p class="text-xs text-zinc-500">No futuro, uma área de membros para quem contribui poderá existir, com cuidado com direitos autorais.</p>
+            <p>O MarkCraft é o studio gratuito da família CriaSys. Manter servidores e melhorias tem custo — um “obrigado” opcional ajuda. Para blog, cobrança e o editor no fluxo de conteúdo, use o <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a>.</p>
+            <p class="text-xs text-zinc-500">A vitrine de packs e produtos é da própria linha CriaSys — sem anúncios genéricos de terceiros.</p>
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
             @if(config('markcraft.donations.gateway_url'))
@@ -337,3 +337,5 @@
         </div>
     </div>
 </div>
+
+@include('partials.credits_modal')

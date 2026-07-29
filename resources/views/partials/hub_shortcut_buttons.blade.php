@@ -7,27 +7,27 @@
         <button
             type="button"
             @click="openHub('packs')"
-            class="mc-shortcut group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left hover:border-amber-400/45"
+            class="mc-shortcut mc-shortcut-neon-sun group flex flex-col items-start gap-3 rounded-xl p-4 text-left"
         >
-            <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300">
+            <span class="mc-hub-icon inline-flex h-11 w-11 items-center justify-center rounded-lg border">
                 @include('partials.tool_icon', ['icon' => 'packs', 'size' => 22])
             </span>
             <span>
-                <span class="block text-sm font-semibold text-zinc-100 group-hover:text-white">Packs</span>
-                <span class="mt-1 block text-xs text-zinc-500 leading-snug">Templates e ofertas afiliadas para importar no Studio.</span>
+                <span class="mc-shortcut-label block text-sm font-semibold">Packs</span>
+                <span class="mc-shortcut-hint mt-1 block text-xs leading-snug">Vitrine CriaSys: Blog, packs e planos da linha.</span>
             </span>
         </button>
         <button
             type="button"
             @click="openHub('apoiar')"
-            class="mc-shortcut group flex flex-col items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left hover:border-rose-400/45"
+            class="mc-shortcut mc-shortcut-neon-shock group flex flex-col items-start gap-3 rounded-xl p-4 text-left"
         >
-            <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/15 text-rose-300">
+            <span class="mc-hub-icon inline-flex h-11 w-11 items-center justify-center rounded-lg border">
                 @include('partials.tool_icon', ['icon' => 'heart', 'size' => 22])
             </span>
             <span>
-                <span class="block text-sm font-semibold text-zinc-100 group-hover:text-white">Apoiar</span>
-                <span class="mt-1 block text-xs text-zinc-500 leading-snug">Contribuição opcional a partir de R$ 2 — Pix ou cartão.</span>
+                <span class="mc-shortcut-label block text-sm font-semibold">Apoiar</span>
+                <span class="mc-shortcut-hint mt-1 block text-xs leading-snug">Contribuição opcional a partir de R$ 2 — Pix ou cartão.</span>
             </span>
         </button>
     </div>
@@ -37,10 +37,10 @@
         <button
             type="button"
             @click="openHub('packs')"
-            class="mc-nav-action border border-amber-400/25 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15"
+            class="mc-nav-action mc-nav-neon-sun"
             title="Packs"
         >
-            <span class="mc-nav-action-icon inline-flex shrink-0 text-amber-300">
+            <span class="mc-nav-action-icon inline-flex shrink-0">
                 @include('partials.tool_icon', ['icon' => 'packs', 'size' => 16])
             </span>
             Packs
@@ -48,10 +48,10 @@
         <button
             type="button"
             @click="openHub('apoiar')"
-            class="mc-nav-action border border-rose-400/25 bg-rose-500/10 text-rose-100 hover:bg-rose-500/15"
+            class="mc-nav-action mc-nav-neon-shock"
             title="Apoiar"
         >
-            <span class="mc-nav-action-icon inline-flex shrink-0 text-rose-300">
+            <span class="mc-nav-action-icon inline-flex shrink-0">
                 @include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])
             </span>
             Apoiar

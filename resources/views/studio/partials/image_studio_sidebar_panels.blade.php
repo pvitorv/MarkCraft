@@ -1,3 +1,10 @@
+@php
+    $mode = $mode ?? 'all';
+    $showLayers = in_array($mode, ['all', 'layers'], true);
+    $showExport = in_array($mode, ['all', 'export'], true);
+@endphp
+
+@if($showLayers)
 <div class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
     <p class="text-xs font-medium text-zinc-300">Camadas</p>
     <template x-if="!imageStudioLayers.length">
@@ -20,13 +27,13 @@
         <button type="button" @click="imageStudioDuplicateSelection()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Duplicar">⧉ Dupl.</button>
         <button type="button" @click="imageStudioFlipSelection('x')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar horizontal">⇋ H</button>
         <button type="button" @click="imageStudioFlipSelection('y')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar vertical">⇅ V</button>
-        <button type="button" @mousedown.prevent.stop="imageStudioDeleteSelection()" class="text-[10px] px-2 py-1 rounded bg-rose-950 hover:bg-rose-900 border border-rose-800/60 text-rose-100" title="Excluir (Delete)">🗑 Excluir</button>
+        <button type="button" @mousedown.prevent.stop="imageStudioDeleteSelection()" class="text-[10px] px-2 py-1 rounded bg-rose-950 hover:bg-rose-900 border border-rose-800/60 text-rose-100" title="Excluir (Delete)">Excluir</button>
         <template x-if="imageStudioSelectedObject?.type === 'image' && !imageStudioCropping">
-            <button type="button" @click="imageStudioStartCrop()" class="text-[10px] px-2 py-1 rounded bg-violet-900 hover:bg-violet-800" title="Recortar imagem">✂ Recortar</button>
+            <button type="button" @click="imageStudioStartCrop()" class="text-[10px] px-2 py-1 rounded bg-violet-900 hover:bg-violet-800" title="Recortar imagem">Recortar</button>
         </template>
         <template x-if="imageStudioCropping">
             <span class="inline-flex gap-1">
-                <button type="button" @click="imageStudioApplyCrop()" class="text-[10px] px-2 py-1 rounded bg-emerald-800 hover:bg-emerald-700">✓ Aplicar</button>
+                <button type="button" @click="imageStudioApplyCrop()" class="text-[10px] px-2 py-1 rounded bg-emerald-800 hover:bg-emerald-700">Aplicar</button>
                 <button type="button" @click="imageStudioCancelCrop()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700">Cancelar</button>
             </span>
         </template>
@@ -59,7 +66,7 @@
             Ângulo
             <input type="range" min="0" max="359" step="1" x-model.number="imageStudioObjectAngle" @input="imageStudioSetObjectAngle(imageStudioObjectAngle)" class="w-full mt-1 accent-violet-500">
         </label>
-        <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectAngle"></span>° — arraste o círculo violeta acima do objeto ou use <kbd class="px-1 rounded bg-zinc-800">[</kbd> <kbd class="px-1 rounded bg-zinc-800">]</kbd></p>
+        <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectAngle"></span>°</p>
     </div>
     <label class="text-xs text-zinc-400 block">
         Opacidade
@@ -96,12 +103,18 @@
         </div>
     </template>
     <template x-if="imageStudioSelectedObject?.type === 'text'">
-        <p class="text-[10px] text-violet-400 pt-1">Texto selecionado — ajuste fonte/cor na barra lateral ou duplo-clique no canvas.</p>
+        <p class="text-[10px] text-violet-400 pt-1">
+            Texto selecionado —
+            <button type="button" @click="setImageStudioSidebarTab('text')" class="underline hover:text-violet-200">abrir painel Texto</button>
+        </p>
     </template>
     <template x-if="imageStudioSelectedObject?.type === 'image'">
         <div class="space-y-2 pt-2 border-t border-zinc-800">
-            <button type="button" @pointerdown.prevent.stop="imageStudioRemoveBgFromSelection()" :disabled="imageStudioBgRemoving" class="w-full text-[10px] py-1.5 rounded bg-emerald-900/60 hover:bg-emerald-800 disabled:opacity-40 inline-flex items-center justify-center gap-1.5" title="Remove o fundo da imagem selecionada">
-                <span x-show="!imageStudioBgRemoving">✂ Remover fundo desta imagem</span>
+            <button type="button" @pointerdown.prevent.stop="imageStudioRemoveBgFromSelection()" :disabled="imageStudioBgRemoving" class="is-rembg-btn w-full text-[10px] py-1.5 rounded disabled:opacity-40 inline-flex items-center justify-center gap-1.5" title="Remove o fundo da imagem selecionada">
+                <span x-show="!imageStudioBgRemoving" class="inline-flex items-center gap-1.5">
+                    Remover fundo
+                    <span class="is-rembg-badge is-rembg-badge--sm">GRÁTIS</span>
+                </span>
                 <span x-show="imageStudioBgRemoving" x-cloak class="inline-flex items-center gap-1.5">
                     <svg class="h-3.5 w-3.5 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -110,17 +123,13 @@
                     Processando…
                 </span>
             </button>
-            <p class="text-[10px] text-violet-400 font-medium">Filtros</p>
-            <label class="text-[10px] text-zinc-400 block">Brilho<input type="range" min="0" max="100" x-model.number="imageStudioFilters.brightness" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-            <label class="text-[10px] text-zinc-400 block">Contraste<input type="range" min="0" max="100" x-model.number="imageStudioFilters.contrast" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-            <label class="text-[10px] text-zinc-400 block">Saturação<input type="range" min="0" max="100" x-model.number="imageStudioFilters.saturation" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-            <label class="text-[10px] text-zinc-400 block">Desfoque<input type="range" min="0" max="100" x-model.number="imageStudioFilters.blur" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-            <label class="text-[10px] text-zinc-400 block">P&B<input type="range" min="0" max="100" x-model.number="imageStudioFilters.grayscale" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-            <button type="button" @click="imageStudioClearFilters()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-400 hover:text-white">Limpar filtros</button>
+            <button type="button" @click="setImageStudioSidebarTab('media')" class="text-[10px] text-violet-400 underline">Filtros e mídia →</button>
         </div>
     </template>
 </div>
+@endif
 
+@if($showExport)
 <div class="rounded-xl border border-violet-900/40 bg-violet-950/20 p-3 space-y-2">
     <p class="text-xs font-medium text-violet-200">Baixar / limpar</p>
     <div class="flex flex-wrap gap-1.5">
@@ -132,7 +141,15 @@
         Baixar PNG
     </button>
     <button type="button" @click="imageStudioClearWorkspace()" class="w-full text-xs py-2 rounded-lg bg-amber-900/70 hover:bg-amber-800 border border-amber-800/50">
-        ⌫ Limpar workspace
+        Limpar workspace
+    </button>
+    <button
+        type="button"
+        @click="window.dispatchEvent(new Event('mc-open-credits'))"
+        class="w-full text-[11px] py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
+    >
+        Créditos e licenças
     </button>
     <p class="text-[9px] text-zinc-500">Baixe antes de limpar. Rascunho opcional só nesta aba — o servidor não guarda artes.</p>
 </div>
+@endif

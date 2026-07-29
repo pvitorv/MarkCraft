@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs';
 import sort from '@alpinejs/sort';
 import axios from 'axios';
-import { imageStudioMethods } from './imageStudio';
+import { imageStudioMethods, normalizeTemplatesList } from './imageStudio';
 import { preloadIconFontCdns, preloadStarterGoogleFonts } from './imageStudioTextFonts';
 import { DEFAULT_SHAPE_FILL, DEFAULT_SHAPE_STROKE, resolveInsertFill } from './imageStudioShapes';
 import markCraftHub from '../markCraftHub';
@@ -40,7 +40,7 @@ function markCraftStudioMethods() {
         projectId: null,
         message: null,
         error: null,
-        studioDraftKey: 'markcraft-studio-draft',
+        studioDraftKey: 'markcraft-studio-draft-v2',
         slides: [],
         selectedSlide: null,
         imageStudioUnderlayEnabled: false,
@@ -180,7 +180,7 @@ function markCraftStudioMethods() {
                 }
                 this.imageStudioGroups = data.groups || {};
                 this.imageStudioExportFormats = data.export_formats || [];
-                this.imageStudioTemplates = data.templates || [];
+                this.imageStudioTemplates = normalizeTemplatesList(data.templates || []);
                 this.imageStudioPacks = data.packs || [];
                 this.imageStudioPackCategories = data.pack_categories || [];
                 this.imageStudioBrand = data.brand || null;
@@ -314,20 +314,36 @@ function markCraftStudioMethods() {
         },
 
         async imageStudioClearWorkspace() {
-            if (!confirm('Limpar o workspace? Baixe antes se quiser manter. O rascunho local desta aba será apagado.')) {
+            if (!confirm('Limpar a prancheta por completo? Remove elementos, fundo e rascunho local desta aba. Baixe antes se quiser manter.')) {
                 return;
             }
             localStorage.removeItem(this.studioDraftKey);
             this.imageStudioCropping = false;
             this.imageStudioEngine?.cancelCropMode?.(false);
-            const p = this.resolveImageStudioPresetMeta?.() || { width: 1080, height: 1080 };
-            this.imageStudioEngine?.init(p.width, p.height, this.imageStudioBgColor || '#ffffff');
-            this.imageStudioEngine?.setBackgroundColor(this.imageStudioBgColor || '#ffffff', this.imageStudioBgTransparency ?? 0);
+
+            // Prancheta limpa de verdade: branco opaco, sem underlay, sem objetos.
+            this.imageStudioBgColor = '#ffffff';
+            this.imageStudioBgTransparency = 0;
+            this.imageStudioUnderlayEnabled = false;
+            this.imageStudioUnderlaySlideIndex = -1;
+
+            const w = this.imageStudioEngine?.designWidth
+                || this.imageStudioCustomWidth
+                || 1080;
+            const h = this.imageStudioEngine?.designHeight
+                || this.imageStudioCustomHeight
+                || 1080;
+
+            this.imageStudioEngine?.init(w, h, '#ffffff');
+            this.imageStudioEngine?.setBackgroundColor('#ffffff', 0);
+            this.imageStudioEngine?.setUnderlayState?.(-1, false);
             this.imageStudioEngine?.pushHistory?.();
+
             this.imageStudioLastExport = null;
             this.refreshImageStudioLayers?.();
             this.closeImageStudioContextMenu?.();
-            this.message = 'Workspace limpo. Nada fica salvo no servidor.';
+            this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+            this.message = 'Prancheta limpa: fundo branco, sem elementos.';
         },
 
         /** Alias do botão MarkCraft */

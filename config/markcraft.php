@@ -2,12 +2,42 @@
 
 return [
     'family' => 'CriaSys',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Posicionamento (interno — não exibir estes rótulos na UI)
+    |--------------------------------------------------------------------------
+    | MarkCraft = studio gratuito de entrada na linha CriaSys.
+    | Blog CriaSys Web = plataforma completa (blog, painel, billing, afiliados,
+    | landings + Image Studio no fluxo de conteúdo).
+    */
+    'role' => 'entry', // entry | product
+    'tagline' => 'Studio de imagem gratuito da família CriaSys — o mesmo DNA do editor do Blog CriaSys Web.',
+
+    'blog' => [
+        'name' => 'Blog CriaSys Web',
+        'eyebrow' => 'Plataforma completa · CriaSys',
+        'headline' => 'Blog, painel e Image Studio no mesmo fluxo',
+        'blurb' => 'Publique posts, organize afiliados, capture leads, cobre assinatura e produza capas e artes no editor embutido — sem juntar cinco ferramentas soltas.',
+        'cta' => 'Conhecer o Blog CriaSys Web',
+        'url' => env('BLOG_CRIASYS_URL', '#'),
+        'register_url' => env('BLOG_CRIASYS_REGISTER_URL', env('BLOG_CRIASYS_URL', '#')),
+        'early_access_note' => 'Acesso antecipado em teste fechado · depoimentos entram só com feedback real',
+        'bullets' => [
+            'Multi-blog com painel profissional',
+            'Mercado Pago, afiliados e landings',
+            'Image Studio integrado (mesmo DNA do MarkCraft)',
+        ],
+    ],
+
     'rembg_python' => env('REMBG_PYTHON'),
+
     'donations' => [
         'min_brl' => 2,
         'pix_key' => env('DONATION_PIX_KEY', ''),
         'gateway_url' => env('DONATION_GATEWAY_URL', ''),
     ],
+
     'tools' => [
         'encurtador' => [
             'name' => 'Encurtador de URL',
@@ -38,24 +68,52 @@ return [
             'icon' => 'compress',
         ],
     ],
+
     'affiliate_packs' => [
         [
-            'title' => 'Pack PSD — Posts Instagram',
-            'blurb' => 'Templates editáveis no MarkCraft (PSD + PNG).',
-            'affiliate_url' => '#',
-            'tag' => 'Afiliado',
+            'title' => 'Blog CriaSys Web',
+            'blurb' => 'Plataforma completa: blog, painel, cobrança, afiliados, landings e Image Studio no fluxo.',
+            'affiliate_url' => env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br'),
+            'tag' => 'Plataforma',
         ],
         [
-            'title' => 'Pack Stories & Reels',
-            'blurb' => 'Capas e carrosséis prontos para marketing.',
-            'affiliate_url' => '#',
-            'tag' => 'Afiliado',
+            'title' => 'Packs editoriais CriaSys',
+            'blurb' => 'Templates e pacotes em R$ para importar no Studio — identidade, capas e vendas.',
+            'affiliate_url' => env('CRIASYS_PACKS_URL', env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br')),
+            'tag' => 'CriaSys',
         ],
         [
-            'title' => 'Hospedagem (Hostinger)',
-            'blurb' => 'Publique o site da sua marca — recomendação comercial.',
-            'affiliate_url' => '#',
-            'tag' => 'Hospedagem',
+            'title' => 'Pro Studio no Blog',
+            'blurb' => 'Planos, trial e studio premium dentro do Blog CriaSys Web quando você precisar de mais.',
+            'affiliate_url' => env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br'),
+            'tag' => 'Plano',
+        ],
+    ],
+
+    'promos' => [
+        'landing_mid' => [
+            'enabled' => true,
+            'eyebrow' => 'Família CriaSys',
+            'title' => 'Do studio gratuito à plataforma completa',
+            'blurb' => 'No MarkCraft você edita e exporta artes. No Blog CriaSys Web você publica, monetiza e mantém o Image Studio no fluxo do conteúdo.',
+            'cta' => 'Ver o Blog CriaSys Web',
+            'url' => env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br'),
+        ],
+        'studio_top' => [
+            'enabled' => true,
+            'eyebrow' => 'CriaSys',
+            'title' => 'Precisa de blog, cobrança e studio juntos?',
+            'blurb' => 'MarkCraft edita. Blog CriaSys Web opera o conteúdo ponta a ponta.',
+            'cta' => 'Ver Blog',
+            'url' => env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br'),
+        ],
+        'studio_sidebar' => [
+            'enabled' => true,
+            'eyebrow' => 'Plataforma CriaSys',
+            'title' => 'Blog CriaSys Web',
+            'blurb' => 'Publique, cobre e produza artes no mesmo ambiente — com o DNA deste studio integrado ao blog.',
+            'cta' => 'Conhecer',
+            'url' => env('BLOG_CRIASYS_URL', 'https://criasysweb.com.br'),
         ],
     ],
 ];

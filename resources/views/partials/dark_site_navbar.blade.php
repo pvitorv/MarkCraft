@@ -15,8 +15,18 @@
         </a>
 
         @if($isStudio)
-            <div class="hidden md:block flex-1 min-w-0 max-w-sm mx-2">
-                <x-ad-slot slot-id="ad_app_top" class="py-1" />
+            <div class="hidden xl:flex flex-1 min-w-0 max-w-sm mx-2 items-center">
+                <a
+                    href="{{ config('markcraft.blog.url') }}"
+                    target="_blank"
+                    rel="noopener"
+                    class="truncate text-xs text-zinc-400 hover:text-amber-200 transition"
+                    title="{{ config('markcraft.blog.headline') }}"
+                >
+                    <span class="text-amber-300/90">Blog CriaSys</span>
+                    <span class="text-zinc-600"> · </span>
+                    blog + painel + studio no mesmo fluxo →
+                </a>
             </div>
         @endif
 
@@ -157,15 +167,22 @@
                 </button>
                 <button
                     type="button"
-                    class="flex items-center gap-2.5 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-3 text-left"
+                    class="mc-shortcut-neon-shock flex items-center gap-2.5 rounded-xl px-3 py-3 text-left"
                     @click="openHub('apoiar')"
                 >
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/15 text-rose-300">
+                    <span class="mc-hub-icon inline-flex h-9 w-9 items-center justify-center rounded-lg border">
                         @include('partials.tool_icon', ['icon' => 'heart', 'size' => 18])
                     </span>
-                    <span class="text-sm font-semibold text-rose-100">Apoiar</span>
+                    <span class="mc-shortcut-label text-sm font-semibold">Apoiar</span>
                 </button>
             </div>
+            <button
+                type="button"
+                class="mt-3 w-full rounded-xl border border-zinc-700 px-3 py-2.5 text-left text-sm text-zinc-300 hover:bg-zinc-900"
+                @click="openCredits()"
+            >
+                Créditos e licenças
+            </button>
         </div>
     </div>
 </header>

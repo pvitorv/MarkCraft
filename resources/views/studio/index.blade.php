@@ -69,9 +69,52 @@
             height: 1rem;
             display: block;
         }
+        .mc-nav-neon-sun {
+            border: 1px solid rgba(250, 204, 21, 0.65);
+            background: rgba(250, 204, 21, 0.08);
+            color: #fde047;
+            box-shadow: 0 0 6px rgba(250, 204, 21, 0.25);
+        }
+        .mc-nav-neon-sun:hover {
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef08a;
+        }
+        .mc-nav-neon-shock {
+            border: 1px solid rgba(251, 113, 133, 0.7);
+            background: rgba(244, 63, 94, 0.12);
+            color: #fda4af;
+            box-shadow:
+                0 0 10px rgba(244, 63, 94, 0.4),
+                0 0 20px rgba(251, 113, 133, 0.2);
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+        }
+        .mc-nav-neon-shock:hover {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fecdd3;
+            border-color: #fb7185;
+        }
+        .mc-nav-neon-shock .mc-nav-action-icon {
+            color: #f43f5e;
+        }
+        .mc-shortcut-neon-shock {
+            border: 1px solid rgba(251, 113, 133, 0.75);
+            background: rgba(244, 63, 94, 0.1);
+            box-shadow:
+                0 0 10px rgba(244, 63, 94, 0.4),
+                0 0 24px rgba(251, 113, 133, 0.22);
+        }
+        .mc-shortcut-neon-shock .mc-hub-icon {
+            border-color: rgba(244, 63, 94, 0.55);
+            background: rgba(244, 63, 94, 0.16);
+            color: #fb7185;
+        }
+        .mc-shortcut-neon-shock .mc-shortcut-label {
+            color: #fda4af;
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.4);
+        }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen" x-data="markCraftHub">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen overflow-x-hidden" x-data="markCraftHub">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -82,7 +125,7 @@
     @include('partials.dark_site_navbar', ['context' => 'studio'])
 
     <div
-        class="mx-auto max-w-[1600px] px-3 py-3"
+        class="mx-auto max-w-[1600px] px-3 py-3 overflow-x-hidden"
         x-data="markCraftStudio"
         x-init="init()"
     >
@@ -90,12 +133,24 @@
             <div class="min-w-0">
                 <h1 class="mc-brand text-lg sm:text-xl font-bold text-white">Monte seu post</h1>
                 <p class="text-xs text-zinc-400">
-                    Layouts · Pacotes · Elementos · rembg no servidor.
+                    Studio gratuito CriaSys · Layouts · Pacotes · Elementos · rembg.
                     Artes não ficam no site — baixe e limpe.
                     <span x-show="imageStudioBgRemovalLabel" x-cloak class="text-zinc-500" x-text="' · ' + imageStudioBgRemovalLabel"></span>
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
+                @php
+                    $blogUrl = trim((string) config('markcraft.blog.url', '#')) ?: '#';
+                    $blogName = config('markcraft.blog.name', 'Blog CriaSys Web');
+                @endphp
+                <a
+                    href="{{ $blogUrl }}"
+                    class="is-blog-bridge-btn text-xs px-3 py-2 rounded-lg font-semibold"
+                    @if($blogUrl !== '#' && !str_starts_with($blogUrl, '#')) target="_blank" rel="noopener" @endif
+                >
+                    Usar no {{ $blogName }}
+                </a>
+                <button type="button" @click="window.dispatchEvent(new Event('mc-open-credits'))" class="text-xs px-3 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800/80">Créditos</button>
                 <button type="button" @click="imageStudioExport('png')" class="text-xs px-3 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white">Baixar PNG</button>
                 <button type="button" @click="imageStudioExport('jpg')" class="text-xs px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700">Baixar JPG</button>
                 <button type="button" @click="clearImageStudioWorkspace()" class="text-xs px-3 py-2 rounded-lg border border-amber-700/60 text-amber-200 hover:bg-amber-950/40">Limpar workspace</button>
@@ -109,8 +164,8 @@
             <div class="flex-1 min-w-0">
                 @include('studio.partials.image_studio_workspace')
             </div>
-            <div class="hidden xl:block w-44 shrink-0 sticky top-16">
-                <x-ad-slot slot-id="ad_app_sidebar" class="min-h-[240px]" />
+            <div class="hidden xl:block w-52 shrink-0 sticky top-16 space-y-3">
+                <x-promo-slot slot="studio_sidebar" />
             </div>
         </div>
     </div>

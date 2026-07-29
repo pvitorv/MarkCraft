@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>MarkCraft — crie posts grátis · família CriaSys</title>
-    <meta name="description" content="Monte posts e artes para redes no navegador. Layouts prontos, elementos, remoção de fundo. Cadastre-se grátis e abra o Studio.">
+    <title>MarkCraft — studio de imagem gratuito · família CriaSys</title>
+    <meta name="description" content="Editor de imagem gratuito da família CriaSys. Layouts, elementos e export no navegador. Para blog, cobrança e studio no mesmo fluxo, conheça o Blog CriaSys Web.">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:500,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -30,11 +30,205 @@
             letter-spacing: -0.04em;
         }
         .mc-hero-stage {
+            height: auto;
+            min-height: 40vh;
+            max-height: none;
+            position: relative;
+            overflow: visible;
             background:
-                radial-gradient(900px 520px at 78% 18%, rgba(20, 184, 166, 0.22), transparent 58%),
-                radial-gradient(700px 420px at 12% 88%, rgba(245, 158, 11, 0.12), transparent 55%),
-                radial-gradient(1200px 600px at 50% -20%, rgba(56, 189, 248, 0.08), transparent 50%),
-                linear-gradient(165deg, #05070a 0%, #0a0f14 42%, #0c1118 100%);
+                radial-gradient(900px 520px at 88% 12%, rgba(244, 63, 94, 0.42), transparent 55%),
+                radial-gradient(700px 480px at 8% 90%, rgba(147, 51, 234, 0.38), transparent 52%),
+                radial-gradient(600px 400px at 55% 40%, rgba(88, 28, 135, 0.28), transparent 60%),
+                radial-gradient(500px 360px at 70% 70%, rgba(251, 113, 133, 0.18), transparent 50%),
+                linear-gradient(165deg, #050508 0%, #0c0610 35%, #0a0712 65%, #030305 100%);
+        }
+        .mc-hero-stage::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 80% 60% at 100% 0%, rgba(244, 63, 94, 0.2), transparent 50%),
+                radial-gradient(ellipse 70% 55% at 0% 100%, rgba(126, 34, 206, 0.22), transparent 48%);
+            mix-blend-mode: screen;
+            opacity: 0.85;
+        }
+        .mc-hero-inner {
+            height: 100%;
+            display: grid;
+            align-items: center;
+            gap: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+        @media (min-width: 768px) {
+            .mc-hero-inner {
+                grid-template-columns: 1.05fr 0.95fr;
+                gap: 2rem;
+            }
+        }
+        .mc-hero-visual {
+            position: relative;
+            height: calc(40vh - 2rem);
+            max-height: 100%;
+            width: 100%;
+            max-width: 380px;
+            margin-inline: auto;
+        }
+        @media (min-width: 1024px) {
+            .mc-hero-visual {
+                max-width: 400px;
+                margin-inline: 0 0 0 auto;
+                justify-self: end;
+            }
+        }
+        .mc-hero-offer {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(8, 8, 12, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.04),
+                0 24px 48px rgba(0, 0, 0, 0.45);
+        }
+        .mc-cta-blog {
+            background: #14b8a6;
+            color: #09090b;
+            box-shadow: 0 10px 28px rgba(20, 184, 166, 0.35);
+        }
+        .mc-cta-blog:hover {
+            background: #2dd4bf;
+            color: #09090b;
+            box-shadow: 0 14px 36px rgba(20, 184, 166, 0.4);
+        }
+        /* CTA principal MarkCraft: neon verde */
+        .mc-cta-primary {
+            border: 1px solid #39ff14;
+            background: rgba(57, 255, 20, 0.14);
+            color: #39ff14;
+            font-weight: 700;
+            box-shadow:
+                0 0 10px rgba(57, 255, 20, 0.45),
+                0 0 24px rgba(57, 255, 20, 0.2);
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+        }
+        .mc-cta-primary:hover {
+            transform: translateY(-2px);
+            background: rgba(57, 255, 20, 0.22);
+            color: #b8ff9a;
+            box-shadow:
+                0 0 14px rgba(57, 255, 20, 0.65),
+                0 0 32px rgba(57, 255, 20, 0.3);
+        }
+        .mc-cta-outline {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: #e4e4e7;
+            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+        }
+        .mc-cta-outline:hover {
+            border-color: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fafafa;
+        }
+        .mc-format-thumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 2.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .mc-format-frame {
+            border: 1.5px solid currentColor;
+            border-radius: 3px;
+            opacity: 0.85;
+            position: relative;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .mc-hub-tools-grid .mc-hub-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+        }
+        .mc-bridge-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 2.25rem;
+        }
+        .mc-bridge-grid {
+            display: grid;
+            gap: 2rem;
+            align-items: center;
+        }
+        @media (min-width: 900px) {
+            .mc-bridge-grid {
+                grid-template-columns: 1.15fr 0.85fr;
+                gap: 2.5rem;
+            }
+        }
+        .mc-bridge-art {
+            position: relative;
+        }
+        .mc-bridge-art svg {
+            filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.35));
+        }
+        .mc-bridge-tools {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .mc-bridge-tool {
+            display: flex;
+            gap: 0.85rem;
+            align-items: flex-start;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.025);
+        }
+        .mc-bridge-tool-icon {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.65rem;
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            background: rgba(168, 85, 247, 0.12);
+            color: #c084fc;
+        }
+        .mc-bridge-tool-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f4f4f5;
+            margin: 0 0 0.25rem;
+        }
+        .mc-bridge-tool-text {
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: #a1a1aa;
+        }
+        .mc-bridge-extras {
+            padding: 0.85rem 1rem;
+            border-radius: 0.65rem;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        @media (max-width: 767px) {
+            .mc-hero-stage {
+                height: auto;
+                min-height: 40vh;
+                max-height: none;
+            }
+            .mc-hero-inner {
+                padding-top: 1.25rem;
+                padding-bottom: 1.25rem;
+            }
+            .mc-hero-visual {
+                height: auto;
+                max-width: 100%;
+            }
         }
         .mc-hero-grain {
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
@@ -69,12 +263,137 @@
             box-shadow: 0 14px 36px rgba(20, 184, 166, 0.28);
         }
         .mc-shortcut {
-            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
         .mc-shortcut:hover {
             transform: translateY(-3px);
-            border-color: rgba(20, 184, 166, 0.45);
-            background: rgba(20, 184, 166, 0.08);
+        }
+        /* Formatos: neon azul suave */
+        .mc-shortcut-neon-blue {
+            border: 1px solid rgba(56, 189, 248, 0.55);
+            background: rgba(56, 189, 248, 0.04);
+            box-shadow:
+                0 0 5px rgba(56, 189, 248, 0.22),
+                0 0 12px rgba(56, 189, 248, 0.1),
+                inset 0 0 8px rgba(56, 189, 248, 0.03);
+        }
+        .mc-shortcut-neon-blue:hover {
+            border-color: rgba(56, 189, 248, 0.75);
+            background: rgba(56, 189, 248, 0.08);
+            box-shadow:
+                0 0 8px rgba(56, 189, 248, 0.32),
+                0 0 18px rgba(56, 189, 248, 0.16),
+                inset 0 0 10px rgba(56, 189, 248, 0.05);
+        }
+        .mc-shortcut-neon-blue .mc-shortcut-bar {
+            background: #38bdf8;
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+        }
+        .mc-shortcut-neon-blue .mc-shortcut-label {
+            color: #e0f2fe;
+        }
+        .mc-shortcut-neon-blue:hover .mc-shortcut-label {
+            color: #f0f9ff;
+        }
+        .mc-shortcut-neon-blue .mc-shortcut-hint {
+            color: rgba(186, 230, 253, 0.92);
+        }
+        /* Studio completo: neon verde forte */
+        .mc-shortcut-neon {
+            border: 1px solid #39ff14;
+            background: rgba(57, 255, 20, 0.06);
+            box-shadow:
+                0 0 8px rgba(57, 255, 20, 0.4),
+                0 0 18px rgba(57, 255, 20, 0.18),
+                inset 0 0 10px rgba(57, 255, 20, 0.05);
+        }
+        .mc-shortcut-neon:hover {
+            border-color: #39ff14;
+            background: rgba(57, 255, 20, 0.12);
+            box-shadow:
+                0 0 12px rgba(57, 255, 20, 0.6),
+                0 0 28px rgba(57, 255, 20, 0.3),
+                inset 0 0 12px rgba(57, 255, 20, 0.08);
+        }
+        .mc-shortcut-neon .mc-shortcut-bar {
+            background: #39ff14;
+            box-shadow: 0 0 8px rgba(57, 255, 20, 0.65);
+        }
+        .mc-shortcut-neon .mc-shortcut-label {
+            color: #39ff14;
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+        }
+        .mc-shortcut-neon:hover .mc-shortcut-label {
+            color: #b8ff9a;
+        }
+        .mc-shortcut-neon .mc-shortcut-hint {
+            color: rgba(184, 255, 154, 0.9);
+        }
+        /* Packs: neon amarelo sol */
+        .mc-shortcut-neon-sun {
+            border: 1px solid rgba(250, 204, 21, 0.7);
+            background: rgba(250, 204, 21, 0.06);
+            box-shadow:
+                0 0 6px rgba(250, 204, 21, 0.28),
+                0 0 14px rgba(250, 204, 21, 0.12),
+                inset 0 0 8px rgba(250, 204, 21, 0.04);
+        }
+        .mc-shortcut-neon-sun:hover {
+            border-color: #facc15;
+            background: rgba(250, 204, 21, 0.1);
+            box-shadow:
+                0 0 10px rgba(250, 204, 21, 0.4),
+                0 0 22px rgba(250, 204, 21, 0.18),
+                inset 0 0 10px rgba(250, 204, 21, 0.06);
+        }
+        .mc-shortcut-neon-sun .mc-hub-icon {
+            border-color: rgba(250, 204, 21, 0.45);
+            background: rgba(250, 204, 21, 0.12);
+            color: #facc15;
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.25);
+        }
+        .mc-shortcut-neon-sun .mc-shortcut-label {
+            color: #fde047;
+            text-shadow: 0 0 6px rgba(250, 204, 21, 0.3);
+        }
+        .mc-shortcut-neon-sun .mc-shortcut-hint {
+            color: rgba(253, 224, 71, 0.92);
+        }
+        /* Apoiar: rosa comunidade (coração + borda) */
+        .mc-shortcut-neon-shock {
+            border: 1px solid rgba(251, 113, 133, 0.75);
+            background: rgba(244, 63, 94, 0.1);
+            box-shadow:
+                0 0 10px rgba(244, 63, 94, 0.4),
+                0 0 24px rgba(251, 113, 133, 0.22),
+                inset 0 0 12px rgba(244, 63, 94, 0.06);
+        }
+        .mc-shortcut-neon-shock:hover {
+            border-color: #fb7185;
+            background: rgba(244, 63, 94, 0.16);
+            box-shadow:
+                0 0 14px rgba(244, 63, 94, 0.55),
+                0 0 32px rgba(251, 113, 133, 0.3),
+                inset 0 0 14px rgba(244, 63, 94, 0.08);
+        }
+        .mc-shortcut-neon-shock .mc-hub-icon {
+            border-color: rgba(244, 63, 94, 0.55);
+            background: rgba(244, 63, 94, 0.16);
+            color: #fb7185;
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+        }
+        .mc-shortcut-neon-shock .mc-shortcut-label {
+            color: #fda4af;
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.4);
+        }
+        .mc-shortcut-neon-shock .mc-shortcut-hint {
+            color: rgba(254, 205, 211, 0.95);
+        }
+        .mc-shortcut-neon-blue .mc-hub-icon {
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.2);
         }
         .mc-preview-frame {
             box-shadow:
@@ -129,8 +448,34 @@
             height: 1rem;
             display: block;
         }
+        .mc-nav-neon-sun {
+            border: 1px solid rgba(250, 204, 21, 0.65);
+            background: rgba(250, 204, 21, 0.08);
+            color: #fde047;
+            box-shadow: 0 0 6px rgba(250, 204, 21, 0.25);
+        }
+        .mc-nav-neon-sun:hover {
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef08a;
+        }
+        .mc-nav-neon-shock {
+            border: 1px solid rgba(251, 113, 133, 0.7);
+            background: rgba(244, 63, 94, 0.12);
+            color: #fda4af;
+            box-shadow:
+                0 0 10px rgba(244, 63, 94, 0.4),
+                0 0 20px rgba(251, 113, 133, 0.2);
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+        }
+        .mc-nav-neon-shock:hover {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fecdd3;
+            border-color: #fb7185;
+        }
+        .mc-nav-neon-shock .mc-nav-action-icon {
+            color: #f43f5e;
+        }
         @media (max-width: 639px) {
-            .mc-hero-stage { min-height: auto; }
             .mc-preview-phone { display: none; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -150,57 +495,43 @@
 
     @include('partials.dark_site_navbar', ['context' => 'landing'])
 
-    {{-- Hero: uma composição — marca, frase, CTA, visual de produto --}}
-    <section class="mc-hero-stage relative overflow-hidden min-h-[min(60vh,533px)]">
+    {{-- Hero: MarkCraft (studio gratuito) + Blog CriaSys Web (plataforma) --}}
+    <section class="mc-hero-stage relative">
         <div class="mc-hero-grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
-        <div class="relative mx-auto max-w-6xl px-4 pt-10 pb-12 sm:pt-14 sm:pb-16 md:pt-20 md:pb-24 grid lg:grid-cols-[1.05fr_0.95fr] gap-8 sm:gap-10 lg:gap-14 items-center">
-            <div class="relative z-10">
-                <p class="mc-rise mc-brand text-[2.75rem] leading-[0.92] sm:text-6xl md:text-7xl font-extrabold text-white">
+        <div class="mc-hero-inner relative mx-auto max-w-6xl px-4 py-6 md:py-8">
+            <div class="relative z-10 min-w-0">
+                <p class="mc-rise text-[10px] uppercase tracking-[0.16em] text-[#39ff14]/80 mb-2">Editor de imagem gratuito</p>
+                <p class="mc-rise mc-brand text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[0.92]">
                     MarkCraft
                 </p>
-                <p class="mc-rise-2 mt-4 sm:mt-5 max-w-md text-base sm:text-lg md:text-xl text-zinc-300 leading-relaxed">
-                    Do blank ao post pronto — layouts, elementos e export no navegador.
+                <p class="mc-rise-2 mt-3 sm:mt-4 max-w-md text-base sm:text-lg md:text-xl text-zinc-200 leading-relaxed">
+                    Crie posts, stories e thumbnails no navegador — escolha o formato, edite e exporte. Sem instalar nada.
                 </p>
-                <div class="mc-rise-3 mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+                <div class="mc-rise-3 mt-5 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                     @auth
-                        <a href="{{ route('studio') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
+                        <a href="{{ route('studio') }}" class="mc-cta-primary inline-flex justify-center rounded-md px-6 py-3 text-base">
                             Abrir Studio
                         </a>
                     @else
-                        <a href="{{ route('register') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3.5 text-base font-semibold text-zinc-950 hover:bg-teal-400">
+                        <a href="{{ route('register') }}" class="mc-cta-primary inline-flex justify-center rounded-md px-6 py-3 text-base">
                             Começar grátis
                         </a>
-                        <a href="{{ route('login') }}" class="inline-flex justify-center rounded-md border border-white/15 bg-white/5 px-5 py-3.5 text-base font-medium text-zinc-100 hover:bg-white/10 transition">
+                        <a href="{{ route('login') }}" class="mc-cta-outline inline-flex justify-center rounded-md px-5 py-3 text-base font-medium">
                             Já tenho conta
                         </a>
                     @endauth
                 </div>
-                <p class="mc-rise-3 mt-5 text-sm text-zinc-500">
-                    Grátis · família CriaSys · artes não ficam no servidor
+                <p class="mc-rise-3 mt-3 text-sm text-zinc-400">
+                    Sem cartão · 100% grátis · Artes privadas (não ficam no servidor)
                 </p>
             </div>
 
-            {{-- Visual âncora: mock de prancheta (produto), full-bleed no eixo direito --}}
-            <div class="mc-rise-2 mc-float relative lg:justify-self-end w-full max-w-md sm:max-w-lg mx-auto lg:mx-0" aria-hidden="true">
-                <div class="mc-preview-frame relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-[#121820]">
-                    <div class="absolute inset-0 bg-[linear-gradient(145deg,#134e4a_0%,#0f172a_48%,#1c1917_100%)]"></div>
-                    <div class="absolute inset-[12%] border border-white/10 bg-zinc-950/40 backdrop-blur-[2px]">
-                        <div class="absolute top-[12%] left-[10%] right-[18%] h-3 rounded-sm bg-teal-400/80"></div>
-                        <div class="absolute top-[22%] left-[10%] w-[55%] h-2 rounded-sm bg-white/25"></div>
-                        <div class="absolute top-[28%] left-[10%] w-[40%] h-2 rounded-sm bg-white/15"></div>
-                        <div class="absolute bottom-[18%] left-[10%] right-[10%] aspect-square rounded-sm bg-gradient-to-br from-amber-500/30 via-teal-500/20 to-transparent border border-white/10"></div>
-                        <div class="absolute bottom-[10%] left-[10%] text-[10px] tracking-widest uppercase text-zinc-400">1080 × 1350</div>
-                    </div>
-                    <div class="mc-preview-phone absolute -right-6 top-1/4 w-28 aspect-[9/16] rounded-sm border border-white/10 bg-zinc-900/90 shadow-2xl rotate-3">
-                        <div class="m-2 h-full rounded-sm bg-gradient-to-b from-teal-700/50 to-zinc-900"></div>
-                    </div>
-                </div>
-            </div>
+            @include('partials.hero_blog_panel')
         </div>
     </section>
 
     {{-- Atalhos (inspiração Canva: “o que você quer criar”) --}}
-    <section class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-8">
+    <section class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-12 sm:pb-14">
         <h2 class="mc-brand text-xl sm:text-2xl md:text-3xl font-bold text-white">O que você quer criar agora?</h2>
         <p class="mt-2 max-w-xl text-zinc-400">
             Escolha um formato e
@@ -214,42 +545,75 @@
         <div class="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
             @foreach($shortcuts as $item)
                 @php
-                    $href = auth()->check()
-                        ? route('studio', ['preset' => $item['preset']])
-                        : route('register', ['preset' => $item['preset']]);
+                    $isStudioCard = !empty($item['featured']) || ($item['tone'] ?? '') === 'neon';
+                    $icon = $item['icon'] ?? 'square';
+                    if ($isStudioCard) {
+                        $href = auth()->check() ? route('studio') : route('login');
+                    } else {
+                        $href = auth()->check()
+                            ? route('studio', ['preset' => $item['preset']])
+                            : route('register', ['preset' => $item['preset']]);
+                    }
                 @endphp
-                <a href="{{ $href }}" class="mc-shortcut group block rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:p-4 text-left">
-                    <span class="block h-1.5 w-8 rounded-sm mb-4
-                        @if($item['tone'] === 'teal') bg-teal-400
-                        @elseif($item['tone'] === 'amber') bg-amber-400
-                        @elseif($item['tone'] === 'rose') bg-rose-400
-                        @elseif($item['tone'] === 'sky') bg-sky-400
-                        @elseif($item['tone'] === 'lime') bg-lime-400
-                        @else bg-orange-400
+                <a
+                    href="{{ $href }}"
+                    class="mc-shortcut group block rounded-lg p-3 sm:p-4 text-left {{ $isStudioCard ? 'mc-shortcut-neon' : 'mc-shortcut-neon-blue' }}"
+                    @if($isStudioCard)
+                        @guest title="Entre para abrir o Studio" @endguest
+                    @endif
+                >
+                    <span class="mc-format-thumb {{ $isStudioCard ? 'text-[#39ff14]' : 'text-sky-300' }}" aria-hidden="true">
+                        @if($icon === 'square')
+                            <span class="mc-format-frame" style="width:2rem;height:2rem;"></span>
+                        @elseif($icon === 'phone')
+                            <span class="mc-format-frame" style="width:1.15rem;height:2.05rem;border-radius:4px;"></span>
+                        @elseif($icon === 'play')
+                            <span class="mc-format-frame flex items-center justify-center" style="width:2.35rem;height:1.35rem;">
+                                <span style="width:0;height:0;border-left:6px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;opacity:0.9;"></span>
+                            </span>
+                        @elseif($icon === 'brief')
+                            <span class="mc-format-frame" style="width:2.4rem;height:1.25rem;"></span>
+                        @elseif($icon === 'cover')
+                            <span class="mc-format-frame" style="width:2.55rem;height:1.15rem;"></span>
+                        @else
+                            <span class="mc-format-frame flex items-center justify-center" style="width:2rem;height:2rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            </span>
                         @endif
-                    "></span>
-                    <span class="block text-sm font-semibold text-zinc-100 group-hover:text-white">{{ $item['label'] }}</span>
-                    <span class="mt-1 block text-xs text-zinc-500">{{ $item['hint'] }}</span>
+                    </span>
+                    <span class="mc-shortcut-label block text-sm font-semibold">{{ $item['label'] }}</span>
+                    <span class="mc-shortcut-hint mt-1 block text-xs">{{ $item['hint'] }}</span>
                 </a>
             @endforeach
         </div>
-
-        @guest
-            <p class="mt-6 text-sm text-zinc-500">
-                Sem cartão · leva menos de um minuto ·
-                <a href="{{ route('register') }}" class="text-teal-300 hover:text-teal-200 underline-offset-2 hover:underline">Começar grátis</a>
-            </p>
-        @endguest
     </section>
 
-    {{-- Ferramentas + Packs + Apoiar com ícones destacados --}}
-    <section class="mx-auto max-w-6xl px-4 pt-6 pb-10" id="ferramentas">
+    {{-- Ferramentas + produtos CriaSys --}}
+    <section class="mx-auto max-w-6xl px-4 pt-4 sm:pt-6 pb-10" id="ferramentas">
         <div>
             <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">Hub CriaSys</p>
-            <h2 class="mc-brand mt-1 text-2xl font-bold text-white">Atalhos do hub</h2>
-            <p class="mt-1 max-w-xl text-sm text-zinc-400">Ferramentas, packs e apoio — cada atalho com ícone claro.</p>
+            <h2 class="mc-brand mt-1 text-2xl font-bold text-white">Ferramentas e produtos da linha</h2>
+            <p class="mt-1 max-w-xl text-sm text-zinc-400">Utilitários grátis no MarkCraft. Packs e o Blog CriaSys Web para quem precisa publicar e monetizar.</p>
+            <p class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400" aria-label="Legenda de cores do hub">
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-sm bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.7)]" aria-hidden="true"></span>
+                    Azul · ferramentas grátis
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-sm bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.7)]" aria-hidden="true"></span>
+                    Amarelo · Packs / produtos
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-sm bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.7)]" aria-hidden="true"></span>
+                    Rosa · Apoiar / comunidade
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-sm bg-[#39ff14] shadow-[0_0_6px_rgba(57,255,20,0.7)]" aria-hidden="true"></span>
+                    Verde · Studio
+                </span>
+            </p>
         </div>
-        <div class="mt-6">
+        <div class="mt-6 mc-hub-tools-grid">
             @include('partials.tool_shortcut_buttons', ['variant' => 'grid'])
         </div>
         <div class="mt-3">
@@ -257,68 +621,90 @@
         </div>
     </section>
 
-    <div class="mx-auto max-w-6xl px-4 pb-6 relative z-10">
-        <x-ad-slot slot-id="ad_landing_hero" class="!border-white/10 !bg-zinc-900/50 !text-zinc-500" />
-    </div>
+    @include('partials.social_proof_placeholder')
+
+    @include('partials.bridge_blog_section')
 
     <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
-        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">Feito para publicar, não para enrolar</h2>
-        <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">Presets de redes, texto, formas, remover fundo e export. Sem vídeo, sem áudio — foco em imagem e texto.</p>
+        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">Editor de verdade — feito para quem publica</h2>
+        <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">O mesmo tipo de Image Studio que roda no Blog CriaSys Web, disponível grátis aqui para criar, exportar e seguir no ecossistema.</p>
         <ul class="mt-8 sm:mt-10 grid gap-8 sm:gap-10 md:grid-cols-3">
             <li>
-                <p class="text-sm font-semibold tracking-wide uppercase text-teal-300/90">Layouts & pacotes</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Comece por um formato de rede ou um pacote pronto e ajuste no canvas.</p>
+                <p class="text-sm font-semibold tracking-wide uppercase text-teal-300/90">Studio completo</p>
+                <p class="mt-2 text-zinc-300 leading-relaxed">Layouts de redes, pacotes, tipografia, shapes, export e remoção de fundo no servidor.</p>
             </li>
             <li>
                 <p class="text-sm font-semibold tracking-wide uppercase text-amber-300/90">Baixe e limpe</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Edite → baixe PNG/JPG → limpe o workspace. Privacidade por padrão.</p>
+                <p class="mt-2 text-zinc-300 leading-relaxed">Edite → baixe PNG/JPG → limpe o workspace. Privacidade por padrão — artes não ficam no site.</p>
             </li>
             <li>
-                <p class="text-sm font-semibold tracking-wide uppercase text-sky-300/90">Hub CriaSys</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Ferramentas e packs na mesma família — atalhos para o fluxo completo.</p>
+                <p class="text-sm font-semibold tracking-wide uppercase text-sky-300/90">Próximo nível</p>
+                <p class="mt-2 text-zinc-300 leading-relaxed">Para blog, afiliados e cobrança no mesmo fluxo: <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a>.</p>
             </li>
         </ul>
     </section>
 
-    {{-- Bloco de conversão --}}
+    {{-- Conversão MarkCraft → Blog --}}
     <section class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
         <div class="relative overflow-hidden rounded-xl border border-white/10 px-5 py-10 sm:px-6 sm:py-12 md:px-12 md:py-14"
              style="background: radial-gradient(800px 280px at 20% 0%, rgba(20,184,166,0.18), transparent 55%), #0c1118;">
-            <p class="mc-brand text-2xl sm:text-3xl md:text-4xl font-bold text-white max-w-lg leading-tight">
-                Sua próxima arte começa com uma conta grátis.
+            <p class="text-[10px] uppercase tracking-[0.16em] text-amber-300/90">Família CriaSys</p>
+            <p class="mc-brand mt-2 text-2xl sm:text-3xl md:text-4xl font-bold text-white max-w-xl leading-tight">
+                Criou a arte. E o resto do funil?
             </p>
             <p class="mt-3 max-w-md text-zinc-400">
-                Cadastro rápido. Studio no navegador. Sem instalar nada.
+                {{ config('markcraft.blog.blurb') }}
             </p>
             <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
+                @php
+                    $blogUrl = trim((string) config('markcraft.blog.url', '#')) ?: '#';
+                    $blogRegister = trim((string) config('markcraft.blog.register_url', $blogUrl)) ?: $blogUrl;
+                @endphp
+                <a
+                    href="{{ $blogUrl }}"
+                    class="mc-cta mc-cta-blog inline-flex justify-center items-center rounded-md px-6 py-3.5 text-base font-semibold"
+                    @if($blogUrl !== '#' && !str_starts_with($blogUrl, '#')) target="_blank" rel="noopener" @endif
+                >
+                    {{ config('markcraft.blog.cta') }}
+                </a>
+                <a
+                    href="{{ $blogRegister }}"
+                    class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-3.5 font-medium text-violet-100 hover:bg-violet-500/20 transition"
+                    @if($blogRegister !== '#' && !str_starts_with($blogRegister, '#')) target="_blank" rel="noopener" @endif
+                >
+                    Começar teste grátis
+                </a>
                 @auth
-                    <a href="{{ route('studio') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Ir para o Studio</a>
+                    <a href="{{ route('studio') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">Continuar no Studio</a>
                 @else
-                    <a href="{{ route('register') }}" class="mc-cta inline-flex justify-center rounded-md bg-teal-500 px-6 py-3 font-semibold text-zinc-950 hover:bg-teal-400">Criar minha conta</a>
-                    <a href="{{ route('login') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3 font-medium text-zinc-200 hover:bg-white/5 transition">Entrar</a>
+                    <a href="{{ route('register') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">Criar conta no MarkCraft</a>
                 @endauth
             </div>
         </div>
     </section>
 
     <div class="mx-auto max-w-6xl px-4 pb-10">
-        <x-ad-slot slot-id="ad_landing_mid" class="!border-white/10 !bg-zinc-900/50 !text-zinc-500" />
+        <x-promo-slot slot="landing_mid" />
     </div>
 
     <footer class="border-t border-white/5 bg-[#05070a] text-zinc-400">
         <div class="mx-auto max-w-6xl px-4 py-10 text-sm">
             <p class="mc-brand text-lg text-white">MarkCraft</p>
-            <p class="mt-2 max-w-2xl">Família CriaSys · contribuições opcionais mantêm o projeto vivo</p>
+            <p class="mt-2 max-w-2xl">Studio gratuito da família CriaSys · plataforma completa: <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a></p>
             <div class="mt-5 flex flex-wrap gap-5">
-                <button type="button" @click="openHub('apoiar')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
-                    <span class="text-rose-300">@include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])</span>
-                    Apoiar a partir de R$ 2
-                </button>
+                <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="hover:text-teal-300 transition">Blog CriaSys Web</a>
                 <button type="button" @click="openHub('packs')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
                     <span class="text-amber-300">@include('partials.tool_icon', ['icon' => 'packs', 'size' => 16])</span>
-                    Packs
+                    Packs CriaSys
                 </button>
                 <a href="#ferramentas" class="hover:text-teal-300 transition">Ferramentas</a>
+                <button type="button" @click="openHub('apoiar')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
+                    <span class="text-rose-300">@include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])</span>
+                    Apoiar
+                </button>
+                <button type="button" @click="openCredits()" class="hover:text-teal-300 transition" id="creditos">
+                    Créditos
+                </button>
                 @guest
                     <a href="{{ route('register') }}" class="hover:text-teal-300 transition">Criar conta</a>
                 @else

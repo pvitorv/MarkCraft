@@ -7,6 +7,7 @@
 html,
 body {
     height: 100%;
+    overflow-x: hidden;
 }
 
 body.studio-body {
@@ -496,7 +497,7 @@ body.studio-body {
 .studio-modal {
     position: fixed;
     inset: 0;
-    z-index: 400;
+    z-index: 580;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1125,4 +1126,110 @@ body.studio-body {
     font-weight: 400;
     font-style: normal;
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Sidebar rail (abas verticais) */
+.is-sidebar-shell {
+    background: rgba(9, 9, 11, 0.55);
+}
+
+.is-sidebar-rail {
+    min-width: 3.25rem;
+}
+
+.is-rail-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    min-width: 2.75rem;
+    padding: 0.45rem 0.35rem;
+    border-radius: 0.55rem;
+    border: 1px solid transparent;
+    color: #a1a1aa;
+    background: transparent;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.is-rail-btn:hover {
+    color: #f4f4f5;
+    background: rgba(39, 39, 42, 0.85);
+}
+
+.is-rail-btn--active {
+    color: #ddd6fe;
+    border-color: rgba(139, 92, 246, 0.45);
+    background: rgba(91, 33, 182, 0.28);
+}
+
+.is-rail-label {
+    font-size: 0.58rem;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    max-width: 3.4rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+    .is-rail-btn {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* rembg highlight */
+.is-rembg-card {
+    box-shadow:
+        0 0 0 1px rgba(16, 185, 129, 0.15),
+        0 0 18px rgba(16, 185, 129, 0.18);
+}
+
+.is-rembg-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.3rem;
+    padding: 0.12rem 0.4rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #052e16;
+    background: #34d399;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.45);
+}
+
+.is-rembg-badge--sm {
+    font-size: 0.52rem;
+    padding: 0.08rem 0.3rem;
+}
+
+.is-rembg-btn {
+    border: 1px solid rgba(52, 211, 153, 0.45);
+    background: rgba(6, 95, 70, 0.55);
+    color: #ecfdf5;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.22);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.is-rembg-btn:hover:not(:disabled) {
+    background: rgba(4, 120, 87, 0.75);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
+
+/* Ponte Blog CriaSys */
+.is-blog-bridge-btn {
+    border: 1px solid rgba(45, 212, 191, 0.55);
+    background: rgba(13, 148, 136, 0.28);
+    color: #ccfbf1;
+    box-shadow: 0 0 12px rgba(20, 184, 166, 0.25);
+    transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.is-blog-bridge-btn:hover {
+    background: rgba(13, 148, 136, 0.42);
+    color: #f0fdfa;
+    box-shadow: 0 0 18px rgba(20, 184, 166, 0.35);
 }
