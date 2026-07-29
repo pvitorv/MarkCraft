@@ -22,6 +22,53 @@
         .is-ic-fa-regular { font-family: "Font Awesome 6 Free"; font-weight: 400; font-style: normal; -webkit-font-smoothing: antialiased; }
         .is-ic-fa-brands { font-family: "Font Awesome 6 Brands"; font-weight: 400; font-style: normal; -webkit-font-smoothing: antialiased; }
         .is-ic-material { font-family: "Material Symbols Outlined"; font-weight: 400; font-style: normal; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; -webkit-font-smoothing: antialiased; }
+        .mc-studio-neon {
+            border: 1px solid #39ff14;
+            background: rgba(57, 255, 20, 0.06);
+            box-shadow:
+                0 0 8px rgba(57, 255, 20, 0.45),
+                0 0 18px rgba(57, 255, 20, 0.22),
+                inset 0 0 10px rgba(57, 255, 20, 0.06);
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
+        }
+        .mc-studio-neon:hover {
+            background: rgba(57, 255, 20, 0.12);
+            box-shadow:
+                0 0 12px rgba(57, 255, 20, 0.65),
+                0 0 28px rgba(57, 255, 20, 0.35),
+                inset 0 0 12px rgba(57, 255, 20, 0.1);
+            color: #b8ff9a;
+        }
+        .mc-nav-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding: 0 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+        .mc-nav-action--sm {
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding: 0 0.75rem;
+            font-size: 0.875rem;
+        }
+        .mc-nav-action-icon {
+            width: 1rem;
+            height: 1rem;
+        }
+        .mc-nav-action-icon svg {
+            width: 1rem;
+            height: 1rem;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen" x-data="markCraftHub">
@@ -32,35 +79,16 @@
             }).catch(() => {});
         }
     </script>
-    {{-- z-[500] acima de canvas/modais do studio para o navbar não ficar "morto" --}}
-    <header class="border-b border-zinc-800 bg-zinc-950/95 sticky top-0 z-[500] backdrop-blur">
-        <div class="mx-auto max-w-[1600px] px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-3 min-w-0">
-                <a href="{{ route('home') }}" class="mc-brand text-lg font-bold text-white shrink-0 relative z-[501]">MarkCraft</a>
-                <span class="text-[10px] uppercase tracking-wide text-teal-300/90 border border-teal-800/60 px-1.5 py-0.5">CriaSys</span>
-                <x-ad-slot slot-id="ad_app_top" class="hidden md:block max-w-sm py-2" />
-            </div>
-            <nav class="relative z-[501] flex flex-wrap items-center gap-2 text-xs text-zinc-300">
-                <a href="{{ route('studio') }}" class="px-2 py-1 rounded bg-zinc-800 text-white">Studio</a>
-                <button type="button" @click="openHub('ferramentas')" class="px-2 py-1 rounded hover:bg-zinc-800">Ferramentas</button>
-                <button type="button" @click="openHub('packs')" class="px-2 py-1 rounded hover:bg-zinc-800">Packs</button>
-                <button type="button" @click="openHub('apoiar')" class="px-2 py-1 rounded hover:bg-zinc-800">Apoiar</button>
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="px-2 py-1 rounded hover:bg-zinc-800">Sair</button>
-                </form>
-            </nav>
-        </div>
-    </header>
+    @include('partials.dark_site_navbar', ['context' => 'studio'])
 
     <div
         class="mx-auto max-w-[1600px] px-3 py-3"
         x-data="markCraftStudio"
         x-init="init()"
     >
-        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div>
-                <h1 class="mc-brand text-xl font-bold text-white">Monte seu post</h1>
+        <div class="mb-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3">
+            <div class="min-w-0">
+                <h1 class="mc-brand text-lg sm:text-xl font-bold text-white">Monte seu post</h1>
                 <p class="text-xs text-zinc-400">
                     Layouts · Pacotes · Elementos · rembg no servidor.
                     Artes não ficam no site — baixe e limpe.
