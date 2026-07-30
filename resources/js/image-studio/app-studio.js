@@ -40,7 +40,7 @@ function markCraftStudioMethods() {
         projectId: null,
         message: null,
         error: null,
-        studioDraftKey: 'markcraft-studio-draft-v2',
+        studioDraftKey: 'markcraft-studio-draft-v3',
         slides: [],
         selectedSlide: null,
         imageStudioUnderlayEnabled: false,
@@ -233,7 +233,8 @@ function markCraftStudioMethods() {
             let canvasJson = null;
 
             try {
-                const raw = localStorage.getItem(this.studioDraftKey);
+                const raw = localStorage.getItem(this.studioDraftKey)
+                    || localStorage.getItem('markcraft-studio-draft-v2');
                 if (raw) {
                     const draft = JSON.parse(raw);
                     if (draft?.width && draft?.height) {
@@ -243,12 +244,31 @@ function markCraftStudioMethods() {
                     if (draft?.preset) {
                         this.imageStudioPreset = draft.preset;
                     }
-                    canvasJson = draft?.canvas || null;
+                    if (Array.isArray(draft?.deck_pages) && draft.deck_pages.length) {
+                        this.imageStudioDeckPages = draft.deck_pages;
+                        this.imageStudioDeckPageIndex = Math.max(
+                            0,
+                            Math.min(draft.deck_page_index ?? 0, draft.deck_pages.length - 1),
+                        );
+                        canvasJson = this.imageStudioDeckPages[this.imageStudioDeckPageIndex]?.canvas || null;
+                    } else {
+                        canvasJson = draft?.canvas || null;
+                        this.imageStudioDeckPages = [{
+                            id: `slide-${Date.now()}`,
+                            name: 'Slide 1',
+                            canvas: canvasJson,
+                        }];
+                        this.imageStudioDeckPageIndex = 0;
+                    }
+                    if (draft?.deck_kind) {
+                        this.imageStudioDeckKind = draft.deck_kind;
+                    }
                 }
             } catch {
                 /* draft inválido */
             }
 
+            this.ensureImageStudioDeck?.();
             this.imageStudioCustomWidth = w;
             this.imageStudioCustomHeight = h;
             this.imageStudioEngine.init(w, h, this.imageStudioBgColor);
@@ -269,14 +289,22 @@ function markCraftStudioMethods() {
             }
             this.imageStudioSaving = true;
             try {
-                const json = this.imageStudioEngine.toJSON();
-                json.width = this.imageStudioEngine.designWidth;
-                json.height = this.imageStudioEngine.designHeight;
+                this.flushImageStudioDeckPage?.();
+                this.ensureImageStudioDeck?.();
+                const current = this.imageStudioDeckPages[this.imageStudioDeckPageIndex]?.canvas
+                    || this.imageStudioEngine.toJSON();
+                if (current) {
+                    current.width = this.imageStudioEngine.designWidth;
+                    current.height = this.imageStudioEngine.designHeight;
+                }
                 localStorage.setItem(this.studioDraftKey, JSON.stringify({
                     preset: this.imageStudioPreset || 'custom',
-                    width: json.width,
-                    height: json.height,
-                    canvas: json,
+                    width: this.imageStudioEngine.designWidth,
+                    height: this.imageStudioEngine.designHeight,
+                    canvas: current,
+                    deck_pages: this.imageStudioDeckPages,
+                    deck_page_index: this.imageStudioDeckPageIndex,
+                    deck_kind: this.imageStudioDeckKind || 'presentation',
                     saved_at: Date.now(),
                 }));
             } catch (e) {
@@ -291,17 +319,40 @@ function markCraftStudioMethods() {
                 return;
             }
             try {
-                const blob = await this.imageStudioEngine.exportBlob(format, 0.92, this.buildImageStudioExportOptions());
+                this.imageStudioDeckBusy = true;
+                this.flushImageStudioDeckPage?.();
+                const baseOpts = this.buildImageStudioExportOptions();
+                const opts = { ...baseOpts };
+
+                if (format === 'pptx' || format === 'pdf' || format === 'zip' || format === 'png_zip') {
+                    const pages = this.imageStudioDeckPages?.length || 1;
+                    if (pages > 1 || format === 'pptx' || format === 'zip' || format === 'png_zip') {
+                        this.message = pages > 1
+                            ? `Gerando kit com ${pages} frames…`
+                            : (format === 'pptx' ? 'Gerando PowerPoint…' : 'Gerando kit…');
+                        if (format === 'pptx' || format === 'zip' || format === 'png_zip') {
+                            opts.pagePngDataUrls = await this.collectImageStudioDeckExportUrls('png');
+                            opts.zipPrefix = this.imageStudioDeckZipPrefix?.() || 'frame';
+                        } else if (pages > 1) {
+                            opts.pageJpegDataUrls = await this.collectImageStudioDeckExportUrls('jpg');
+                        }
+                    }
+                }
+
+                const blob = await this.imageStudioEngine.exportBlob(format, 0.92, opts);
                 if (!blob) {
                     return;
                 }
-                const ext = format === 'jpeg' ? 'jpg' : format;
-                const filename = `markcraft-${this.imageStudioPreset || 'arte'}.${ext}`;
+                const ext = format === 'jpeg' ? 'jpg' : (format === 'png_zip' ? 'zip' : format);
+                const kind = this.imageStudioDeckKind || 'kit';
+                const filename = `markcraft-${kind}-${this.imageStudioPreset || 'arte'}.${ext}`;
                 downloadBlob(blob, filename);
                 this.imageStudioLastExport = { filename, format: ext, local: true };
                 this.message = `Baixado: ${filename} — o servidor não guarda sua arte.`;
             } catch (e) {
                 this.error = e.response?.data?.message || e.message || 'Erro ao exportar';
+            } finally {
+                this.imageStudioDeckBusy = false;
             }
         },
 
@@ -326,6 +377,9 @@ function markCraftStudioMethods() {
             this.imageStudioBgTransparency = 0;
             this.imageStudioUnderlayEnabled = false;
             this.imageStudioUnderlaySlideIndex = -1;
+            this.imageStudioDeckPages = [this.newImageStudioDeckPage?.('Slide 1') || { id: 'slide-1', name: 'Slide 1', canvas: null }];
+            this.imageStudioDeckPageIndex = 0;
+            this.imageStudioDeckKind = 'presentation';
 
             const w = this.imageStudioEngine?.designWidth
                 || this.imageStudioCustomWidth

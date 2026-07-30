@@ -49,7 +49,15 @@
         </div>
         <label class="text-[10px] text-zinc-400 block">
             Escala
-            <input type="range" min="5" max="600" step="1" x-model.number="imageStudioObjectScale" @input="imageStudioSetObjectScale(imageStudioObjectScale)" class="w-full mt-1 accent-violet-500">
+            <input
+                type="range"
+                min="5"
+                max="600"
+                step="1"
+                :value="imageStudioObjectScale"
+                @input="imageStudioSetObjectScale(Number($event.target.value))"
+                class="w-full mt-1 accent-violet-500"
+            >
         </label>
         <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectScale"></span>% — arraste os cantos violetas ou use os botões</p>
     </div>
@@ -64,7 +72,15 @@
         </div>
         <label class="text-[10px] text-zinc-400 block">
             Ângulo
-            <input type="range" min="0" max="359" step="1" x-model.number="imageStudioObjectAngle" @input="imageStudioSetObjectAngle(imageStudioObjectAngle)" class="w-full mt-1 accent-violet-500">
+            <input
+                type="range"
+                min="0"
+                max="359"
+                step="1"
+                :value="imageStudioObjectAngle"
+                @input="imageStudioSetObjectAngle(Number($event.target.value))"
+                class="w-full mt-1 accent-violet-500"
+            >
         </label>
         <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectAngle"></span>°</p>
     </div>
@@ -132,13 +148,24 @@
 @if($showExport)
 <div class="rounded-xl border border-violet-900/40 bg-violet-950/20 p-3 space-y-2">
     <p class="text-xs font-medium text-violet-200">Baixar / limpar</p>
+    <p class="text-[10px] text-zinc-500" x-show="imageStudioDeckPages.length > 1" x-cloak>
+        Kit: <span x-text="imageStudioDeckPages.length"></span>
+        <span x-text="(imageStudioDeckUnitLabel() || 'frame').toLowerCase() + 's'"></span>
+        — ZIP / PDF / PPTX saem em sequência.
+    </p>
     <div class="flex flex-wrap gap-1.5">
         <template x-for="fmt in imageStudioExportFormats" :key="'isf-' + fmt.id">
-            <button type="button" @click="imageStudioExport(fmt.id)" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-violet-800" x-text="fmt.label"></button>
+            <button type="button" @click="imageStudioExport(fmt.id)" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-violet-800" :disabled="imageStudioDeckBusy" x-text="fmt.label"></button>
         </template>
     </div>
-    <button type="button" @click="imageStudioExport('png')" class="w-full text-xs py-2 rounded-lg bg-teal-800 hover:bg-teal-700">
-        Baixar PNG
+    <button type="button" @click="imageStudioExport('zip')" :disabled="imageStudioDeckBusy" class="w-full text-xs py-2 rounded-lg bg-teal-800 hover:bg-teal-700">
+        Baixar ZIP (PNG sequência)
+    </button>
+    <button type="button" @click="imageStudioExport('pptx')" :disabled="imageStudioDeckBusy" class="w-full text-xs py-2 rounded-lg bg-violet-800 hover:bg-violet-700">
+        Baixar PowerPoint (.pptx)
+    </button>
+    <button type="button" @click="imageStudioExport('png')" :disabled="imageStudioDeckBusy" class="w-full text-xs py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700">
+        Baixar PNG (página atual)
     </button>
     <button type="button" @click="imageStudioClearWorkspace()" class="w-full text-xs py-2 rounded-lg bg-amber-900/70 hover:bg-amber-800 border border-amber-800/50">
         Limpar workspace
@@ -150,6 +177,6 @@
     >
         Créditos e licenças
     </button>
-    <p class="text-[9px] text-zinc-500">Baixe antes de limpar. Rascunho opcional só nesta aba — o servidor não guarda artes.</p>
+    <p class="text-[9px] text-zinc-500">ZIP: um PNG por página (carrossel/kit). PPTX: arte como imagem em cada slide. Baixe antes de limpar.</p>
 </div>
 @endif

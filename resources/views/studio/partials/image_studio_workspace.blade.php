@@ -118,7 +118,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="inline-block shrink-0 overflow-hidden" :style="imageStudioCanvasViewportStyle()">
+                <div class="inline-block shrink-0" :style="imageStudioCanvasViewportStyle()">
                     <div
                         x-ref="imageStudioCanvasScaler"
                         class="relative shadow-2xl shadow-black/40 ring-2 ring-violet-500/40 inline-block"

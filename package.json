@@ -26,6 +26,8 @@
         "bootstrap-icons": "^1.13.1",
         "fabric": "^7.4.0",
         "jspdf": "^4.2.1",
-        "pdfjs-dist": "^4.10.38"
+        "jszip": "^3.10.1",
+        "pdfjs-dist": "^4.10.38",
+        "pptxgenjs": "^4.0.1"
     }
 }

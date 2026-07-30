@@ -23,6 +23,8 @@ return [
     'export_formats' => [
         ['id' => 'png', 'label' => 'PNG (transparência)', 'ext' => 'png', 'mime' => 'image/png', 'hint' => 'Photoshop, Affinity, web'],
         ['id' => 'jpg', 'label' => 'JPG (foto)', 'ext' => 'jpg', 'mime' => 'image/jpeg', 'hint' => 'Redes sociais, sites'],
+        ['id' => 'pptx', 'label' => 'PowerPoint (.pptx)', 'ext' => 'pptx', 'mime' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'hint' => 'Abre no Microsoft PowerPoint'],
+        ['id' => 'zip', 'label' => 'ZIP (PNG sequência)', 'ext' => 'zip', 'mime' => 'application/zip', 'hint' => 'Kit carrossel redes / frames do site'],
         ['id' => 'svg', 'label' => 'SVG (vetor)', 'ext' => 'svg', 'mime' => 'image/svg+xml', 'hint' => 'CorelDRAW, Affinity, Illustrator'],
         ['id' => 'psd', 'label' => 'PSD (camadas)', 'ext' => 'psd', 'mime' => 'application/vnd.adobe.photoshop', 'hint' => 'Photoshop, Affinity Photo'],
         ['id' => 'pdf', 'label' => 'PDF (impressão)', 'ext' => 'pdf', 'mime' => 'application/pdf', 'hint' => 'CorelDRAW, Affinity, impressão'],
@@ -31,6 +33,7 @@ return [
 
     'groups' => [
         'custom' => 'Personalizado',
+        'presentation' => 'Apresentação / PowerPoint',
         'instagram' => 'Instagram',
         'facebook' => 'Facebook',
         'linkedin' => 'LinkedIn',
@@ -51,6 +54,10 @@ return [
 
     'presets' => [
         'custom' => ['name' => 'Personalizado', 'group' => 'custom', 'width' => 1920, 'height' => 1080, 'icon' => '▭', 'aspect' => '16:9'],
+        // ── Apresentação / PowerPoint ──
+        'ppt_16_9_hd' => ['name' => 'Apresentação 16:9 Full HD', 'group' => 'presentation', 'width' => 1920, 'height' => 1080, 'icon' => '▦', 'aspect' => '16:9', 'hint' => 'Padrão widescreen PowerPoint'],
+        'ppt_16_9' => ['name' => 'Apresentação 16:9 (1280)', 'group' => 'presentation', 'width' => 1280, 'height' => 720, 'icon' => '▦', 'aspect' => '16:9'],
+        'ppt_4_3' => ['name' => 'Apresentação 4:3 clássico', 'group' => 'presentation', 'width' => 1024, 'height' => 768, 'icon' => '▦', 'aspect' => '4:3'],
         // ── Instagram ──
         'ig_feed_square' => ['name' => 'Feed quadrado 1:1', 'group' => 'instagram', 'width' => 1080, 'height' => 1080, 'icon' => '◎', 'aspect' => '1:1'],
         'ig_feed_portrait' => ['name' => 'Feed retrato 4:5', 'group' => 'instagram', 'width' => 1080, 'height' => 1350, 'icon' => '▯', 'aspect' => '4:5'],
@@ -164,6 +171,9 @@ return [
         // ── Web & banners ──
         'web_hero' => ['name' => 'Hero site 1920', 'group' => 'web', 'width' => 1920, 'height' => 800, 'icon' => '🌐', 'aspect' => '2.4:1'],
         'web_hero_full' => ['name' => 'Hero full screen 16:9', 'group' => 'web', 'width' => 1920, 'height' => 1080, 'icon' => '🌐', 'aspect' => '16:9'],
+        'web_carousel_hd' => ['name' => 'Carrossel site 16:9', 'group' => 'web', 'width' => 1920, 'height' => 1080, 'icon' => '▦', 'aspect' => '16:9', 'hint' => 'Frames sequenciais para carrossel do site'],
+        'web_carousel_wide' => ['name' => 'Carrossel site wide', 'group' => 'web', 'width' => 1600, 'height' => 600, 'icon' => '▦', 'aspect' => '8:3', 'hint' => 'Banner carrossel largo'],
+        'web_carousel_card' => ['name' => 'Carrossel site card', 'group' => 'web', 'width' => 1200, 'height' => 675, 'icon' => '▦', 'aspect' => '16:9'],
         'web_banner_leader' => ['name' => 'Leaderboard 728×90', 'group' => 'web', 'width' => 728, 'height' => 90, 'icon' => '▭', 'aspect' => '8.09:1'],
         'web_banner_medium' => ['name' => 'Medium rectangle 300×250', 'group' => 'web', 'width' => 300, 'height' => 250, 'icon' => '▢', 'aspect' => '1.2:1'],
         'web_banner_large' => ['name' => 'Large rectangle 336×280', 'group' => 'web', 'width' => 336, 'height' => 280, 'icon' => '▢', 'aspect' => '1.2:1'],
@@ -667,6 +677,7 @@ return [
 
     /** Ordem dos grupos na lista lateral */
     'group_order' => [
+        'Apresentação / PowerPoint',
         'Blog',
         'YouTube',
         'Instagram',

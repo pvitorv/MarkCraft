@@ -47,10 +47,14 @@ body.studio-body {
     overflow-y: auto;
 }
 
-.is-canvas-dropzone.is-canvas-dropzone--active {
-    outline: 2px dashed rgba(52, 211, 153, 0.85);
-    outline-offset: -6px;
-    background: rgba(16, 185, 129, 0.08);
+/* Fabric: garantir que o upper-canvas receba os cliques das alças */
+.canvas-container {
+    position: relative !important;
+    margin: 0 !important;
+    line-height: 0;
+}
+.canvas-container .upper-canvas {
+    z-index: 2;
 }
 
 .studio-topbar {
@@ -205,6 +209,35 @@ body.studio-body {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
+}
+
+.studio-deck-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.studio-deck-chip {
+    padding: 0.3rem 0.55rem;
+    border-radius: 0.45rem;
+    border: 1px solid #3f3f46;
+    background: #18181b;
+    color: #d4d4d8;
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.studio-deck-chip.is-active {
+    border-color: #7c3aed;
+    background: #4c1d95;
+    color: #f5f3ff;
+}
+
+.studio-deck-chip:disabled,
+.studio-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .studio-chip {

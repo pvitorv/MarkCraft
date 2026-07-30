@@ -16,6 +16,7 @@
                 ['id' => 'media', 'label' => 'Mídia', 'paths' => ['M4 5h16v14H4z', 'M8 15l3-3 2 2 3-4 4 5H8z']],
                 ['id' => 'bg', 'label' => 'Fundo', 'paths' => ['M12 3l8 4v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z']],
                 ['id' => 'layers', 'label' => 'Camadas', 'paths' => ['M12 3l9 5-9 5-9-5 9-5z', 'M3 13l9 5 9-5', 'M3 17l9 5 9-5']],
+                ['id' => 'slides', 'label' => 'Sequência', 'paths' => ['M4 5h16v12H4z', 'M8 21h8', 'M12 17v4']],
                 ['id' => 'export', 'label' => 'Exportar', 'paths' => ['M12 3v12', 'M8 11l4 4 4-4', 'M5 21h14']],
             ];
         @endphp
@@ -265,6 +266,102 @@
         {{-- Camadas + objeto --}}
         <div x-show="imageStudioSidebarTab === 'layers'" x-cloak class="space-y-3">
             @include('studio.partials.image_studio_sidebar_panels', ['mode' => 'layers'])
+        </div>
+
+        {{-- Sequência: PPT / carrossel redes / carrossel web --}}
+        <div x-show="imageStudioSidebarTab === 'slides'" x-cloak class="space-y-3">
+            <div class="rounded-xl border border-violet-900/40 bg-violet-950/20 p-3 space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-xs font-medium text-violet-200">Sequência / kit</p>
+                    <span class="text-[10px] text-zinc-500 tabular-nums" x-text="(imageStudioDeckPageIndex + 1) + ' / ' + imageStudioDeckPages.length"></span>
+                </div>
+                <p class="text-[10px] text-zinc-500 leading-snug">
+                    O mesmo deck serve para PowerPoint, carrossel de redes e frames de site. Monte as páginas e exporte ZIP, PDF ou PPTX.
+                </p>
+
+                <div class="space-y-1.5">
+                    <p class="text-[10px] font-medium text-zinc-400">Tipo de kit</p>
+                    <div class="flex flex-col gap-1">
+                        <template x-for="kind in imageStudioDeckKindDefs()" :key="'deck-kind-' + kind.id">
+                            <button
+                                type="button"
+                                class="text-left text-[10px] px-2 py-1.5 rounded border transition"
+                                :class="imageStudioDeckKind === kind.id
+                                    ? 'bg-violet-800 border-violet-500 text-violet-50'
+                                    : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:bg-zinc-800'"
+                                @click="setImageStudioDeckKind(kind.id)"
+                            >
+                                <span class="font-semibold" x-text="kind.label"></span>
+                                <span class="block text-[9px] opacity-70" x-text="kind.hint"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <p class="text-[10px] font-medium text-zinc-400">Formato do frame</p>
+                    <div class="flex flex-wrap gap-1">
+                        <template x-for="preset in (imageStudioDeckKindMeta()?.presets || [])" :key="'deck-preset-' + preset.slug">
+                            <button
+                                type="button"
+                                class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-violet-800"
+                                :class="imageStudioPreset === preset.slug ? 'ring-1 ring-violet-400' : ''"
+                                @click="switchImageStudioPreset(preset.slug)"
+                                x-text="preset.label"
+                            ></button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="studio-deck-row">
+                    <template x-for="(page, idx) in imageStudioDeckPages" :key="page.id">
+                        <button
+                            type="button"
+                            class="studio-deck-chip"
+                            :class="idx === imageStudioDeckPageIndex ? 'is-active' : ''"
+                            :disabled="imageStudioDeckBusy"
+                            @click="selectImageStudioDeckPage(idx)"
+                            x-text="page.name || imageStudioDeckPageLabel(idx)"
+                        ></button>
+                    </template>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-violet-800" :disabled="imageStudioDeckBusy" @click="imageStudioDeckAddPage()" x-text="'+ ' + imageStudioDeckUnitLabel()"></button>
+                    <button type="button" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-violet-800" :disabled="imageStudioDeckBusy" @click="imageStudioDeckDuplicatePage()">Duplicar</button>
+                    <button type="button" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-rose-900" :disabled="imageStudioDeckBusy || imageStudioDeckPages.length <= 1" @click="imageStudioDeckDeletePage()">Excluir</button>
+                    <button type="button" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" :disabled="imageStudioDeckBusy || imageStudioDeckPageIndex <= 0" @click="imageStudioDeckMovePage(-1)">↑</button>
+                    <button type="button" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" :disabled="imageStudioDeckBusy || imageStudioDeckPageIndex >= imageStudioDeckPages.length - 1" @click="imageStudioDeckMovePage(1)">↓</button>
+                </div>
+
+                <div class="pt-1 border-t border-violet-900/40 space-y-2">
+                    <p class="text-[10px] font-medium text-zinc-400">Exportar kit</p>
+                    <button
+                        type="button"
+                        class="w-full text-[10px] px-2 py-1.5 rounded bg-teal-800 hover:bg-teal-700"
+                        :disabled="imageStudioDeckBusy"
+                        @click="imageStudioExport('zip')"
+                    >
+                        Baixar ZIP (PNG sequência)
+                    </button>
+                    <button
+                        type="button"
+                        class="w-full text-[10px] px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+                        :disabled="imageStudioDeckBusy"
+                        @click="imageStudioExport('pdf')"
+                    >
+                        Baixar PDF multipágina
+                    </button>
+                    <button
+                        type="button"
+                        class="w-full text-[10px] px-2 py-1.5 rounded bg-violet-800 hover:bg-violet-700"
+                        :disabled="imageStudioDeckBusy"
+                        @click="imageStudioExport('pptx')"
+                    >
+                        Baixar PowerPoint (.pptx)
+                    </button>
+                </div>
+            </div>
         </div>
 
         {{-- Export + ponte Blog --}}

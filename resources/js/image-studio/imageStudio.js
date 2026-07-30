@@ -1,6 +1,138 @@
-import { Canvas, FabricText, IText, Textbox, FabricImage, Rect, Circle, Ellipse, Line, Gradient, loadSVGFromURL, util, filters, Shadow, ActiveSelection } from 'fabric';
+import {
+    Canvas,
+    FabricText,
+    IText,
+    Textbox,
+    FabricImage,
+    Rect,
+    Circle,
+    Ellipse,
+    Line,
+    Gradient,
+    loadSVGFromURL,
+    util,
+    filters,
+    Shadow,
+    ActiveSelection,
+    InteractiveFabricObject,
+    controlsUtils,
+} from 'fabric';
+
+/** Controles padrão do Fabric — tamanho visual normal (não inflar as bolinhas). */
+InteractiveFabricObject.ownDefaults = {
+    ...(InteractiveFabricObject.ownDefaults || {}),
+    cornerStyle: 'circle',
+    cornerColor: '#a78bfa',
+    cornerStrokeColor: '#ffffff',
+    borderColor: '#a78bfa',
+    cornerSize: 12,
+    touchCornerSize: 24,
+    transparentCorners: false,
+    borderScaleFactor: 1.5,
+    padding: 4,
+    hasControls: true,
+    hasBorders: true,
+    lockScalingX: false,
+    lockScalingY: false,
+};
+
+/**
+ * Hit-test por distância (viewport px): clicar perto da bolinha conta como a bolinha,
+ * sem desenhar alças enormes. O Fabric padrão às vezes perde o canto e cai em "drag".
+ */
+function installCornerHitFix(canvas, getViewportZoom) {
+    if (!canvas || canvas._mcCornerHitFixed) {
+        return;
+    }
+    canvas._mcCornerHitFixed = true;
+
+    const maxHitPx = () => {
+        const z = Math.max(0.08, Number(getViewportZoom?.()) || 1);
+        // ~14px na tela, convertido p/ coords do canvas (design / viewport)
+        return Math.max(12, Math.round(14 / z));
+    };
+
+    const findNearestControl = (target, pointer, forTouch = false) => {
+        if (!target?.hasControls || !target.oCoords || !target.controls) {
+            return undefined;
+        }
+        if (target.canvas?.getActiveObject() !== target) {
+            return undefined;
+        }
+        const limit = forTouch ? Math.max(maxHitPx(), 24) : maxHitPx();
+        let bestKey = null;
+        let bestDist = limit;
+        for (const key of Object.keys(target.controls)) {
+            if (!target.isControlVisible?.(key)) {
+                continue;
+            }
+            const coord = target.oCoords[key];
+            if (!coord) {
+                continue;
+            }
+            const d = Math.hypot(pointer.x - coord.x, pointer.y - coord.y);
+            if (d <= bestDist) {
+                bestDist = d;
+                bestKey = key;
+            }
+        }
+        if (!bestKey) {
+            return undefined;
+        }
+        target.__corner = bestKey;
+
+        return {
+            key: bestKey,
+            control: target.controls[bestKey],
+            coord: target.oCoords[bestKey],
+        };
+    };
+
+    // 1) findControl: se o polígono do Fabric falhar, usa distância ao centro da bolinha
+    const objects = () => canvas.getObjects?.() || [];
+    const patchTarget = (target) => {
+        if (!target || target._mcFindControlPatched) {
+            return;
+        }
+        target._mcFindControlPatched = true;
+        const original = target.findControl?.bind(target);
+        target.findControl = (pointer, forTouch = false) => {
+            const hit = original?.(pointer, forTouch);
+            if (hit) {
+                return hit;
+            }
+
+            return findNearestControl(target, pointer, forTouch);
+        };
+    };
+
+    canvas.on('object:added', (e) => patchTarget(e.target));
+    objects().forEach(patchTarget);
+
+    // 2) _setupCurrentTransform: se há canto, FORÇA alreadySelected + handler de escala
+    //    (senão o Fabric usa dragHandler e o objeto só anda)
+    const setup = canvas._setupCurrentTransform.bind(canvas);
+    canvas._setupCurrentTransform = (e, target, alreadySelected) => {
+        patchTarget(target);
+        try {
+            const pointer = canvas.getViewportPoint(e);
+            const found = target.findControl?.(pointer, false)
+                || target.findControl?.(pointer, true);
+            if (found?.key) {
+                target.__corner = found.key;
+                alreadySelected = true;
+            }
+        } catch {
+            /* keep fabric default */
+        }
+
+        return setup(e, target, alreadySelected);
+    };
+}
 import { writePsdBuffer } from 'ag-psd';
 import { jsPDF } from 'jspdf';
+import PptxGenJS from 'pptxgenjs';
+import JSZip from 'jszip';
 import {
     EMOJI_FONT_STACK,
     addCanvasObject,
@@ -352,23 +484,26 @@ export class ImageStudioEngine {
         if (!obj || obj.criasysGuide) {
             return;
         }
-        const z = Math.max(0.08, this.viewportZoom || 1);
-        const cornerSize = Math.min(48, Math.max(14, Math.round(14 / z)));
         obj.set({
             cornerStyle: 'circle',
             cornerColor: '#a78bfa',
             cornerStrokeColor: '#ffffff',
             borderColor: '#a78bfa',
-            cornerSize,
-            padding: 8,
+            cornerSize: 12,
+            touchCornerSize: 24,
+            padding: 4,
             transparentCorners: false,
+            borderScaleFactor: 1.5,
             hasControls: true,
             hasBorders: true,
             centeredRotation: true,
+            centeredScaling: false,
             lockScalingFlip: false,
             lockRotation: false,
             lockScalingX: false,
             lockScalingY: false,
+            lockSkewingX: true,
+            lockSkewingY: true,
             selectable: true,
             evented: true,
         });
@@ -378,10 +513,49 @@ export class ImageStudioEngine {
                 ml: true, mt: true, mr: true, mb: true, mtr: true,
             });
         }
-        const rotateOffset = Math.min(72, Math.max(36, Math.round(48 / z)));
-        if (obj.controls?.mtr) {
-            obj.controls.mtr.offsetY = -rotateOffset;
-            obj.controls.mtr.withConnection = true;
+        if (obj.controls) {
+            const {
+                scalingEqually,
+                scalingX,
+                scalingY,
+                rotationWithSnapping,
+                scaleCursorStyleHandler,
+                rotationStyleHandler,
+            } = controlsUtils;
+            ['tl', 'tr', 'bl', 'br'].forEach((key) => {
+                if (obj.controls[key]) {
+                    obj.controls[key].actionHandler = scalingEqually;
+                    obj.controls[key].cursorStyleHandler = scaleCursorStyleHandler;
+                    obj.controls[key].actionName = 'scale';
+                }
+            });
+            if (obj.controls.ml) {
+                obj.controls.ml.actionHandler = scalingX;
+                obj.controls.ml.cursorStyleHandler = scaleCursorStyleHandler;
+                obj.controls.ml.actionName = 'scale';
+            }
+            if (obj.controls.mr) {
+                obj.controls.mr.actionHandler = scalingX;
+                obj.controls.mr.cursorStyleHandler = scaleCursorStyleHandler;
+                obj.controls.mr.actionName = 'scale';
+            }
+            if (obj.controls.mt) {
+                obj.controls.mt.actionHandler = scalingY;
+                obj.controls.mt.cursorStyleHandler = scaleCursorStyleHandler;
+                obj.controls.mt.actionName = 'scale';
+            }
+            if (obj.controls.mb) {
+                obj.controls.mb.actionHandler = scalingY;
+                obj.controls.mb.cursorStyleHandler = scaleCursorStyleHandler;
+                obj.controls.mb.actionName = 'scale';
+            }
+            if (obj.controls.mtr) {
+                obj.controls.mtr.actionHandler = rotationWithSnapping;
+                obj.controls.mtr.cursorStyleHandler = rotationStyleHandler;
+                obj.controls.mtr.offsetY = -28;
+                obj.controls.mtr.withConnection = true;
+                obj.controls.mtr.actionName = 'rotate';
+            }
         }
         if (isFabricImage(obj)) {
             obj.set({
@@ -390,6 +564,7 @@ export class ImageStudioEngine {
                 lockScalingY: false,
             });
         }
+        obj.setCoords?.();
     }
 
     configureAllObjects() {
@@ -410,21 +585,24 @@ export class ImageStudioEngine {
             preserveObjectStacking: true,
             selection: true,
             enableRetinaScaling: false,
-            uniformScaling: false,
+            uniformScaling: true,
+            uniScaleKey: 'shiftKey',
             stopContextMenu: true,
             controlsAboveOverlay: true,
+            allowTouchScrolling: false,
+            targetFindTolerance: 8,
         });
-        this.canvas.on('object:scaling', (e) => {
-            if (e.target) {
-                this.clampObjectScale(e.target);
-            }
+        installCornerHitFix(this.canvas, () => this.viewportZoom || 1);
+        this.canvas.on('object:scaling', () => {
             this.canvas?.requestRenderAll();
-            this.notifyChange();
         });
-        this.canvas.on('object:rotating', () => this.notifyChange());
+        this.canvas.on('object:rotating', () => {
+            this.canvas?.requestRenderAll();
+        });
         this.canvas.on('object:modified', (e) => {
             if (e.target) {
                 this.clampObjectScale(e.target);
+                e.target.setCoords?.();
             }
             this.emitChange();
         });
@@ -435,12 +613,19 @@ export class ImageStudioEngine {
             this.emitChange();
         });
         this.canvas.on('object:removed', () => this.emitChange());
-        this.canvas.on('selection:created', () => this.notifyChange());
-        this.canvas.on('selection:updated', () => this.notifyChange());
+        this.canvas.on('selection:created', (e) => {
+            (e.selected || []).forEach((obj) => this.configureSelectableObject(obj));
+            this.notifyChange();
+        });
+        this.canvas.on('selection:updated', (e) => {
+            (e.selected || []).forEach((obj) => this.configureSelectableObject(obj));
+            this.notifyChange();
+        });
         this.canvas.on('selection:cleared', () => this.notifyChange());
         this.canvas.on('object:moving', (e) => this.handleObjectMoving(e));
         this.canvas.on('text:changed', () => this.emitChange(false));
         this.canvas.on('mouse:down', () => this.canvas?.calcOffset());
+        this.canvas.on('mouse:up', () => this.canvas?.calcOffset());
         this.canvas.on('after:render', () => {
             this.drawGridOverlay();
             this.drawFormatGuidesOverlay();
@@ -558,11 +743,13 @@ export class ImageStudioEngine {
         if (!ctx) {
             return;
         }
-        const w = this.canvas.getWidth();
-        const h = this.canvas.getHeight();
+        const w = this.designWidth;
+        const h = this.designHeight;
         const g = this.gridSize;
-        const zoom = this.canvas.getZoom();
+        const zoom = this.canvas.getZoom() || 1;
+        const vpt = this.canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
         ctx.save();
+        ctx.transform(vpt[0], vpt[1], vpt[2], vpt[3], vpt[4], vpt[5]);
         ctx.strokeStyle = 'rgba(139, 92, 246, 0.25)';
         ctx.lineWidth = 1 / zoom;
         for (let x = 0; x <= w; x += g) {
@@ -591,7 +778,9 @@ export class ImageStudioEngine {
         const w = this.designWidth || this.canvas.getWidth();
         const h = this.designHeight || this.canvas.getHeight();
         const zoom = this.canvas.getZoom() || 1;
+        const vpt = this.canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
         ctx.save();
+        ctx.transform(vpt[0], vpt[1], vpt[2], vpt[3], vpt[4], vpt[5]);
         ctx.lineWidth = 2 / zoom;
         ctx.strokeStyle = '#8b5cf6';
         ctx.strokeRect(1, 1, w - 2, h - 2);
@@ -622,20 +811,71 @@ export class ImageStudioEngine {
         this.canvas?.requestRenderAll();
     }
 
+    /**
+     * Zoom com viewport nativo do Fabric (sem CSS zoom/transform).
+     * CSS zoom quebrava o hit-test das bolinhas — o mouse arrastava o objeto em vez de escalar.
+     */
     applyViewportZoom(zoom) {
         if (!this.canvas) {
             return 1;
         }
-        const z = Math.max(0.08, Math.min(4, zoom));
+        const z = Math.max(0.08, Math.min(4, Number(zoom) || 1));
         this.viewportZoom = z;
-        this.canvas.setZoom(1);
-        this.canvas.setDimensions({ width: this.designWidth, height: this.designHeight });
+        const w = Math.max(1, Math.round(this.designWidth * z));
+        const h = Math.max(1, Math.round(this.designHeight * z));
+
+        this.canvas.setViewportTransform([z, 0, 0, z, 0, 0]);
+        this.canvas.setDimensions({ width: w, height: h });
+
+        if (this.scaleWrapper) {
+            this.scaleWrapper.style.width = `${w}px`;
+            this.scaleWrapper.style.height = `${h}px`;
+            this.scaleWrapper.style.zoom = '';
+            this.scaleWrapper.style.transform = 'none';
+            this.scaleWrapper.style.transformOrigin = 'top left';
+        }
+
+        this.canvas.getObjects().forEach((obj) => {
+            if (obj?.criasysGuide) {
+                return;
+            }
+            obj.set({
+                cornerSize: 12,
+                touchCornerSize: 24,
+                padding: 4,
+                lockScalingX: false,
+                lockScalingY: false,
+            });
+            obj.setCoords?.();
+        });
+
         requestAnimationFrame(() => {
-            this.configureAllObjects();
             this.canvas?.calcOffset();
             this.canvas?.requestRenderAll();
         });
+
         return z;
+    }
+
+    /** Export em coordenadas de design (zoom 100%). Reentrante. */
+    async withDesignViewport(fn) {
+        const canvas = this.canvas;
+        if (!canvas) {
+            return fn();
+        }
+        if (this._designViewportDepth > 0) {
+            return fn();
+        }
+        this._designViewportDepth = 1;
+        const prevZ = this.viewportZoom || 1;
+        canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        canvas.setDimensions({ width: this.designWidth, height: this.designHeight });
+        try {
+            return await fn();
+        } finally {
+            this._designViewportDepth = 0;
+            this.applyViewportZoom(prevZ);
+        }
     }
 
     getActiveObjectScalePercent() {
@@ -744,8 +984,8 @@ export class ImageStudioEngine {
         if (!obj) {
             return;
         }
-        const w = this.canvas.getWidth();
-        const h = this.canvas.getHeight();
+        const w = this.designWidth || this.canvas.getWidth();
+        const h = this.designHeight || this.canvas.getHeight();
         const bounds = obj.getBoundingRect();
         if (mode === 'left') {
             obj.set('left', obj.left - bounds.left);
@@ -922,41 +1162,43 @@ export class ImageStudioEngine {
     }
 
     async renderExportCanvas(multiplier = 1, options = {}) {
-        const { underlayUrl = null, underlayIsVideo = false } = options;
-        const w = this.canvas.getWidth();
-        const h = this.canvas.getHeight();
-        const out = document.createElement('canvas');
-        out.width = w * multiplier;
-        out.height = h * multiplier;
-        const ctx = out.getContext('2d');
-        ctx.clearRect(0, 0, out.width, out.height);
+        return this.withDesignViewport(async () => {
+            const { underlayUrl = null, underlayIsVideo = false } = options;
+            const w = this.designWidth;
+            const h = this.designHeight;
+            const out = document.createElement('canvas');
+            out.width = w * multiplier;
+            out.height = h * multiplier;
+            const ctx = out.getContext('2d');
+            ctx.clearRect(0, 0, out.width, out.height);
 
-        if (underlayUrl) {
-            try {
-                const media = await loadMediaDrawable(underlayUrl, underlayIsVideo);
-                if (media) {
-                    drawCoverMedia(ctx, media, out.width, out.height);
+            if (underlayUrl) {
+                try {
+                    const media = await loadMediaDrawable(underlayUrl, underlayIsVideo);
+                    if (media) {
+                        drawCoverMedia(ctx, media, out.width, out.height);
+                    }
+                } catch {
+                    /* slide sem mídia utilizável */
                 }
-            } catch {
-                /* slide sem mídia utilizável */
             }
-        }
 
-        const paint = this.getBackgroundPaint();
-        if (paint) {
-            ctx.fillStyle = `rgba(${paint.r},${paint.g},${paint.b},${paint.a})`;
-            ctx.fillRect(0, 0, out.width, out.height);
-        }
+            const paint = this.getBackgroundPaint();
+            if (paint) {
+                ctx.fillStyle = `rgba(${paint.r},${paint.g},${paint.b},${paint.a})`;
+                ctx.fillRect(0, 0, out.width, out.height);
+            }
 
-        const savedBg = this.canvas.backgroundColor;
-        this.canvas.backgroundColor = 'transparent';
-        this.canvas.requestRenderAll();
-        const objectsLayer = this.canvas.toCanvasElement(multiplier);
-        this.canvas.backgroundColor = savedBg;
-        this.canvas.requestRenderAll();
-        ctx.drawImage(objectsLayer, 0, 0);
+            const savedBg = this.canvas.backgroundColor;
+            this.canvas.backgroundColor = 'transparent';
+            this.canvas.requestRenderAll();
+            const objectsLayer = this.canvas.toCanvasElement(multiplier);
+            this.canvas.backgroundColor = savedBg;
+            this.canvas.requestRenderAll();
+            ctx.drawImage(objectsLayer, 0, 0);
 
-        return out;
+            return out;
+        });
     }
 
     getLayers() {
@@ -2174,11 +2416,23 @@ export class ImageStudioEngine {
             frameVisible = true,
             underlayUrl = null,
             underlayIsVideo = false,
+            pagePngDataUrls = null,
+            pageJpegDataUrls = null,
+            zipPrefix = null,
         } = options;
-        const exportOpts = { underlayUrl, underlayIsVideo };
+        const exportOpts = {
+            underlayUrl,
+            underlayIsVideo,
+            pagePngDataUrls,
+            pageJpegDataUrls,
+            zipPrefix,
+        };
         if (format === 'svg') {
-            const svg = this.canvas.toSVG();
-            return new Blob([svg], { type: 'image/svg+xml' });
+            return this.withDesignViewport(async () => {
+                const svg = this.canvas.toSVG();
+
+                return new Blob([svg], { type: 'image/svg+xml' });
+            });
         }
         if (format === 'json') {
             return new Blob([JSON.stringify(this.toJSON(), null, 2)], { type: 'application/json' });
@@ -2188,6 +2442,12 @@ export class ImageStudioEngine {
         }
         if (format === 'pdf') {
             return this.exportPdfBlob(quality, frameOverlayUrl, frameVisible, exportOpts);
+        }
+        if (format === 'pptx') {
+            return this.exportPptxBlob(quality, frameOverlayUrl, frameVisible, exportOpts);
+        }
+        if (format === 'zip' || format === 'png_zip') {
+            return this.exportZipPngBlob(quality, frameOverlayUrl, frameVisible, exportOpts);
         }
         const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
         let blob;
@@ -2202,20 +2462,23 @@ export class ImageStudioEngine {
             ctx.drawImage(exportCanvas, 0, 0);
             blob = await canvasToBlob(jpegOff, mime, quality);
         } else if (frameOverlayUrl && frameVisible !== false) {
-            let dataUrl = await compositeFrameOnCanvasDataUrl(this.canvas, frameOverlayUrl, frameVisible);
-            if (format === 'jpg') {
-                const jpegOff = document.createElement('canvas');
-                jpegOff.width = this.canvas.getWidth();
-                jpegOff.height = this.canvas.getHeight();
-                const ctx = jpegOff.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, jpegOff.width, jpegOff.height);
-                const img = await loadHtmlImage(dataUrl);
-                ctx.drawImage(img, 0, 0);
-                dataUrl = jpegOff.toDataURL('image/jpeg', quality);
-            }
-            const res = await fetch(dataUrl);
-            blob = await res.blob();
+            blob = await this.withDesignViewport(async () => {
+                let dataUrl = await compositeFrameOnCanvasDataUrl(this.canvas, frameOverlayUrl, frameVisible);
+                if (format === 'jpg') {
+                    const jpegOff = document.createElement('canvas');
+                    jpegOff.width = this.designWidth;
+                    jpegOff.height = this.designHeight;
+                    const ctx = jpegOff.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, jpegOff.width, jpegOff.height);
+                    const img = await loadHtmlImage(dataUrl);
+                    ctx.drawImage(img, 0, 0);
+                    dataUrl = jpegOff.toDataURL('image/jpeg', quality);
+                }
+                const res = await fetch(dataUrl);
+
+                return res.blob();
+            });
         } else {
             const exportCanvas = await this.renderExportCanvas(1, exportOpts);
             blob = await canvasToBlob(exportCanvas, mime, quality);
@@ -2225,8 +2488,9 @@ export class ImageStudioEngine {
     }
 
     async exportPsdBlob(frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
-        const w = this.canvas.getWidth();
-        const h = this.canvas.getHeight();
+        return this.withDesignViewport(async () => {
+        const w = this.designWidth;
+        const h = this.designHeight;
         const layers = [];
 
         const { underlayUrl = null, underlayIsVideo = false } = exportOpts;
@@ -2291,14 +2555,19 @@ export class ImageStudioEngine {
 
         const buffer = writePsdBuffer({ width: w, height: h, children: layers });
         return new Blob([buffer], { type: 'application/vnd.adobe.photoshop' });
+        });
     }
 
-    async exportPdfBlob(quality = 0.92, frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
-        const w = this.canvas.getWidth();
-        const h = this.canvas.getHeight();
-        let dataUrl;
+    async exportDesignDataUrl(format = 'png', quality = 0.92, frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
+        const w = this.designWidth;
+        const h = this.designHeight;
+        const wantJpeg = format === 'jpg' || format === 'jpeg';
+
         if (frameOverlayUrl && frameVisible !== false) {
             const pngUrl = await compositeFrameOnCanvasDataUrl(this.canvas, frameOverlayUrl, frameVisible);
+            if (!wantJpeg) {
+                return pngUrl;
+            }
             const jpegOff = document.createElement('canvas');
             jpegOff.width = w;
             jpegOff.height = h;
@@ -2307,10 +2576,35 @@ export class ImageStudioEngine {
             ctx.fillRect(0, 0, w, h);
             const img = await loadHtmlImage(pngUrl);
             ctx.drawImage(img, 0, 0);
-            dataUrl = jpegOff.toDataURL('image/jpeg', quality);
-        } else {
-            const exportCanvas = await this.renderExportCanvas(1, exportOpts);
-            dataUrl = exportCanvas.toDataURL('image/jpeg', quality);
+
+            return jpegOff.toDataURL('image/jpeg', quality);
+        }
+
+        const exportCanvas = await this.renderExportCanvas(1, exportOpts);
+        if (wantJpeg) {
+            const jpegOff = document.createElement('canvas');
+            jpegOff.width = exportCanvas.width;
+            jpegOff.height = exportCanvas.height;
+            const ctx = jpegOff.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, jpegOff.width, jpegOff.height);
+            ctx.drawImage(exportCanvas, 0, 0);
+
+            return jpegOff.toDataURL('image/jpeg', quality);
+        }
+
+        return exportCanvas.toDataURL('image/png');
+    }
+
+    async exportPdfBlob(quality = 0.92, frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
+        return this.withDesignViewport(async () => {
+        const w = this.designWidth;
+        const h = this.designHeight;
+        let pageUrls = Array.isArray(exportOpts.pageJpegDataUrls)
+            ? exportOpts.pageJpegDataUrls.filter(Boolean)
+            : [];
+        if (!pageUrls.length) {
+            pageUrls = [await this.exportDesignDataUrl('jpg', quality, frameOverlayUrl, frameVisible, exportOpts)];
         }
         const orientation = w >= h ? 'landscape' : 'portrait';
         const pdf = new jsPDF({
@@ -2319,8 +2613,78 @@ export class ImageStudioEngine {
             format: [w, h],
             hotfixes: ['px_scaling'],
         });
-        pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h);
+        pageUrls.forEach((dataUrl, index) => {
+            if (index > 0) {
+                pdf.addPage([w, h], orientation);
+            }
+            pdf.addImage(dataUrl, 'JPEG', 0, 0, w, h);
+        });
         return pdf.output('blob');
+        });
+    }
+
+    /**
+     * MVP PowerPoint: cada página = 1 slide 16:9 (ou proporção do canvas) com PNG full-bleed.
+     * Texto/formas nativos do PPT ficam para fase 2.
+     */
+    async exportPptxBlob(quality = 0.92, frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
+        return this.withDesignViewport(async () => {
+            const w = this.designWidth;
+            const h = this.designHeight;
+            let pageUrls = Array.isArray(exportOpts.pagePngDataUrls)
+                ? exportOpts.pagePngDataUrls.filter(Boolean)
+                : [];
+            if (!pageUrls.length) {
+                pageUrls = [await this.exportDesignDataUrl('png', quality, frameOverlayUrl, frameVisible, exportOpts)];
+            }
+
+            const pptx = new PptxGenJS();
+            const inchesW = w >= h ? 13.333 : 7.5;
+            const inchesH = inchesW * (h / w);
+            pptx.defineLayout({ name: 'MARKCRAFT', width: inchesW, height: inchesH });
+            pptx.layout = 'MARKCRAFT';
+            pptx.author = 'MarkCraft';
+            pptx.title = 'Apresentação MarkCraft';
+
+            pageUrls.forEach((dataUrl) => {
+                const slide = pptx.addSlide();
+                slide.addImage({
+                    data: dataUrl,
+                    x: 0,
+                    y: 0,
+                    w: inchesW,
+                    h: inchesH,
+                });
+            });
+
+            return pptx.write({ outputType: 'blob' });
+        });
+    }
+
+    /**
+     * Kit sequencial: ZIP com um PNG por página do deck (carrossel redes / site).
+     */
+    async exportZipPngBlob(quality = 0.92, frameOverlayUrl = null, frameVisible = true, exportOpts = {}) {
+        return this.withDesignViewport(async () => {
+            let pageUrls = Array.isArray(exportOpts.pagePngDataUrls)
+                ? exportOpts.pagePngDataUrls.filter(Boolean)
+                : [];
+            if (!pageUrls.length) {
+                pageUrls = [await this.exportDesignDataUrl('png', quality, frameOverlayUrl, frameVisible, exportOpts)];
+            }
+
+            const zip = new JSZip();
+            const prefix = String(exportOpts.zipPrefix || 'frame').replace(/[^\w\-]+/g, '_');
+            pageUrls.forEach((dataUrl, index) => {
+                const base64 = String(dataUrl).includes(',')
+                    ? String(dataUrl).split(',')[1]
+                    : String(dataUrl);
+                const name = `${prefix}-${String(index + 1).padStart(2, '0')}.png`;
+                zip.file(name, base64, { base64: true });
+            });
+
+            return zip.generateAsync({ type: 'blob' });
+        });
     }
 
     zoomToFit(containerWidth, containerHeight) {
@@ -2422,6 +2786,10 @@ export function imageStudioMethods() {
         imageStudioExpanded: false,
         imageStudioLocalWatch: null,
         imageStudioFileDragOver: false,
+        imageStudioDeckPages: [{ id: 'slide-1', name: 'Slide 1', canvas: null }],
+        imageStudioDeckPageIndex: 0,
+        imageStudioDeckBusy: false,
+        imageStudioDeckKind: 'presentation',
         imageStudioFileDragDepth: 0,
 
         normalizeImageStudioElementList(source) {
@@ -2853,9 +3221,10 @@ export function imageStudioMethods() {
             const bg = this.imageStudioShowUnderlayMedia() ? 'transparent' : checker;
 
             return {
-                width: `${w}px`,
-                height: `${h}px`,
-                transform: `scale(${z})`,
+                width: `${Math.ceil(w * z)}px`,
+                height: `${Math.ceil(h * z)}px`,
+                zoom: 1,
+                transform: 'none',
                 transformOrigin: 'top left',
                 background: bg,
             };
@@ -3390,6 +3759,272 @@ export function imageStudioMethods() {
                 underlayUrl,
                 underlayIsVideo: !!(underlayUrl && slide?.video_url && !slide?.image_url),
             };
+        },
+
+        ensureImageStudioDeck() {
+            if (!Array.isArray(this.imageStudioDeckPages) || !this.imageStudioDeckPages.length) {
+                this.imageStudioDeckPages = [this.newImageStudioDeckPage(this.imageStudioDeckPageLabel(0))];
+                this.imageStudioDeckPageIndex = 0;
+            }
+            if (this.imageStudioDeckPageIndex < 0 || this.imageStudioDeckPageIndex >= this.imageStudioDeckPages.length) {
+                this.imageStudioDeckPageIndex = 0;
+            }
+        },
+
+        imageStudioDeckKindDefs() {
+            return [
+                {
+                    id: 'presentation',
+                    label: 'Apresentação',
+                    hint: 'PowerPoint / PDF',
+                    unit: 'Slide',
+                    zipPrefix: 'slide',
+                    presets: [
+                        { slug: 'ppt_16_9_hd', label: '16:9 Full HD' },
+                        { slug: 'ppt_16_9', label: '16:9 1280' },
+                        { slug: 'ppt_4_3', label: '4:3 clássico' },
+                    ],
+                },
+                {
+                    id: 'social',
+                    label: 'Redes sociais',
+                    hint: 'Carrossel IG / LinkedIn',
+                    unit: 'Card',
+                    zipPrefix: 'card',
+                    presets: [
+                        { slug: 'ig_carousel_square', label: 'IG 1:1' },
+                        { slug: 'ig_carousel_portrait', label: 'IG 4:5' },
+                        { slug: 'li_carousel', label: 'LinkedIn' },
+                        { slug: 'ig_feed_square', label: 'Feed 1:1' },
+                    ],
+                },
+                {
+                    id: 'web',
+                    label: 'Carrossel web',
+                    hint: 'Frames do site',
+                    unit: 'Frame',
+                    zipPrefix: 'frame',
+                    presets: [
+                        { slug: 'web_carousel_hd', label: 'Site 16:9' },
+                        { slug: 'web_carousel_wide', label: 'Site wide' },
+                        { slug: 'web_carousel_card', label: 'Site card' },
+                        { slug: 'web_hero', label: 'Hero 1920' },
+                    ],
+                },
+            ];
+        },
+
+        imageStudioDeckKindMeta() {
+            return this.imageStudioDeckKindDefs().find((k) => k.id === this.imageStudioDeckKind)
+                || this.imageStudioDeckKindDefs()[0];
+        },
+
+        imageStudioDeckUnitLabel() {
+            return this.imageStudioDeckKindMeta()?.unit || 'Slide';
+        },
+
+        imageStudioDeckPageLabel(index = 0) {
+            return `${this.imageStudioDeckUnitLabel()} ${Number(index) + 1}`;
+        },
+
+        imageStudioDeckZipPrefix() {
+            return this.imageStudioDeckKindMeta()?.zipPrefix || 'frame';
+        },
+
+        imageStudioDeckIsAutoName(name) {
+            return !name || /^(Slide|Card|Frame)\s+\d+(\s*\(cópia\))?$/i.test(String(name).trim());
+        },
+
+        async setImageStudioDeckKind(kind) {
+            const next = this.imageStudioDeckKindDefs().find((k) => k.id === kind);
+            if (!next) {
+                return;
+            }
+            this.imageStudioDeckKind = next.id;
+            this.ensureImageStudioDeck();
+            this.imageStudioDeckPages.forEach((page, idx) => {
+                if (this.imageStudioDeckIsAutoName(page.name)) {
+                    page.name = this.imageStudioDeckPageLabel(idx);
+                }
+            });
+            const firstPreset = next.presets?.[0]?.slug;
+            if (firstPreset) {
+                await this.switchImageStudioPreset?.(firstPreset);
+            }
+            this.scheduleImageStudioSave?.();
+            this.message = `Sequência: ${next.label} — exporte ZIP, PDF ou PPTX.`;
+        },
+
+        newImageStudioDeckPage(name = null, canvas = null) {
+            const n = (this.imageStudioDeckPages?.length || 0);
+
+            return {
+                id: `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                name: name || this.imageStudioDeckPageLabel(n),
+                canvas,
+            };
+        },
+
+        flushImageStudioDeckPage() {
+            if (!this.imageStudioEngine?.canvas) {
+                return;
+            }
+            this.ensureImageStudioDeck();
+            const idx = this.imageStudioDeckPageIndex;
+            const page = this.imageStudioDeckPages[idx];
+            if (!page) {
+                return;
+            }
+            const json = this.imageStudioEngine.toJSON();
+            json.width = this.imageStudioEngine.designWidth;
+            json.height = this.imageStudioEngine.designHeight;
+            page.canvas = json;
+        },
+
+        async loadImageStudioDeckPage(index) {
+            this.ensureImageStudioDeck();
+            const page = this.imageStudioDeckPages[index];
+            if (!page || !this.imageStudioEngine) {
+                return;
+            }
+            this.imageStudioDeckPageIndex = index;
+            if (page.canvas) {
+                try {
+                    await this.imageStudioEngine.loadFromJSON(page.canvas);
+                } catch {
+                    this.imageStudioEngine.canvas?.clear();
+                    this.imageStudioEngine.setBackgroundColor(this.imageStudioBgColor, this.imageStudioBgTransparency);
+                }
+            } else {
+                this.imageStudioEngine.canvas?.discardActiveObject?.();
+                this.imageStudioEngine.canvas?.clear();
+                this.imageStudioEngine.setBackgroundColor(this.imageStudioBgColor, this.imageStudioBgTransparency);
+                this.imageStudioEngine.pushHistory?.();
+            }
+            this.refreshImageStudioLayers?.();
+            this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+        },
+
+        async selectImageStudioDeckPage(index) {
+            this.ensureImageStudioDeck();
+            if (index === this.imageStudioDeckPageIndex || this.imageStudioDeckBusy) {
+                return;
+            }
+            if (index < 0 || index >= this.imageStudioDeckPages.length) {
+                return;
+            }
+            this.imageStudioDeckBusy = true;
+            try {
+                this.flushImageStudioDeckPage();
+                await this.loadImageStudioDeckPage(index);
+                this.scheduleImageStudioSave?.();
+            } finally {
+                this.imageStudioDeckBusy = false;
+            }
+        },
+
+        async imageStudioDeckAddPage() {
+            if (this.imageStudioDeckBusy) {
+                return;
+            }
+            this.imageStudioDeckBusy = true;
+            try {
+                this.ensureImageStudioDeck();
+                this.flushImageStudioDeckPage();
+                this.imageStudioDeckPages.push(this.newImageStudioDeckPage());
+                await this.loadImageStudioDeckPage(this.imageStudioDeckPages.length - 1);
+                this.scheduleImageStudioSave?.();
+                this.message = `${this.imageStudioDeckPageLabel(this.imageStudioDeckPages.length - 1)} adicionado.`;
+            } finally {
+                this.imageStudioDeckBusy = false;
+            }
+        },
+
+        async imageStudioDeckDuplicatePage() {
+            if (this.imageStudioDeckBusy) {
+                return;
+            }
+            this.imageStudioDeckBusy = true;
+            try {
+                this.ensureImageStudioDeck();
+                this.flushImageStudioDeckPage();
+                const src = this.imageStudioDeckPages[this.imageStudioDeckPageIndex];
+                const copyCanvas = src?.canvas ? JSON.parse(JSON.stringify(src.canvas)) : null;
+                const page = this.newImageStudioDeckPage(`${src?.name || this.imageStudioDeckUnitLabel()} (cópia)`, copyCanvas);
+                const insertAt = this.imageStudioDeckPageIndex + 1;
+                this.imageStudioDeckPages.splice(insertAt, 0, page);
+                await this.loadImageStudioDeckPage(insertAt);
+                this.scheduleImageStudioSave?.();
+                this.message = `${this.imageStudioDeckUnitLabel()} duplicado.`;
+            } finally {
+                this.imageStudioDeckBusy = false;
+            }
+        },
+
+        async imageStudioDeckDeletePage() {
+            this.ensureImageStudioDeck();
+            if (this.imageStudioDeckPages.length <= 1 || this.imageStudioDeckBusy) {
+                return;
+            }
+            if (!confirm(`Excluir este ${this.imageStudioDeckUnitLabel().toLowerCase()} da sequência?`)) {
+                return;
+            }
+            this.imageStudioDeckBusy = true;
+            try {
+                const idx = this.imageStudioDeckPageIndex;
+                this.imageStudioDeckPages.splice(idx, 1);
+                this.imageStudioDeckPages.forEach((page, i) => {
+                    if (this.imageStudioDeckIsAutoName(page.name)) {
+                        page.name = this.imageStudioDeckPageLabel(i);
+                    }
+                });
+                const next = Math.min(idx, this.imageStudioDeckPages.length - 1);
+                await this.loadImageStudioDeckPage(next);
+                this.scheduleImageStudioSave?.();
+                this.message = `${this.imageStudioDeckUnitLabel()} excluído.`;
+            } finally {
+                this.imageStudioDeckBusy = false;
+            }
+        },
+
+        async imageStudioDeckMovePage(delta) {
+            this.ensureImageStudioDeck();
+            if (this.imageStudioDeckBusy) {
+                return;
+            }
+            this.flushImageStudioDeckPage();
+            const from = this.imageStudioDeckPageIndex;
+            const to = from + delta;
+            if (to < 0 || to >= this.imageStudioDeckPages.length) {
+                return;
+            }
+            const pages = this.imageStudioDeckPages;
+            const [item] = pages.splice(from, 1);
+            pages.splice(to, 0, item);
+            this.imageStudioDeckPageIndex = to;
+            this.scheduleImageStudioSave?.();
+        },
+
+        async collectImageStudioDeckExportUrls(kind = 'png') {
+            this.ensureImageStudioDeck();
+            this.flushImageStudioDeckPage();
+            const restoreIdx = this.imageStudioDeckPageIndex;
+            const opts = this.buildImageStudioExportOptions();
+            const urls = [];
+            for (let i = 0; i < this.imageStudioDeckPages.length; i += 1) {
+                await this.loadImageStudioDeckPage(i);
+                const url = await this.imageStudioEngine.exportDesignDataUrl(
+                    kind === 'jpg' ? 'jpg' : 'png',
+                    0.92,
+                    null,
+                    true,
+                    opts,
+                );
+                urls.push(url);
+            }
+            await this.loadImageStudioDeckPage(restoreIdx);
+
+            return urls;
         },
 
         onImageStudioUnderlayChange() {
@@ -3985,7 +4620,7 @@ export function imageStudioMethods() {
         },
 
         setImageStudioSidebarTab(tab) {
-            const allowed = ['tools', 'text', 'media', 'bg', 'layers', 'export'];
+            const allowed = ['tools', 'text', 'media', 'bg', 'layers', 'slides', 'export'];
             if (allowed.includes(tab)) {
                 this.imageStudioSidebarTab = tab;
             }

@@ -156,6 +156,7 @@
                 <button type="button" @click="window.dispatchEvent(new Event('mc-open-credits'))" class="text-xs px-3 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800/80">Créditos</button>
                 <button type="button" @click="imageStudioExport('png')" class="text-xs px-3 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white">Baixar PNG</button>
                 <button type="button" @click="imageStudioExport('jpg')" class="text-xs px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700">Baixar JPG</button>
+                <button type="button" @click="imageStudioExport('pptx')" class="text-xs px-3 py-2 rounded-lg bg-violet-800 hover:bg-violet-700 text-white">Baixar PPTX</button>
                 <button type="button" @click="clearImageStudioWorkspace()" class="text-xs px-3 py-2 rounded-lg border border-amber-700/60 text-amber-200 hover:bg-amber-950/40">Limpar workspace</button>
             </div>
         </div>
