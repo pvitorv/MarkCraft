@@ -145,6 +145,9 @@ mkcert*
 # Histórico de progresso particular (só máquina local)
 /docs/HISTORICO_PROGRESSO.md
 
+# Electron desktop shell (cópia pessoal — não versionar no remoto)
+/desktop/
+
 # —— Python / rembg caches ——
 .cache/
 __pycache__/
@@ -155,10 +158,3 @@ venv/
 # —— Frontend local ——
 .turbo/
 .sass-cache/
-
-# Electron desktop shell (deps e instalador locais; código-fonte em desktop/ pode ir)
-/desktop/node_modules/
-/desktop/dist/
-/desktop/*.exe
-/desktop/*.blockmap
-/desktop/dist-portable/
