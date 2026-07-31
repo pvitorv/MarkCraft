@@ -6,19 +6,49 @@
 
 @if($showLayers)
 <div class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
-    <p class="text-xs font-medium text-zinc-300">Camadas</p>
+    <div class="flex items-center justify-between gap-2">
+        <p class="text-xs font-medium text-zinc-300">Camadas</p>
+        <span
+            x-show="imageStudioActiveLayerName"
+            x-cloak
+            class="max-w-[55%] truncate text-[9px] font-semibold uppercase tracking-wide text-violet-300"
+            x-text="'Ativa: ' + imageStudioActiveLayerName"
+            title="Camada em edição"
+        ></span>
+    </div>
     <template x-if="!imageStudioLayers.length">
         <p class="text-[10px] text-zinc-600">Adicione texto, formas ou imagens.</p>
     </template>
-    <template x-for="layer in imageStudioLayers" :key="layer.id">
-        <div class="flex items-center gap-1 rounded bg-zinc-900/80 border border-zinc-800 px-1.5 py-1">
-            <button type="button" @click="imageStudioSelectLayer(layer)" class="flex-1 text-left text-[10px] text-zinc-300 truncate" x-text="layer.name"></button>
-            <button type="button" @click="imageStudioLayerAction(layer, 'visibility')" class="text-[10px] px-1" x-text="layer.visible ? '👁' : '🚫'"></button>
-            <button type="button" @click="imageStudioLayerAction(layer, 'lock')" class="text-[10px] px-1" x-text="layer.locked ? '🔒' : '🔓'"></button>
-            <button type="button" @click="imageStudioLayerAction(layer, 'up')" class="text-[10px] px-1">↑</button>
-            <button type="button" @mousedown.prevent.stop="imageStudioDeleteLayer(layer)" class="text-[10px] px-1 text-red-400" title="Excluir esta camada">×</button>
-        </div>
-    </template>
+    <div x-ref="imageStudioLayersList" class="max-h-[min(42vh,360px)] overflow-y-auto overscroll-contain space-y-1 pr-0.5">
+        <template x-for="layer in imageStudioLayers" :key="layer.id">
+            <div
+                class="studio-layer-row flex items-center gap-1 rounded border px-1.5 py-1 transition"
+                :class="layer.active || layer.id === imageStudioActiveLayerId
+                    ? 'studio-layer-row--active'
+                    : 'border-zinc-800 bg-zinc-900/80'"
+                :data-layer-active="(layer.active || layer.id === imageStudioActiveLayerId) ? '1' : '0'"
+            >
+                <span
+                    class="studio-layer-dot shrink-0"
+                    :class="(layer.active || layer.id === imageStudioActiveLayerId) ? 'studio-layer-dot--on' : ''"
+                    aria-hidden="true"
+                ></span>
+                <button
+                    type="button"
+                    @click="imageStudioSelectLayer(layer)"
+                    class="flex-1 min-w-0 text-left text-[10px] truncate"
+                    :class="(layer.active || layer.id === imageStudioActiveLayerId) ? 'text-violet-100 font-semibold' : 'text-zinc-300'"
+                    :title="layer.name"
+                >
+                    <span x-text="layer.name"></span>
+                </button>
+                <button type="button" @click="imageStudioLayerAction(layer, 'visibility')" class="text-[10px] px-1 shrink-0" x-text="layer.visible ? '👁' : '🚫'"></button>
+                <button type="button" @click="imageStudioLayerAction(layer, 'lock')" class="text-[10px] px-1 shrink-0" x-text="layer.locked ? '🔒' : '🔓'"></button>
+                <button type="button" @click="imageStudioLayerAction(layer, 'up')" class="text-[10px] px-1 shrink-0">↑</button>
+                <button type="button" @mousedown.prevent.stop="imageStudioDeleteLayer(layer)" class="text-[10px] px-1 text-red-400 shrink-0" title="Excluir esta camada">×</button>
+            </div>
+        </template>
+    </div>
 </div>
 
 <div x-show="imageStudioSelectedObject" class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
@@ -55,8 +85,12 @@
                 max="600"
                 step="1"
                 :value="imageStudioObjectScale"
+                @pointerdown="imageStudioBeginControlDrag($event)"
+                @pointerup="imageStudioEndControlDrag()"
+                @pointercancel="imageStudioEndControlDrag()"
+                @change="imageStudioEndControlDrag()"
                 @input="imageStudioSetObjectScale(Number($event.target.value))"
-                class="w-full mt-1 accent-violet-500"
+                class="w-full mt-1 accent-violet-500 is-control-range"
             >
         </label>
         <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectScale"></span>% — arraste os cantos violetas ou use os botões</p>
@@ -78,15 +112,30 @@
                 max="359"
                 step="1"
                 :value="imageStudioObjectAngle"
+                @pointerdown="imageStudioBeginControlDrag($event)"
+                @pointerup="imageStudioEndControlDrag()"
+                @pointercancel="imageStudioEndControlDrag()"
+                @change="imageStudioEndControlDrag()"
                 @input="imageStudioSetObjectAngle(Number($event.target.value))"
-                class="w-full mt-1 accent-violet-500"
+                class="w-full mt-1 accent-violet-500 is-control-range"
             >
         </label>
         <p class="text-[10px] text-zinc-500"><span x-text="imageStudioObjectAngle"></span>°</p>
     </div>
     <label class="text-xs text-zinc-400 block">
         Opacidade
-        <input type="range" min="0" max="100" :value="Math.round((imageStudioSelectedObject?.opacity ?? 1) * 100)" @input="imageStudioObjectOpacity($event.target.value)" class="w-full mt-1">
+        <input
+            type="range"
+            min="0"
+            max="100"
+            :value="Math.round((imageStudioSelectedObject?.opacity ?? 1) * 100)"
+            @pointerdown="imageStudioBeginControlDrag($event)"
+            @pointerup="imageStudioEndControlDrag()"
+            @pointercancel="imageStudioEndControlDrag()"
+            @change="imageStudioEndControlDrag()"
+            @input="imageStudioObjectOpacity($event.target.value)"
+            class="w-full mt-1 is-control-range"
+        >
     </label>
     <div class="flex flex-wrap gap-1 pt-1">
         <button type="button" @click="imageStudioAlignObject('left')" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800">⬅</button>
@@ -114,7 +163,7 @@
             </label>
             <label class="text-[10px] text-zinc-400 block">
                 Espessura do contorno
-                <input type="range" min="0" max="80" step="1" x-model.number="imageStudioShapeStrokeWidth" @input="imageStudioOnShapeStrokeWidthChange()" class="w-full mt-1 accent-violet-500">
+                <input type="range" min="0" max="80" step="1" x-model.number="imageStudioShapeStrokeWidth" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioOnShapeStrokeWidthChange()" class="w-full mt-1 accent-violet-500 is-control-range">
             </label>
         </div>
     </template>

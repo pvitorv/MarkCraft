@@ -297,7 +297,7 @@ function markCraftStudioMethods() {
                     current.width = this.imageStudioEngine.designWidth;
                     current.height = this.imageStudioEngine.designHeight;
                 }
-                localStorage.setItem(this.studioDraftKey, JSON.stringify({
+                const payload = {
                     preset: this.imageStudioPreset || 'custom',
                     width: this.imageStudioEngine.designWidth,
                     height: this.imageStudioEngine.designHeight,
@@ -306,9 +306,51 @@ function markCraftStudioMethods() {
                     deck_page_index: this.imageStudioDeckPageIndex,
                     deck_kind: this.imageStudioDeckKind || 'presentation',
                     saved_at: Date.now(),
-                }));
+                };
+                const raw = JSON.stringify(payload);
+                // localStorage ~5MB; PSD 2500px com várias camadas estoura fácil
+                const maxChars = 4.2 * 1024 * 1024;
+                if (raw.length > maxChars) {
+                    try {
+                        localStorage.removeItem(this.studioDraftKey);
+                    } catch {
+                        /* ignore */
+                    }
+                    const note = ' Rascunho local não gravado (arte grande demais para o navegador) — exporte PNG/PSD para não perder.';
+                    if (this.message && String(this.message).includes('PSD importado')) {
+                        if (!String(this.message).includes('Rascunho local')) {
+                            this.message = `${this.message}${note}`;
+                        }
+                    } else {
+                        this.message = `Arte grande demais para rascunho automático.${note}`;
+                    }
+                    this.error = null;
+
+                    return;
+                }
+                localStorage.setItem(this.studioDraftKey, raw);
             } catch (e) {
-                this.error = e.message || 'Erro ao guardar rascunho local';
+                const quota = e?.name === 'QuotaExceededError'
+                    || e?.code === 22
+                    || /quota/i.test(String(e?.message || ''));
+                if (quota) {
+                    try {
+                        localStorage.removeItem(this.studioDraftKey);
+                    } catch {
+                        /* ignore */
+                    }
+                    const note = 'Rascunho local não gravado (limite do navegador). Exporte o arquivo para não perder o trabalho.';
+                    if (this.message && String(this.message).includes('PSD importado')) {
+                        if (!String(this.message).includes('Rascunho local')) {
+                            this.message = `${this.message} ${note}`;
+                        }
+                        this.error = null;
+                    } else {
+                        this.error = note;
+                    }
+                } else {
+                    this.error = e.message || 'Erro ao guardar rascunho local';
+                }
             } finally {
                 this.imageStudioSaving = false;
             }
@@ -346,9 +388,29 @@ function markCraftStudioMethods() {
                 const ext = format === 'jpeg' ? 'jpg' : (format === 'png_zip' ? 'zip' : format);
                 const kind = this.imageStudioDeckKind || 'kit';
                 const filename = `markcraft-${kind}-${this.imageStudioPreset || 'arte'}.${ext}`;
-                downloadBlob(blob, filename);
-                this.imageStudioLastExport = { filename, format: ext, local: true };
-                this.message = `Baixado: ${filename} — o servidor não guarda sua arte.`;
+                const categoryMap = {
+                    social: 'Instagram',
+                    web: 'Blog',
+                    presentation: 'Apresentacao',
+                };
+                const category = categoryMap[this.imageStudioDeckKind] || 'Outros';
+
+                if (window.markcraftDesktop?.saveExport) {
+                    const buffer = await blob.arrayBuffer();
+                    const saved = await window.markcraftDesktop.saveExport({
+                        filename,
+                        category,
+                        data: Array.from(new Uint8Array(buffer)),
+                    });
+                    this.imageStudioLastExport = { filename, format: ext, local: true, path: saved?.path };
+                    this.message = saved?.path
+                        ? `Salvo em: ${saved.path}`
+                        : `Baixado: ${filename}`;
+                } else {
+                    downloadBlob(blob, filename);
+                    this.imageStudioLastExport = { filename, format: ext, local: true };
+                    this.message = `Baixado: ${filename} — o servidor não guarda sua arte.`;
+                }
             } catch (e) {
                 this.error = e.response?.data?.message || e.message || 'Erro ao exportar';
             } finally {

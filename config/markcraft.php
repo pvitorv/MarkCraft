@@ -32,6 +32,21 @@ return [
 
     'rembg_python' => env('REMBG_PYTHON'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Shell: web (público) | desktop (cópia local — só login → Studio)
+    |--------------------------------------------------------------------------
+    | desktop: sem landing; home redireciona; register só se não houver usuários
+    | (ou MARKCRAFT_ALLOW_REGISTER=true). Sem dependência de MarkCraft online.
+    | Electron em /desktop grava exports em MARKCRAFT_EXPORTS_DIR.
+    */
+    'shell' => [
+        'mode' => env('MARKCRAFT_SHELL', 'web'), // web | desktop
+        'allow_register' => env('MARKCRAFT_ALLOW_REGISTER'), // true|false|null (null = auto)
+        'exports_dir' => env('MARKCRAFT_EXPORTS_DIR', ''), // vazio = ~/MarkCraftExports
+        'app_url' => env('MARKCRAFT_DESKTOP_URL', env('APP_URL', 'http://127.0.0.1:8000')),
+    ],
+
     'donations' => [
         'min_brl' => 2,
         'pix_key' => env('DONATION_PIX_KEY', ''),

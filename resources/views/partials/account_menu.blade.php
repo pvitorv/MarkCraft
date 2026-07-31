@@ -31,8 +31,13 @@
                 <p class="mt-0.5 text-xs text-zinc-400 truncate">{{ Auth::user()->email }}</p>
             </div>
             <div class="p-1.5 text-sm">
-                <a href="{{ route('home') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
-                    Página inicial
+                @unless(!empty($markcraftDesktop))
+                    <a href="{{ route('home') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
+                        Página inicial
+                    </a>
+                @endunless
+                <a href="{{ route('studio') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
+                    Studio
                 </a>
                 <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
                     Perfil · e-mail e senha
@@ -50,5 +55,7 @@
     </div>
 @else
     <a href="{{ route('login') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Entrar</a>
-    <a href="{{ route('register') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-3.5 py-1.5 font-semibold text-zinc-950 hover:bg-teal-400">Criar conta</a>
+    @if(! empty($markcraftAllowsRegister))
+        <a href="{{ route('register') }}" class="mc-cta inline-flex rounded-md bg-teal-500 px-3.5 py-1.5 font-semibold text-zinc-950 hover:bg-teal-400">Criar conta</a>
+    @endif
 @endauth

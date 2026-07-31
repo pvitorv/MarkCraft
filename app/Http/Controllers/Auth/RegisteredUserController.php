@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\MarkCraftShell;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ class RegisteredUserController extends Controller
      */
     public function create(Request $request): View
     {
+        abort_unless(MarkCraftShell::allowsRegister(), 404);
+
         $preset = (string) $request->query('preset', '');
         if ($preset !== '' && preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
             $request->session()->put('markcraft_start_preset', $preset);
@@ -37,6 +40,8 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(MarkCraftShell::allowsRegister(), 404);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -58,6 +63,6 @@ class RegisteredUserController extends Controller
             return redirect()->route('studio', ['preset' => $preset]);
         }
 
-        return redirect()->route('home');
+        return redirect()->route(MarkCraftShell::homeRouteName());
     }
 }

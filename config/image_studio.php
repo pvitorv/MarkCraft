@@ -26,7 +26,7 @@ return [
         ['id' => 'pptx', 'label' => 'PowerPoint (.pptx)', 'ext' => 'pptx', 'mime' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'hint' => 'Abre no Microsoft PowerPoint'],
         ['id' => 'zip', 'label' => 'ZIP (PNG sequência)', 'ext' => 'zip', 'mime' => 'application/zip', 'hint' => 'Kit carrossel redes / frames do site'],
         ['id' => 'svg', 'label' => 'SVG (vetor)', 'ext' => 'svg', 'mime' => 'image/svg+xml', 'hint' => 'CorelDRAW, Affinity, Illustrator'],
-        ['id' => 'psd', 'label' => 'PSD (camadas)', 'ext' => 'psd', 'mime' => 'application/vnd.adobe.photoshop', 'hint' => 'Photoshop, Affinity Photo'],
+        ['id' => 'psd', 'label' => 'PSD (camadas)', 'ext' => 'psd', 'mime' => 'application/vnd.adobe.photoshop', 'hint' => 'Photoshop — também pode importar .psd no Studio'],
         ['id' => 'pdf', 'label' => 'PDF (impressão)', 'ext' => 'pdf', 'mime' => 'application/pdf', 'hint' => 'CorelDRAW, Affinity, impressão'],
         ['id' => 'json', 'label' => 'Projeto Studio (.json)', 'ext' => 'json', 'mime' => 'application/json', 'hint' => 'Reabrir e editar depois'],
     ],

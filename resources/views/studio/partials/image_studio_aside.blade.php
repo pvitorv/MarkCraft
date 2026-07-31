@@ -24,7 +24,7 @@
             <button
                 type="button"
                 @click="setImageStudioSidebarTab('{{ $tab['id'] }}')"
-                class="is-rail-btn"
+                class="is-rail-btn relative"
                 :class="imageStudioSidebarTab === '{{ $tab['id'] }}' ? 'is-rail-btn--active' : ''"
                 title="{{ $tab['label'] }}"
                 :aria-pressed="imageStudioSidebarTab === '{{ $tab['id'] }}'"
@@ -35,6 +35,14 @@
                     @endforeach
                 </svg>
                 <span class="is-rail-label">{{ $tab['label'] }}</span>
+                @if($tab['id'] === 'layers')
+                    <span
+                        x-show="imageStudioActiveLayerId"
+                        x-cloak
+                        class="is-rail-layer-badge"
+                        title="Camada em edição"
+                    ></span>
+                @endif
             </button>
         @endforeach
     </nav>
@@ -54,8 +62,8 @@
                     <button type="button" @click="openImageStudioTemplatesModal()" class="text-[10px] px-2 py-1 rounded bg-fuchsia-900 hover:bg-fuchsia-800 border border-fuchsia-700">Layouts</button>
                     <button type="button" @click="openImageStudioPacksModal()" class="text-[10px] px-2 py-1 rounded bg-amber-900 hover:bg-amber-800 border border-amber-700" title="Pacotes">Pacotes</button>
                     <label class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 cursor-pointer">
-                        + Imagem
-                        <input type="file" accept="image/*" @change="imageStudioUploadImage($event)" class="hidden">
+                        + Imagem / PSD
+                        <input type="file" accept="image/*,.psd,image/vnd.adobe.photoshop" @change="imageStudioUploadImage($event)" class="hidden">
                     </label>
                 </div>
                 <div class="flex flex-wrap gap-1.5 pt-1 border-t border-zinc-800" x-show="imageStudioBrand">
@@ -147,26 +155,26 @@
                 </div>
                 <label class="text-[10px] text-zinc-400 block">
                     Tamanho <span class="text-zinc-500 tabular-nums" x-text="imageStudioTextSize + 'px'"></span>
-                    <input type="range" min="12" max="320" step="1" x-model.number="imageStudioTextSize" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500">
+                    <input type="range" min="12" max="320" step="1" x-model.number="imageStudioTextSize" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500 is-control-range">
                 </label>
                 <div class="flex flex-wrap items-end gap-2">
                     <label class="text-[10px] text-zinc-400 block flex-1 min-w-[10rem]">
                         Espessura contorno
                         <span class="text-zinc-500 tabular-nums" x-text="imageStudioTextStrokeWidth <= 0 ? ' (sem contorno)' : ' (' + imageStudioTextStrokeWidth + 'px)'"></span>
-                        <input type="range" min="0" max="24" step="1" x-model.number="imageStudioTextStrokeWidth" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500">
+                        <input type="range" min="0" max="24" step="1" x-model.number="imageStudioTextStrokeWidth" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500 is-control-range">
                     </label>
                     <button type="button" @click="imageStudioRemoveTextOutline()" class="text-[10px] px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 shrink-0">Sem contorno</button>
                 </div>
                 <label class="text-[10px] text-zinc-400 block">
                     Espaçamento letras
-                    <input type="range" min="-50" max="400" step="5" x-model.number="imageStudioTextCharSpacing" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500">
+                    <input type="range" min="-50" max="400" step="5" x-model.number="imageStudioTextCharSpacing" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioOnTextControlChange()" class="w-full mt-1 accent-violet-500 is-control-range">
                 </label>
                 <label class="text-[10px] text-zinc-400 flex items-center gap-2">
                     <input type="checkbox" x-model="imageStudioTextShadow" @change="imageStudioOnTextControlChange()" class="rounded"> Sombra
                 </label>
                 <div x-show="imageStudioTextShadow" class="grid grid-cols-2 gap-2">
                     <input type="color" x-model="imageStudioTextShadowColor" @input="imageStudioOnTextControlChange()" class="w-full h-8 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">
-                    <input type="range" min="0" max="40" x-model.number="imageStudioTextShadowBlur" @input="imageStudioOnTextControlChange()" class="w-full accent-violet-500" title="Desfoque sombra">
+                    <input type="range" min="0" max="40" x-model.number="imageStudioTextShadowBlur" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioOnTextControlChange()" class="w-full accent-violet-500 is-control-range" title="Desfoque sombra">
                 </div>
             </div>
         </div>
@@ -177,7 +185,7 @@
                 <p class="text-xs font-medium text-zinc-300">Mídia</p>
                 <label class="text-[10px] px-2 py-2 rounded bg-zinc-800 hover:bg-zinc-700 cursor-pointer inline-flex w-full justify-center">
                     + Enviar imagem
-                    <input type="file" accept="image/*" @change="imageStudioUploadImage($event)" class="hidden">
+                    <input type="file" accept="image/*,.psd,image/vnd.adobe.photoshop" @change="imageStudioUploadImage($event)" class="hidden">
                 </label>
             </div>
 
@@ -219,11 +227,11 @@
             <template x-if="imageStudioSelectedObject?.type === 'image'">
                 <div class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
                     <p class="text-[10px] text-violet-400 font-medium">Filtros da imagem</p>
-                    <label class="text-[10px] text-zinc-400 block">Brilho<input type="range" min="0" max="100" x-model.number="imageStudioFilters.brightness" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-                    <label class="text-[10px] text-zinc-400 block">Contraste<input type="range" min="0" max="100" x-model.number="imageStudioFilters.contrast" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-                    <label class="text-[10px] text-zinc-400 block">Saturação<input type="range" min="0" max="100" x-model.number="imageStudioFilters.saturation" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-                    <label class="text-[10px] text-zinc-400 block">Desfoque<input type="range" min="0" max="100" x-model.number="imageStudioFilters.blur" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
-                    <label class="text-[10px] text-zinc-400 block">P&B<input type="range" min="0" max="100" x-model.number="imageStudioFilters.grayscale" @input="imageStudioApplyFilters()" class="w-full mt-1"></label>
+                    <label class="text-[10px] text-zinc-400 block">Brilho<input type="range" min="0" max="100" x-model.number="imageStudioFilters.brightness" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioApplyFilters()" class="w-full mt-1 is-control-range"></label>
+                    <label class="text-[10px] text-zinc-400 block">Contraste<input type="range" min="0" max="100" x-model.number="imageStudioFilters.contrast" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioApplyFilters()" class="w-full mt-1 is-control-range"></label>
+                    <label class="text-[10px] text-zinc-400 block">Saturação<input type="range" min="0" max="100" x-model.number="imageStudioFilters.saturation" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioApplyFilters()" class="w-full mt-1 is-control-range"></label>
+                    <label class="text-[10px] text-zinc-400 block">Desfoque<input type="range" min="0" max="100" x-model.number="imageStudioFilters.blur" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioApplyFilters()" class="w-full mt-1 is-control-range"></label>
+                    <label class="text-[10px] text-zinc-400 block">P&B<input type="range" min="0" max="100" x-model.number="imageStudioFilters.grayscale" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="imageStudioApplyFilters()" class="w-full mt-1 is-control-range"></label>
                     <button type="button" @click="imageStudioClearFilters()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-400 hover:text-white">Limpar filtros</button>
                 </div>
             </template>
@@ -239,7 +247,7 @@
                 </label>
                 <label class="text-xs text-zinc-400 block">
                     Transparência
-                    <input type="range" min="0" max="100" x-model.number="imageStudioBgTransparency" @input="onImageStudioBgChange()" class="w-full mt-2">
+                    <input type="range" min="0" max="100" x-model.number="imageStudioBgTransparency" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="onImageStudioBgChange()" class="w-full mt-2 is-control-range">
                     <span class="text-[10px] text-zinc-500" x-text="imageStudioBgTransparency + '%'"></span>
                 </label>
                 <div class="pt-2 border-t border-zinc-800 space-y-2" x-show="(slides || []).length > 0">
@@ -367,6 +375,7 @@
         {{-- Export + ponte Blog --}}
         <div x-show="imageStudioSidebarTab === 'export'" x-cloak class="space-y-3">
             @include('studio.partials.image_studio_sidebar_panels', ['mode' => 'export'])
+            @unless(!empty($markcraftDesktop))
             <div class="rounded-xl border border-teal-500/30 bg-teal-950/20 p-3 space-y-2">
                 <p class="text-xs font-medium text-teal-200">Próximo passo · {{ $blogName }}</p>
                 <p class="text-[10px] text-zinc-400 leading-snug">Monte a arte aqui e continue no painel do Blog — posts, afiliados e Image Studio no mesmo fluxo.</p>
@@ -387,6 +396,13 @@
                     </a>
                 @endif
             </div>
+            @endunless
+            @if(!empty($markcraftDesktop))
+            <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 space-y-1">
+                <p class="text-xs font-medium text-emerald-200">Modo desktop</p>
+                <p class="text-[10px] text-zinc-400 leading-snug">Sem landing · só login → Studio. Com Electron, exports vão para a pasta pai <code class="text-emerald-300">MarkCraftExports</code>.</p>
+            </div>
+            @endif
         </div>
     </div>
 </aside>

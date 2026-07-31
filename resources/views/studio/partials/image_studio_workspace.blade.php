@@ -58,7 +58,7 @@
                     <span class="studio-toolbar-label">Zoom</span>
                     <div class="studio-zoom-row">
                         <button type="button" @click="imageStudioZoomOut()" title="Diminuir">−</button>
-                        <input type="range" min="8" max="400" step="1" x-model.number="imageStudioZoom" @input="imageStudioSetZoomPercent(imageStudioZoom)">
+                        <input type="range" min="8" max="400" step="1" x-model.number="imageStudioZoom" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @input="imageStudioSetZoomPercent(imageStudioZoom)">
                         <button type="button" @click="imageStudioZoomIn()" title="Aumentar">+</button>
                         <span class="tabular-nums" x-text="imageStudioZoom + '%'"></span>
                         <button type="button" class="studio-btn" @click="imageStudioZoomReset()">100%</button>
@@ -95,8 +95,8 @@
                     aria-hidden="true"
                 >
                     <div class="rounded-xl border border-emerald-400/70 bg-zinc-950/90 px-5 py-4 text-center shadow-xl">
-                        <p class="text-sm font-semibold text-emerald-200">Solte a imagem aqui</p>
-                        <p class="mt-1 text-[11px] text-zinc-400">PNG · JPG · WebP · GIF · SVG</p>
+                        <p class="text-sm font-semibold text-emerald-200">Solte a imagem ou PSD aqui</p>
+                        <p class="mt-1 text-[11px] text-zinc-400">PNG · JPG · WebP · GIF · SVG · PSD (Photoshop)</p>
                     </div>
                 </div>
                 <div

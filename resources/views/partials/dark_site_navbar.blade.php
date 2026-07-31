@@ -5,16 +5,21 @@
 @php
     $tools = config('markcraft.tools', []);
     $isStudio = $context === 'studio';
+    $desktop = ! empty($markcraftDesktop);
 @endphp
 
 <header class="sticky top-0 z-[500] border-b border-white/5 bg-[#07090c]/90 backdrop-blur-md">
     <div class="mx-auto {{ $isStudio ? 'max-w-[1600px] px-3' : 'max-w-6xl px-4' }} py-3 flex items-center justify-between gap-3">
-        <a href="{{ route('home') }}" class="mc-brand text-lg sm:text-xl font-extrabold text-white tracking-tight shrink-0 relative z-[501]">
+        <a href="{{ $desktop ? route('studio') : route('home') }}" class="mc-brand text-lg sm:text-xl font-extrabold text-white tracking-tight shrink-0 relative z-[501]">
             MarkCraft
-            <span class="ms-1.5 sm:ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-teal-300/90 border border-teal-500/30 px-1.5 py-0.5">CriaSys</span>
+            @if($desktop)
+                <span class="ms-1.5 sm:ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-emerald-300/90 border border-emerald-500/30 px-1.5 py-0.5">Desktop</span>
+            @else
+                <span class="ms-1.5 sm:ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-teal-300/90 border border-teal-500/30 px-1.5 py-0.5">CriaSys</span>
+            @endif
         </a>
 
-        @if($isStudio)
+        @if($isStudio && ! $desktop)
             <div class="hidden xl:flex flex-1 min-w-0 max-w-sm mx-2 items-center">
                 <a
                     href="{{ config('markcraft.blog.url') }}"
@@ -32,7 +37,7 @@
 
         {{-- Desktop / large tablet landscape --}}
         <nav class="hidden lg:flex flex-wrap items-center justify-end gap-1.5 xl:gap-2 text-sm text-zinc-300 relative z-[501]">
-            @if($isStudio)
+            @if($isStudio && ! $desktop)
                 <a href="{{ route('home') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Início</a>
                 @foreach($tools as $slug => $tool)
                     <button
@@ -49,13 +54,17 @@
                 @endforeach
             @endif
             @include('partials.account_menu')
-            @include('partials.hub_shortcut_buttons', ['variant' => 'nav'])
-            @include('partials.studio_nav_button')
+            @unless($desktop)
+                @include('partials.hub_shortcut_buttons', ['variant' => 'nav'])
+                @include('partials.studio_nav_button')
+            @endunless
         </nav>
 
         {{-- Mobile / tablet: Studio neon + hamburger --}}
         <div class="flex lg:hidden items-center gap-2 relative z-[501]">
-            @include('partials.studio_nav_button')
+            @unless($desktop)
+                @include('partials.studio_nav_button')
+            @endunless
             <button
                 type="button"
                 class="mc-burger mc-nav-action !px-0 w-9 border border-white/15 bg-white/[0.04] text-zinc-100 hover:bg-white/[0.08] transition"
@@ -112,17 +121,21 @@
                     </div>
                 </div>
             @else
-                <div class="mb-4 grid grid-cols-2 gap-2">
+                <div class="mb-4 grid grid-cols-{{ !empty($markcraftAllowsRegister) ? '2' : '1' }} gap-2">
                     <a href="{{ route('login') }}" class="rounded-lg border border-white/15 px-3 py-2.5 text-center text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">Entrar</a>
-                    <a href="{{ route('register') }}" class="rounded-lg bg-teal-500 px-3 py-2.5 text-center text-sm font-semibold text-zinc-950 hover:bg-teal-400" @click="closeNav()">Criar conta</a>
+                    @if(! empty($markcraftAllowsRegister))
+                        <a href="{{ route('register') }}" class="rounded-lg bg-teal-500 px-3 py-2.5 text-center text-sm font-semibold text-zinc-950 hover:bg-teal-400" @click="closeNav()">Criar conta</a>
+                    @endif
                 </div>
             @endauth
 
             <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Navegação</p>
             <div class="space-y-1 mb-4">
-                <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">
-                    Página inicial
-                </a>
+                @unless($desktop)
+                    <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">
+                        Página inicial
+                    </a>
+                @endunless
                 @auth
                     <a href="{{ route('studio') }}" class="mc-studio-neon flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold text-[#39ff14]" @click="closeNav()">
                         Abrir Studio
@@ -134,48 +147,50 @@
                 @endauth
             </div>
 
-            <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Ferramentas</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-                @foreach($tools as $slug => $tool)
+            @unless($desktop)
+                <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Ferramentas</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                    @foreach($tools as $slug => $tool)
+                        <button
+                            type="button"
+                            class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left hover:border-teal-400/40"
+                            @click="openTool('{{ $slug }}')"
+                        >
+                            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-teal-500/10 text-teal-300">
+                                @include('partials.tool_icon', ['icon' => $tool['icon'] ?? 'link', 'size' => 18])
+                            </span>
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-zinc-100">{{ $tool['name'] }}</span>
+                                <span class="block text-[11px] text-zinc-500 truncate">{{ $tool['blurb'] }}</span>
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+
+                <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Hub</p>
+                <div class="grid grid-cols-2 gap-2">
                     <button
                         type="button"
-                        class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left hover:border-teal-400/40"
-                        @click="openTool('{{ $slug }}')"
+                        class="flex items-center gap-2.5 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-3 text-left"
+                        @click="openHub('packs')"
                     >
-                        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-teal-500/10 text-teal-300">
-                            @include('partials.tool_icon', ['icon' => $tool['icon'] ?? 'link', 'size' => 18])
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300">
+                            @include('partials.tool_icon', ['icon' => 'packs', 'size' => 18])
                         </span>
-                        <span class="min-w-0">
-                            <span class="block text-sm font-semibold text-zinc-100">{{ $tool['name'] }}</span>
-                            <span class="block text-[11px] text-zinc-500 truncate">{{ $tool['blurb'] }}</span>
-                        </span>
+                        <span class="text-sm font-semibold text-amber-100">Packs</span>
                     </button>
-                @endforeach
-            </div>
-
-            <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Hub</p>
-            <div class="grid grid-cols-2 gap-2">
-                <button
-                    type="button"
-                    class="flex items-center gap-2.5 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-3 text-left"
-                    @click="openHub('packs')"
-                >
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-500/15 text-amber-300">
-                        @include('partials.tool_icon', ['icon' => 'packs', 'size' => 18])
-                    </span>
-                    <span class="text-sm font-semibold text-amber-100">Packs</span>
-                </button>
-                <button
-                    type="button"
-                    class="mc-shortcut-neon-shock flex items-center gap-2.5 rounded-xl px-3 py-3 text-left"
-                    @click="openHub('apoiar')"
-                >
-                    <span class="mc-hub-icon inline-flex h-9 w-9 items-center justify-center rounded-lg border">
-                        @include('partials.tool_icon', ['icon' => 'heart', 'size' => 18])
-                    </span>
-                    <span class="mc-shortcut-label text-sm font-semibold">Apoiar</span>
-                </button>
-            </div>
+                    <button
+                        type="button"
+                        class="mc-shortcut-neon-shock flex items-center gap-2.5 rounded-xl px-3 py-3 text-left"
+                        @click="openHub('apoiar')"
+                    >
+                        <span class="mc-hub-icon inline-flex h-9 w-9 items-center justify-center rounded-lg border">
+                            @include('partials.tool_icon', ['icon' => 'heart', 'size' => 18])
+                        </span>
+                        <span class="mc-shortcut-label text-sm font-semibold">Apoiar</span>
+                    </button>
+                </div>
+            @endunless
             <button
                 type="button"
                 class="mt-3 w-full rounded-xl border border-zinc-700 px-3 py-2.5 text-left text-sm text-zinc-300 hover:bg-zinc-900"

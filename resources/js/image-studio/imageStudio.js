@@ -18,6 +18,97 @@ import {
     controlsUtils,
 } from 'fabric';
 
+/**
+ * Trava overflow dos pais durante arraste (range / alças Fabric).
+ * Sem isso, overflow-y:auto da sidebar e do canvas rouba o gesto.
+ */
+let studioScrollLockItems = null;
+
+function unlockStudioScrollDuringDrag() {
+    if (!studioScrollLockItems) {
+        return;
+    }
+    studioScrollLockItems.forEach((item) => {
+        item.node.style.overflow = item.overflow;
+        item.node.style.overflowX = item.overflowX;
+        item.node.style.overflowY = item.overflowY;
+        item.node.style.touchAction = item.touchAction;
+        item.node.classList.remove('is-scroll-locked');
+        try {
+            item.node.scrollTop = item.scrollTop;
+            item.node.scrollLeft = item.scrollLeft;
+        } catch {
+            /* ignore */
+        }
+    });
+    studioScrollLockItems = null;
+    document.documentElement.classList.remove('is-studio-drag-lock');
+    document.body.classList.remove('is-studio-drag-lock');
+}
+
+function lockStudioScrollDuringDrag(fromEl) {
+    if (!studioScrollLockItems) {
+        const roots = new Set();
+        let el = fromEl && fromEl.nodeType === 1 ? fromEl : null;
+        while (el) {
+            const cs = window.getComputedStyle(el);
+            if (/(auto|scroll|overlay)/.test(cs.overflowY) || /(auto|scroll|overlay)/.test(cs.overflowX)) {
+                roots.add(el);
+            }
+            el = el.parentElement;
+        }
+        document.querySelectorAll('.is-canvas-dropzone, .is-sidebar-drawer').forEach((node) => roots.add(node));
+        studioScrollLockItems = [];
+        roots.forEach((node) => {
+            studioScrollLockItems.push({
+                node,
+                overflow: node.style.overflow,
+                overflowX: node.style.overflowX,
+                overflowY: node.style.overflowY,
+                touchAction: node.style.touchAction,
+                scrollTop: node.scrollTop,
+                scrollLeft: node.scrollLeft,
+            });
+            node.style.overflow = 'hidden';
+            node.style.overflowX = 'hidden';
+            node.style.overflowY = 'hidden';
+            node.style.touchAction = 'none';
+            node.classList.add('is-scroll-locked');
+        });
+        document.documentElement.classList.add('is-studio-drag-lock');
+        document.body.classList.add('is-studio-drag-lock');
+    }
+
+    const onEnd = () => {
+        window.removeEventListener('pointerup', onEnd, true);
+        window.removeEventListener('pointercancel', onEnd, true);
+        window.removeEventListener('mouseup', onEnd, true);
+        window.removeEventListener('touchend', onEnd, true);
+        unlockStudioScrollDuringDrag();
+    };
+    window.addEventListener('pointerup', onEnd, true);
+    window.addEventListener('pointercancel', onEnd, true);
+    window.addEventListener('mouseup', onEnd, true);
+    window.addEventListener('touchend', onEnd, true);
+}
+
+function installStudioRangeScrollLock() {
+    if (typeof document === 'undefined' || document.__markcraftRangeScrollLock) {
+        return;
+    }
+    document.__markcraftRangeScrollLock = true;
+    document.addEventListener('pointerdown', (e) => {
+        const t = e.target;
+        if (!(t instanceof HTMLInputElement) || t.type !== 'range') {
+            return;
+        }
+        if (!t.closest('.studio-shell, .is-workspace-row, .is-sidebar-drawer, .studio-canvas-toolbar')) {
+            return;
+        }
+        lockStudioScrollDuringDrag(t);
+    }, true);
+}
+
 /** Controles padrão do Fabric — tamanho visual normal (não inflar as bolinhas). */
 InteractiveFabricObject.ownDefaults = {
     ...(InteractiveFabricObject.ownDefaults || {}),
@@ -129,7 +220,7 @@ function installCornerHitFix(canvas, getViewportZoom) {
         return setup(e, target, alreadySelected);
     };
 }
-import { writePsdBuffer } from 'ag-psd';
+import { writePsdBuffer, readPsd } from 'ag-psd';
 import { jsPDF } from 'jspdf';
 import PptxGenJS from 'pptxgenjs';
 import JSZip from 'jszip';
@@ -624,8 +715,18 @@ export class ImageStudioEngine {
         this.canvas.on('selection:cleared', () => this.notifyChange());
         this.canvas.on('object:moving', (e) => this.handleObjectMoving(e));
         this.canvas.on('text:changed', () => this.emitChange(false));
-        this.canvas.on('mouse:down', () => this.canvas?.calcOffset());
-        this.canvas.on('mouse:up', () => this.canvas?.calcOffset());
+        this.canvas.on('mouse:down', (opt) => {
+            this.canvas?.calcOffset();
+            // Escala / rotação / mover: trava scroll da área do canvas e da sidebar
+            if (opt?.target || opt?.transform) {
+                const host = this.canvas?.wrapperEl || this.scaleWrapper || this.canvasEl;
+                lockStudioScrollDuringDrag(host);
+            }
+        });
+        this.canvas.on('mouse:up', () => {
+            this.canvas?.calcOffset();
+            unlockStudioScrollDuringDrag();
+        });
         this.canvas.on('after:render', () => {
             this.drawGridOverlay();
             this.drawFormatGuidesOverlay();
@@ -1205,15 +1306,30 @@ export class ImageStudioEngine {
         if (!this.canvas) {
             return [];
         }
+
+        const active = this.canvas.getActiveObject();
+        const selected = new Set();
+        if (active) {
+            const nested = typeof active.getObjects === 'function'
+                ? active.getObjects()
+                : (active._objects || null);
+            if (Array.isArray(nested) && nested.length) {
+                nested.forEach((obj) => selected.add(obj));
+            } else {
+                selected.add(active);
+            }
+        }
+
         return [...this.canvas.getObjects()]
             .filter((obj) => !obj.criasysGuide && !obj.criasysCropGuide)
             .reverse()
             .map((obj, idx) => ({
-                id: obj.criasysId || obj.type + '_' + idx,
-                name: obj.name || obj.type || 'Camada',
+                id: obj.criasysId || `${obj.type || 'layer'}_${idx}`,
+                name: obj.name || obj.type || `Camada ${idx + 1}`,
                 type: obj.type,
                 visible: obj.visible !== false,
                 locked: obj.selectable === false,
+                active: selected.has(obj),
                 object: obj,
             }));
     }
@@ -2296,6 +2412,198 @@ export class ImageStudioEngine {
         this.emitChange();
     }
 
+    /**
+     * Importa Photoshop (.psd): cada camada com bitmap vira imagem no Fabric.
+     * Grupos são percorridos; textos/smart objects entram como raster da camada (fidelidade visual).
+     * MVP: não reconstrói tipografia nativa 100% editável do PS.
+     */
+    async importPsdFromArrayBuffer(buffer, options = {}) {
+        if (!this.canvas || !buffer) {
+            throw new Error('Canvas ou arquivo PSD inválido');
+        }
+
+        const {
+            replaceWorkspace = true,
+            backgroundColor = '#ffffff',
+        } = options;
+
+        let psd;
+        try {
+            psd = readPsd(buffer);
+        } catch (e) {
+            throw new Error(e?.message || 'Não foi possível ler o PSD (arquivo corrompido ou não suportado)');
+        }
+
+        const w = Math.max(1, Math.round(Number(psd.width) || this.designWidth || 1080));
+        const h = Math.max(1, Math.round(Number(psd.height) || this.designHeight || 1080));
+
+        const flatLayers = [];
+        const walk = (nodes) => {
+            if (!Array.isArray(nodes)) {
+                return;
+            }
+            nodes.forEach((node) => {
+                if (!node) {
+                    return;
+                }
+                if (Array.isArray(node.children) && node.children.length) {
+                    walk(node.children);
+
+                    return;
+                }
+                const c = node.canvas;
+                if (c && c.width > 0 && c.height > 0) {
+                    flatLayers.push(node);
+                }
+            });
+        };
+        walk(psd.children);
+
+        this.historyPaused = true;
+        try {
+            if (replaceWorkspace) {
+                this.cancelCropMode?.(false);
+                this.canvas.discardActiveObject();
+                this.canvas.clear();
+                this.setSize(w, h);
+                this.setBackgroundColor(backgroundColor, 0);
+            }
+
+            // children do ag-psd: topo → fundo (como no painel do PS). Fabric: último add = topo.
+            const ordered = flatLayers.slice().reverse();
+            let added = 0;
+
+            for (const layer of ordered) {
+                // eslint-disable-next-line no-await-in-loop
+                const ok = await this.addPsdLayerAsImage(layer);
+                if (ok) {
+                    added += 1;
+                }
+            }
+
+            if (added === 0 && psd.canvas) {
+                await this.addPsdLayerAsImage({
+                    name: 'Composição PSD',
+                    canvas: psd.canvas,
+                    left: 0,
+                    top: 0,
+                    opacity: 1,
+                    hidden: false,
+                });
+                added = 1;
+            }
+
+            if (added === 0) {
+                throw new Error('O PSD não tem camadas com imagem utilizável');
+            }
+
+            this.canvas.discardActiveObject();
+            this.canvas.requestRenderAll();
+        } finally {
+            this.historyPaused = false;
+            this.pushHistory();
+            this.emitChange();
+        }
+
+        return {
+            width: w,
+            height: h,
+            layers: flatLayers.length || 1,
+        };
+    }
+
+    /**
+     * ag-psd usa opacidade 0–1. Alguns exports legados usam 0–255.
+     */
+    normalizePsdOpacity(raw) {
+        if (raw == null || Number.isNaN(Number(raw))) {
+            return 1;
+        }
+        const n = Number(raw);
+        if (n > 1) {
+            return Math.max(0, Math.min(1, n / 255));
+        }
+
+        return Math.max(0, Math.min(1, n));
+    }
+
+    async addPsdLayerAsImage(layer) {
+        if (!layer?.canvas || !this.canvas) {
+            return false;
+        }
+        if (!(layer.canvas.width > 0) || !(layer.canvas.height > 0)) {
+            return false;
+        }
+
+        let dataUrl;
+        try {
+            dataUrl = layer.canvas.toDataURL('image/png');
+        } catch {
+            return false;
+        }
+
+        const img = await FabricImage.fromURL(dataUrl, { crossOrigin: 'anonymous' });
+        const left = Number.isFinite(layer.left) ? layer.left : 0;
+        const top = Number.isFinite(layer.top) ? layer.top : 0;
+        let opacity = this.normalizePsdOpacity(layer.opacity);
+        const fillOpacity = layer.fillOpacity ?? layer.blending?.fillOpacity;
+        if (fillOpacity != null && !Number.isNaN(Number(fillOpacity))) {
+            opacity *= this.normalizePsdOpacity(fillOpacity);
+        }
+
+        const props = {
+            originX: 'left',
+            originY: 'top',
+            left,
+            top,
+            opacity,
+            visible: layer.hidden !== true,
+            name: layer.name || 'Camada PSD',
+            criasysId: `psd_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            criasysFromPsd: true,
+        };
+
+        const gco = this.mapPsdBlendModeToComposite(layer.blendMode);
+        if (gco) {
+            props.globalCompositeOperation = gco;
+        }
+
+        img.set(props);
+        this.configureSelectableObject(img);
+        this.canvas.add(img);
+
+        return true;
+    }
+
+    /** Mapeia blend modes comuns do PSD → globalCompositeOperation do canvas. */
+    mapPsdBlendModeToComposite(mode) {
+        const m = String(mode || 'normal').toLowerCase().trim();
+        const map = {
+            normal: null,
+            multiply: 'multiply',
+            screen: 'screen',
+            overlay: 'overlay',
+            darken: 'darken',
+            lighten: 'lighten',
+            'color dodge': 'color-dodge',
+            'color-dodge': 'color-dodge',
+            'color burn': 'color-burn',
+            'color-burn': 'color-burn',
+            'hard light': 'hard-light',
+            'hard-light': 'hard-light',
+            'soft light': 'soft-light',
+            'soft-light': 'soft-light',
+            difference: 'difference',
+            exclusion: 'exclusion',
+            hue: 'hue',
+            saturation: 'saturation',
+            color: 'color',
+            luminosity: 'luminosity',
+        };
+
+        return Object.prototype.hasOwnProperty.call(map, m) ? map[m] : null;
+    }
+
     applyObjectOpacity(object, opacity) {
         if (!object) {
             return;
@@ -2755,6 +3063,8 @@ export function imageStudioMethods() {
         imageStudioPresetPlatformMap: {},
         imageStudioEngine: null,
         imageStudioLayers: [],
+        imageStudioActiveLayerId: null,
+        imageStudioActiveLayerName: '',
         imageStudioSaving: false,
         imageStudioLastExport: null,
         imageStudioBgColor: '#ffffff',
@@ -2763,6 +3073,9 @@ export function imageStudioMethods() {
         imageStudioUnderlayEnabled: true,
         imageStudioSelectedObject: null,
         imageStudioObjectScale: 100,
+        imageStudioObjectAngle: 0,
+        _imageStudioControlDragging: false,
+        _imageStudioSkipLayerScroll: false,
         imageStudioObjectAngle: 0,
         imageStudioShapeFill: '#ffffff',
         imageStudioShapeStroke: '#ffffff',
@@ -3579,6 +3892,7 @@ export function imageStudioMethods() {
         },
 
         async initImageStudio() {
+            installStudioRangeScrollLock();
             if (!this.imageStudioElements?.length) {
                 const embedded = ImageStudioEngine.readEmbeddedJson('criasys-image-studio-elements');
                 if (Array.isArray(embedded) && embedded.length) {
@@ -3599,6 +3913,7 @@ export function imageStudioMethods() {
             if (this.imageStudioReady && this.imageStudioEngine?.canvas) {
                 this.imageStudioEngine.setScaleWrapper(this.$refs.imageStudioCanvasScaler);
                 this.imageStudioEngine.setFormatGuidesVisible(this.imageStudioShowFormatGuides);
+                this.bindImageStudioEngineOnChange();
                 this.refreshImageStudioLayers();
                 this.fitImageStudioCanvas();
                 return;
@@ -3612,10 +3927,6 @@ export function imageStudioMethods() {
 
             if (!this.imageStudioEngine) {
                 this.imageStudioEngine = new ImageStudioEngine(el);
-                this.imageStudioEngine.onChange = () => {
-                    this.refreshImageStudioLayers();
-                    this.scheduleImageStudioSave();
-                };
             }
 
             this.imageStudioEngine.setScaleWrapper(this.$refs.imageStudioCanvasScaler);
@@ -3624,6 +3935,7 @@ export function imageStudioMethods() {
                 || document.querySelector('meta[name="studio-bg-driver"]')?.getAttribute('content')
                 || 'rembg';
             this.imageStudioEngine.bgRemovalUrl = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || null;
+            this.bindImageStudioEngineOnChange();
 
             await this.loadImageStudioDesign();
 
@@ -4118,6 +4430,24 @@ export function imageStudioMethods() {
             this.imageStudioSelectedObject = raw
                 ? { type: normalizeFabricType(raw), opacity: raw.opacity ?? 1 }
                 : null;
+
+            const activeLayer = (this.imageStudioLayers || []).find((layer) => layer.active)
+                || (this.imageStudioLayers || []).find((layer) => layer.object === raw)
+                || null;
+            this.imageStudioActiveLayerId = activeLayer?.id || null;
+            this.imageStudioActiveLayerName = activeLayer?.name || (raw?.name || '');
+
+            // Com várias camadas, ao clicar na prancheta abre Camadas e destaca a linha.
+            // Não tira o usuário do painel Texto/Mídia se o tipo bate com o que está editando.
+            if (usable && this.imageStudioSidebarTab !== 'layers' && !this._imageStudioSelectingFromLayersPanel) {
+                const layersCount = this.imageStudioLayers?.length || 0;
+                const stayOnText = this.imageStudioSidebarTab === 'text' && isFabricText(usable);
+                const stayOnMedia = this.imageStudioSidebarTab === 'media' && isFabricImage(usable);
+                if (layersCount >= 2 && !stayOnText && !stayOnMedia) {
+                    this.setImageStudioSidebarTab?.('layers');
+                }
+            }
+
             if (raw && isFabricText(raw)) {
                 this._syncingTextUi = true;
                 const st = this.imageStudioEngine.getTextStyleFromObject(raw);
@@ -4159,6 +4489,89 @@ export function imageStudioMethods() {
                     this.imageStudioShapeIsLine = shapeStyle.isLine;
                 }
             }
+            // NÃO scrollIntoView aqui — joga a sidebar inteira e estraga o arraste dos sliders.
+        },
+
+        /**
+         * Só ajusta scroll DENTRO da lista de camadas (nunca dos pais).
+         * Usar só ao escolher outra camada — nunca após slider.
+         */
+        scrollImageStudioActiveLayerIntoView() {
+            if (this._imageStudioControlDragging || this._imageStudioSkipLayerScroll) {
+                return;
+            }
+            const root = this.$refs?.imageStudioLayersList;
+            if (!root) {
+                return;
+            }
+            const el = root.querySelector('[data-layer-active="1"]');
+            if (!el) {
+                return;
+            }
+            const rootRect = root.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            if (elRect.top < rootRect.top) {
+                root.scrollTop -= rootRect.top - elRect.top;
+            } else if (elRect.bottom > rootRect.bottom) {
+                root.scrollTop += elRect.bottom - rootRect.bottom;
+            }
+        },
+
+        bindImageStudioEngineOnChange() {
+            if (!this.imageStudioEngine) {
+                return;
+            }
+            this.imageStudioEngine.onChange = () => {
+                if (this._imageStudioControlDragging || this._imageStudioSkipLayerScroll) {
+                    return;
+                }
+                this.refreshImageStudioLayers();
+                this.scheduleImageStudioSave();
+            };
+        },
+
+        imageStudioBeginControlDrag(event) {
+            this._imageStudioControlDragging = true;
+            this._imageStudioSkipLayerScroll = true;
+            if (this.imageStudioEngine) {
+                this.imageStudioEngine.historyPaused = true;
+            }
+            const target = event?.target;
+            if (target) {
+                try {
+                    target.setPointerCapture?.(event.pointerId);
+                } catch {
+                    /* ignore */
+                }
+                lockStudioScrollDuringDrag(target);
+            }
+        },
+
+        imageStudioEndControlDrag() {
+            if (!this._imageStudioControlDragging) {
+                return;
+            }
+            this._imageStudioControlDragging = false;
+            if (this.imageStudioEngine) {
+                this.imageStudioEngine.historyPaused = false;
+                this.imageStudioEngine.pushHistory();
+            }
+            // Atualiza só números — sem refresh/scroll da lista (era isso que te matava de raiva)
+            this.imageStudioObjectScale = this.imageStudioEngine?.getActiveObjectScalePercent() ?? 100;
+            this.imageStudioObjectAngle = this.imageStudioEngine?.getActiveObjectAngle() ?? 0;
+            const raw = this._imageStudioActiveObject;
+            if (raw) {
+                this.imageStudioSelectedObject = {
+                    type: normalizeFabricType(raw),
+                    opacity: raw.opacity ?? 1,
+                };
+            }
+            this.scheduleImageStudioSave?.();
+            unlockStudioScrollDuringDrag();
+            // Libera a trava no próximo tick, depois de qualquer re-render residual
+            this.$nextTick?.(() => {
+                this._imageStudioSkipLayerScroll = false;
+            });
         },
 
         imageStudioOnShapeFillChange() {
@@ -4192,8 +4605,10 @@ export function imageStudioMethods() {
 
         imageStudioSetObjectScale(percent) {
             this.imageStudioEngine?.setActiveObjectScalePercent(percent);
-            this.imageStudioObjectScale = this.imageStudioEngine?.getActiveObjectScalePercent() ?? 100;
-            this.refreshImageStudioLayers();
+            this.imageStudioObjectScale = Math.round(Number(percent) || 100);
+            if (!this._imageStudioControlDragging) {
+                this.refreshImageStudioLayers();
+            }
         },
 
         imageStudioNudgeObjectScale(delta) {
@@ -4205,7 +4620,9 @@ export function imageStudioMethods() {
         imageStudioSetObjectAngle(degrees) {
             this.imageStudioEngine?.setActiveObjectAngle(degrees);
             this.imageStudioObjectAngle = this.imageStudioEngine?.getActiveObjectAngle() ?? 0;
-            this.refreshImageStudioLayers();
+            if (!this._imageStudioControlDragging) {
+                this.refreshImageStudioLayers();
+            }
         },
 
         imageStudioNudgeObjectAngle(delta) {
@@ -4842,9 +5259,24 @@ export function imageStudioMethods() {
             }
         },
 
+        imageStudioIsPsdFile(file) {
+            if (!file) {
+                return false;
+            }
+            const type = String(file.type || '').toLowerCase();
+            if (type === 'image/vnd.adobe.photoshop' || type === 'application/photoshop' || type === 'application/psd') {
+                return true;
+            }
+
+            return /\.psd$/i.test(file.name || '');
+        },
+
         imageStudioIsImageFile(file) {
             if (!file) {
                 return false;
+            }
+            if (this.imageStudioIsPsdFile(file)) {
+                return true;
             }
             if (file.type && file.type.startsWith('image/')) {
                 return true;
@@ -4896,9 +5328,53 @@ export function imageStudioMethods() {
             }
         },
 
+        async imageStudioImportPsdFile(file) {
+            if (!this.imageStudioIsPsdFile(file)) {
+                return false;
+            }
+            if (!this.imageStudioEngine?.canvas) {
+                await this.initImageStudio();
+            }
+            if (!this.imageStudioEngine?.canvas) {
+                this.error = 'Canvas não carregou — recarregue a página (F5)';
+
+                return false;
+            }
+
+            const hasObjects = (this.imageStudioEngine.canvas.getObjects?.() || []).length > 0;
+            if (hasObjects) {
+                const ok = confirm(
+                    'Importar o PSD redefine a prancheta para o tamanho do arquivo e substitui o conteúdo atual. Continuar?'
+                );
+                if (!ok) {
+                    return false;
+                }
+            }
+
+            this.message = 'Lendo PSD…';
+            const buffer = await file.arrayBuffer();
+            const result = await this.imageStudioEngine.importPsdFromArrayBuffer(buffer, {
+                replaceWorkspace: true,
+                backgroundColor: this.imageStudioBgColor || '#ffffff',
+            });
+
+            this.imageStudioCustomWidth = result.width;
+            this.imageStudioCustomHeight = result.height;
+            this.imageStudioPreset = 'custom';
+            this.refreshImageStudioLayers?.();
+            this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+            this.scheduleImageStudioSave?.();
+            this.message = `PSD importado: ${result.layers} camada(s) · ${result.width}×${result.height}px. Camadas entram como imagens editáveis.`;
+
+            return true;
+        },
+
         async imageStudioAddImageFromFile(file) {
             if (!this.imageStudioIsImageFile(file)) {
                 return false;
+            }
+            if (this.imageStudioIsPsdFile(file)) {
+                return this.imageStudioImportPsdFile(file);
             }
             if (!this.imageStudioEngine?.canvas) {
                 await this.initImageStudio();
@@ -4923,26 +5399,30 @@ export function imageStudioMethods() {
                 this.imageStudioIsImageFile(file)
             );
             if (!files.length) {
-                this.error = 'Solte um arquivo de imagem (PNG, JPG, WebP…)';
+                this.error = 'Solte PNG, JPG, WebP, SVG ou PSD (Photoshop)';
 
                 return;
             }
 
             this.error = '';
             let added = 0;
+            let psdCount = 0;
             try {
                 for (const file of files) {
                     if (await this.imageStudioAddImageFromFile(file)) {
                         added += 1;
+                        if (this.imageStudioIsPsdFile(file)) {
+                            psdCount += 1;
+                        }
                     }
                 }
-                if (added > 0) {
+                if (added > 0 && !psdCount) {
                     this.message = added === 1
                         ? 'Imagem adicionada ao canvas'
                         : `${added} imagens adicionadas ao canvas`;
                 }
             } catch (e) {
-                this.error = e.message || 'Erro ao adicionar imagem';
+                this.error = e.message || 'Erro ao adicionar arquivo';
             }
         },
 
@@ -4951,11 +5431,11 @@ export function imageStudioMethods() {
             if (!file) return;
             try {
                 const ok = await this.imageStudioAddImageFromFile(file);
-                if (ok) {
+                if (ok && !this.imageStudioIsPsdFile(file)) {
                     this.message = 'Imagem adicionada ao canvas';
                 }
             } catch (e) {
-                this.error = e.message || 'Erro ao adicionar imagem';
+                this.error = e.message || 'Erro ao adicionar arquivo';
             } finally {
                 if (event?.target) {
                     event.target.value = '';
@@ -5179,8 +5659,13 @@ export function imageStudioMethods() {
         },
 
         imageStudioSelectLayer(layer) {
+            this._imageStudioSelectingFromLayersPanel = true;
             this.imageStudioEngine?.selectLayer(layer.object);
+            this.setImageStudioSidebarTab?.('layers');
             this.refreshImageStudioLayers();
+            this.$nextTick?.(() => {
+                this._imageStudioSelectingFromLayersPanel = false;
+            });
         },
 
         imageStudioLayerAction(layer, action) {

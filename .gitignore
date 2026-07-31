@@ -135,6 +135,16 @@ mkcert*
 /*.tar.gz
 /*.tgz
 
+# Pack de divulgação (copiar e remover — não faz parte do app)
+/_PACK_DIVULGACAO_MARKCRAFT/
+
+# Kits espelho / handoff (locais — não versionar no remoto)
+/image-studio-kit/
+/01-image-studio-kit/
+
+# Histórico de progresso particular (só máquina local)
+/docs/HISTORICO_PROGRESSO.md
+
 # —— Python / rembg caches ——
 .cache/
 __pycache__/
@@ -145,3 +155,10 @@ venv/
 # —— Frontend local ——
 .turbo/
 .sass-cache/
+
+# Electron desktop shell (deps e instalador locais; código-fonte em desktop/ pode ir)
+/desktop/node_modules/
+/desktop/dist/
+/desktop/*.exe
+/desktop/*.blockmap
+/desktop/dist-portable/
