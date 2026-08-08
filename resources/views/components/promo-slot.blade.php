@@ -1,11 +1,11 @@
 @props([
-    'slot' => 'landing_mid', // chave em config('markcraft.promos')
+    'slot' => 'landing_mid',
 ])
 
 @php
-    $promo = config('markcraft.promos.'.$slot, []);
+    $promo = \App\Support\Cms::promo($slot);
     $enabled = (bool) ($promo['enabled'] ?? false);
-    $url = $promo['url'] ?? config('markcraft.blog.url');
+    $url = $promo['url'] ?? ($cmsBlog['url'] ?? config('markcraft.blog.url'));
 @endphp
 
 @if($enabled)
@@ -26,7 +26,7 @@
         <a
             href="{{ $url }}"
             target="_blank"
-            rel="noopener"
+            rel="noopener sponsored"
             class="mc-cta mt-3 inline-flex rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-teal-400"
         >
             {{ $promo['cta'] ?? 'Saiba mais' }} →

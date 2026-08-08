@@ -16,6 +16,20 @@
             title="Camada em edição"
         ></span>
     </div>
+    <p class="text-[9px] text-zinc-500">Ctrl/Shift+clique na lista para multi-selecionar · Ctrl+G agrupa</p>
+    <div
+        x-show="imageStudioGroupBagCount >= 2"
+        x-cloak
+        class="flex items-center gap-1.5 rounded-lg border border-violet-800/50 bg-violet-950/30 px-2 py-1.5"
+    >
+        <span class="text-[10px] text-violet-200 flex-1" x-text="imageStudioGroupBagCount + ' selecionadas'"></span>
+        <button
+            type="button"
+            @mousedown.prevent.stop="imageStudioGroupSelection()"
+            class="text-[10px] px-2 py-1 rounded bg-violet-800 hover:bg-violet-700 text-white"
+            title="Agrupar (Ctrl+G)"
+        >Agrupar</button>
+    </div>
     <template x-if="!imageStudioLayers.length">
         <p class="text-[10px] text-zinc-600">Adicione texto, formas ou imagens.</p>
     </template>
@@ -35,10 +49,10 @@
                 ></span>
                 <button
                     type="button"
-                    @click="imageStudioSelectLayer(layer)"
+                    @click="imageStudioSelectLayer(layer, $event)"
                     class="flex-1 min-w-0 text-left text-[10px] truncate"
                     :class="(layer.active || layer.id === imageStudioActiveLayerId) ? 'text-violet-100 font-semibold' : 'text-zinc-300'"
-                    :title="layer.name"
+                    :title="layer.name + ' — Ctrl+clique para somar à seleção'"
                 >
                     <span x-text="layer.name"></span>
                 </button>
@@ -54,9 +68,23 @@
 <div x-show="imageStudioSelectedObject" class="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 space-y-2">
     <p class="text-xs font-medium text-zinc-300">Objeto selecionado</p>
     <div class="flex flex-wrap gap-1 pb-2 border-b border-zinc-800">
-        <button type="button" @click="imageStudioDuplicateSelection()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Duplicar">⧉ Dupl.</button>
-        <button type="button" @click="imageStudioFlipSelection('x')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar horizontal">⇋ H</button>
-        <button type="button" @click="imageStudioFlipSelection('y')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar vertical">⇅ V</button>
+        <button type="button" @mousedown.prevent.stop="imageStudioDuplicateSelection()" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Duplicar">⧉ Dupl.</button>
+        <button
+            type="button"
+            @mousedown.prevent.stop="imageStudioGroupSelection()"
+            :disabled="!imageStudioCanGroup && imageStudioGroupBagCount < 2"
+            class="text-[10px] px-2 py-1 rounded bg-violet-900 hover:bg-violet-800 border border-violet-700/60 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Agrupar todas as selecionadas (Ctrl+G). Use mousedown para não perder a seleção."
+        >Agrupar</button>
+        <button
+            type="button"
+            @mousedown.prevent.stop="imageStudioUngroupSelection()"
+            :disabled="!imageStudioCanUngroup"
+            class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Desagrupar (Ctrl+Shift+G)"
+        >Separar</button>
+        <button type="button" @mousedown.prevent.stop="imageStudioFlipSelection('x')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar horizontal">⇋ H</button>
+        <button type="button" @mousedown.prevent.stop="imageStudioFlipSelection('y')" class="text-[10px] px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700" title="Espelhar vertical">⇅ V</button>
         <button type="button" @mousedown.prevent.stop="imageStudioDeleteSelection()" class="text-[10px] px-2 py-1 rounded bg-rose-950 hover:bg-rose-900 border border-rose-800/60 text-rose-100" title="Excluir (Delete)">Excluir</button>
         <template x-if="imageStudioSelectedObject?.type === 'image' && !imageStudioCropping">
             <button type="button" @click="imageStudioStartCrop()" class="text-[10px] px-2 py-1 rounded bg-violet-900 hover:bg-violet-800" title="Recortar imagem">Recortar</button>
@@ -145,16 +173,53 @@
         <button type="button" @click="imageStudioAlignObject('center-v')" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800">↕</button>
         <button type="button" @click="imageStudioAlignObject('bottom')" class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800">⬇</button>
     </div>
-    <template x-if="imageStudioSelectedObject && imageStudioSelectedObject.type !== 'text' && imageStudioSelectedObject.type !== 'image'">
+    <template x-if="imageStudioSelectedObject && imageStudioSelectedObject.type !== 'text' && imageStudioSelectedObject.type !== 'image' && (imageStudioSelectedObject.type !== 'group' || imageStudioCanRecolorSelection)">
         <div class="space-y-2 pt-2 border-t border-zinc-800">
             <p class="text-[10px] text-violet-400 font-medium">Cor & contorno</p>
-            <div class="grid grid-cols-2 gap-2" x-show="!imageStudioShapeIsLine">
-                <label class="text-[10px] text-zinc-400 block">
-                    Preenchimento
-                    <input type="color" x-model="imageStudioShapeFill" @input="imageStudioOnShapeFillChange()" class="w-full mt-1 h-8 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">
-                </label>
-                <div class="flex flex-col justify-end">
-                    <button type="button" @click="imageStudioClearShapeFill()" class="text-[10px] px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Sem preenchimento</button>
+            <p class="text-[9px] text-zinc-500" x-show="imageStudioCanRecolorSelection && imageStudioSelectedObject?.type === 'group'">Elemento / ícone SVG — a cor pinta todas as partes.</p>
+            <div class="space-y-2" x-show="!imageStudioShapeIsLine">
+                <div class="flex flex-wrap gap-1">
+                    <button type="button" @click="imageStudioSetFillMode('solid')" class="text-[10px] px-2 py-1 rounded border" :class="imageStudioFillMode === 'solid' ? 'bg-violet-900 border-violet-600 text-violet-100' : 'bg-zinc-800 border-zinc-700 text-zinc-300'">Sólida</button>
+                    <button type="button" @click="imageStudioSetFillMode('linear')" class="text-[10px] px-2 py-1 rounded border" :class="imageStudioFillMode === 'linear' ? 'bg-violet-900 border-violet-600 text-violet-100' : 'bg-zinc-800 border-zinc-700 text-zinc-300'">Linear</button>
+                    <button type="button" @click="imageStudioSetFillMode('radial')" class="text-[10px] px-2 py-1 rounded border" :class="imageStudioFillMode === 'radial' ? 'bg-violet-900 border-violet-600 text-violet-100' : 'bg-zinc-800 border-zinc-700 text-zinc-300'">Radial</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2" x-show="imageStudioFillMode === 'solid'">
+                    <label class="text-[10px] text-zinc-400 block">
+                        Preenchimento
+                        <input type="color" x-model="imageStudioShapeFill" @input="imageStudioOnShapeFillChange()" class="w-full mt-1 h-8 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">
+                    </label>
+                    <div class="flex flex-col justify-end">
+                        <button type="button" @click="imageStudioClearShapeFill()" class="text-[10px] px-2 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Sem preenchimento</button>
+                    </div>
+                </div>
+                <div class="space-y-2" x-show="imageStudioFillMode === 'linear' || imageStudioFillMode === 'radial'" x-cloak>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="text-[10px] text-zinc-400 block">
+                            Cor A
+                            <input type="color" x-model="imageStudioGradientColorA" @input="imageStudioOnGradientChange()" class="w-full mt-1 h-8 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">
+                        </label>
+                        <label class="text-[10px] text-zinc-400 block">
+                            Cor B
+                            <input type="color" x-model="imageStudioGradientColorB" @input="imageStudioOnGradientChange()" class="w-full mt-1 h-8 rounded bg-zinc-800 border border-zinc-700 cursor-pointer">
+                        </label>
+                    </div>
+                    <label class="text-[10px] text-zinc-400 block" x-show="imageStudioFillMode === 'linear'">
+                        Ângulo <span class="text-zinc-500" x-text="imageStudioGradientAngle + '°'"></span>
+                        <input
+                            type="range"
+                            min="0"
+                            max="360"
+                            step="1"
+                            x-model.number="imageStudioGradientAngle"
+                            @pointerdown="imageStudioBeginControlDrag($event)"
+                            @pointerup="imageStudioEndControlDrag()"
+                            @pointercancel="imageStudioEndControlDrag()"
+                            @change="imageStudioEndControlDrag()"
+                            @input="imageStudioOnGradientChange()"
+                            class="w-full mt-1 accent-violet-500 is-control-range"
+                        >
+                    </label>
+                    <p class="text-[9px] text-zinc-500" x-show="imageStudioFillMode === 'radial'">Radial do centro da forma para a borda.</p>
                 </div>
             </div>
             <label class="text-[10px] text-zinc-400 block">

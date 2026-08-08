@@ -50,6 +50,267 @@ function markCraftStudioMethods() {
         imageStudioShapeFill: DEFAULT_SHAPE_FILL,
         imageStudioShapeStroke: DEFAULT_SHAPE_STROKE,
 
+        desktopWorkspaceModalOpen: false,
+        desktopWorkspaceFolder: null,
+        desktopWorkspaceCwd: null,
+        desktopWorkspaceItems: [],
+        desktopWorkspaceBusy: false,
+        desktopWorkspaceFilter: '',
+
+        isMarkCraftDesktopApp() {
+            return !!(window.markcraftDesktop?.isDesktop);
+        },
+
+        hasDesktopWorkspaceApi() {
+            const d = window.markcraftDesktop;
+            return !!(
+                d?.isDesktop
+                && typeof d.workspacePick === 'function'
+                && typeof d.workspaceBrowse === 'function'
+                && typeof d.workspaceRead === 'function'
+            );
+        },
+
+        desktopWorkspaceApiMissingMessage() {
+            return 'Reinicie o Desktop (cd desktop && npm start) ou Setup ≥1.0.3. O app antigo trava ao abrir PSD pela biblioteca.';
+        },
+
+        /**
+         * workspaceRead → ArrayBuffer. Prefere bytes crus (API v4).
+         * Fallback base64 via fetch (sem atob+loop que congela PSD grande).
+         */
+        async desktopReadToArrayBuffer(read) {
+            if (!read) {
+                throw new Error('Leitura vazia');
+            }
+            const raw = read.bytes;
+            if (raw != null) {
+                if (raw instanceof ArrayBuffer) {
+                    return raw;
+                }
+                if (ArrayBuffer.isView(raw)) {
+                    return raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+                }
+                if (raw.type === 'Buffer' && Array.isArray(raw.data)) {
+                    return Uint8Array.from(raw.data).buffer;
+                }
+                if (Array.isArray(raw)) {
+                    return Uint8Array.from(raw).buffer;
+                }
+            }
+            if (read.base64) {
+                const res = await fetch(`data:application/octet-stream;base64,${read.base64}`);
+
+                return res.arrayBuffer();
+            }
+            throw new Error('Arquivo sem bytes — atualize o Desktop (API v4)');
+        },
+
+        async browseDesktopWorkspace(dir) {
+            if (!this.hasDesktopWorkspaceApi()) {
+                this.error = this.desktopWorkspaceApiMissingMessage();
+                return;
+            }
+            this.desktopWorkspaceBusy = true;
+            try {
+                const res = await window.markcraftDesktop.workspaceBrowse({
+                    dir: dir || this.desktopWorkspaceCwd || undefined,
+                });
+                this.desktopWorkspaceFolder = res?.folder || null;
+                this.desktopWorkspaceCwd = res?.cwd || res?.folder || null;
+                this.desktopWorkspaceItems = Array.isArray(res?.items) ? res.items : [];
+                this.error = null;
+            } catch (e) {
+                this.error = e?.message || 'Não foi possível ler a pasta';
+            } finally {
+                this.desktopWorkspaceBusy = false;
+            }
+        },
+
+        async openDesktopWorkspaceModal() {
+            if (!this.isMarkCraftDesktopApp()) {
+                this.error = 'Só no MarkCraft Desktop.';
+                return;
+            }
+            this.desktopWorkspaceModalOpen = true;
+            if (!this.hasDesktopWorkspaceApi()) {
+                this.error = this.desktopWorkspaceApiMissingMessage();
+                return;
+            }
+            await this.browseDesktopWorkspace();
+            if (!this.desktopWorkspaceFolder) {
+                await this.pickDesktopWorkspaceFolder();
+            }
+        },
+
+        closeDesktopWorkspaceModal() {
+            this.desktopWorkspaceModalOpen = false;
+        },
+
+        async pickDesktopWorkspaceFolder() {
+            if (!this.hasDesktopWorkspaceApi()) {
+                this.error = this.desktopWorkspaceApiMissingMessage();
+                return;
+            }
+            this.desktopWorkspaceBusy = true;
+            try {
+                const picked = await window.markcraftDesktop.workspacePick();
+                if (picked?.canceled) {
+                    return;
+                }
+                this.desktopWorkspaceFolder = picked?.folder || null;
+                this.desktopWorkspaceCwd = this.desktopWorkspaceFolder;
+                await this.browseDesktopWorkspace(this.desktopWorkspaceFolder);
+                this.message = this.desktopWorkspaceFolder
+                    ? `Biblioteca: ${this.desktopWorkspaceFolder}`
+                    : null;
+            } catch (e) {
+                this.error = e?.message || 'Não foi possível escolher a pasta';
+            } finally {
+                this.desktopWorkspaceBusy = false;
+            }
+        },
+
+        desktopWorkspaceBreadcrumb() {
+            const root = this.desktopWorkspaceFolder;
+            const cwd = this.desktopWorkspaceCwd || root;
+            if (!root || !cwd) {
+                return [];
+            }
+            const sep = root.includes('/') && !root.includes('\\') ? '/' : '\\';
+            const rel = String(cwd).slice(String(root).length).replace(/^[\\/]+/, '');
+            const parts = rel ? rel.split(/[\\/]+/).filter(Boolean) : [];
+            const crumbs = [{ name: 'Raiz', path: root }];
+            let cur = root;
+            parts.forEach((part) => {
+                cur = (cur.endsWith('/') || cur.endsWith('\\')) ? (cur + part) : (cur + sep + part);
+                crumbs.push({ name: part, path: cur });
+            });
+
+            return crumbs;
+        },
+
+        desktopWorkspaceGoUp() {
+            const crumbs = this.desktopWorkspaceBreadcrumb();
+            if (crumbs.length < 2) {
+                return;
+            }
+            this.browseDesktopWorkspace(crumbs[crumbs.length - 2].path);
+        },
+
+        desktopWorkspaceGalleryItems() {
+            const q = String(this.desktopWorkspaceFilter || '').trim().toLowerCase();
+            const list = this.desktopWorkspaceItems || [];
+            if (!q) {
+                return list;
+            }
+
+            return list.filter((i) => String(i.name || '').toLowerCase().includes(q));
+        },
+
+        async onDesktopWorkspaceActivate(item) {
+            if (!item || this._desktopOpeningFile || this.desktopWorkspaceBusy) {
+                return;
+            }
+            if (item.type === 'dir' || item.kind === 'folder') {
+                await this.browseDesktopWorkspace(item.path);
+
+                return;
+            }
+            await this.openDesktopWorkspaceFileIntoStudio(item);
+        },
+
+        async ensureDesktopStudioReady() {
+            if (!this.imageStudioEngine?.canvas) {
+                await this.initImageStudio?.();
+            }
+        },
+
+        async openDesktopWorkspaceFileIntoStudio(file) {
+            if (!this.hasDesktopWorkspaceApi() || !file?.path) {
+                this.error = this.desktopWorkspaceApiMissingMessage();
+                return;
+            }
+            if (this._desktopOpeningFile) {
+                return;
+            }
+            this._desktopOpeningFile = true;
+            this.desktopWorkspaceBusy = true;
+            try {
+                await this.ensureDesktopStudioReady();
+                this.message = `Abrindo ${file.name || 'arquivo'}…`;
+                this.error = '';
+                const read = await window.markcraftDesktop.workspaceRead(file.path);
+                const ext = String(read.ext || file.ext || '').toLowerCase();
+
+                // Fecha o modal antes do parse pesado para o UI não parecer travado
+                this.closeDesktopWorkspaceModal();
+                await this.$nextTick?.();
+                await new Promise((r) => setTimeout(r, 40));
+
+                if (ext === '.psd') {
+                    this.message = `Lendo PSD: ${read.name}…`;
+                    const buffer = await this.desktopReadToArrayBuffer(read);
+                    const result = await this.imageStudioEngine.importPsdFromArrayBuffer(buffer, {
+                        replaceWorkspace: true,
+                        backgroundColor: this.imageStudioBgColor || '#ffffff',
+                    });
+                    this.imageStudioCustomWidth = result.width;
+                    this.imageStudioCustomHeight = result.height;
+                    this.imageStudioPreset = 'custom';
+                    this.refreshImageStudioLayers?.();
+                    this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+                    this.scheduleImageStudioSave?.();
+                    this.message = `PSD na prancheta: ${read.name} · ${result.layers} camada(s)`;
+                    return;
+                }
+
+                if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'].includes(ext)) {
+                    let dataUrl = read.dataUrl;
+                    if (!dataUrl) {
+                        const buffer = await this.desktopReadToArrayBuffer(read);
+                        const blob = new Blob([buffer], { type: read.mime || 'application/octet-stream' });
+                        dataUrl = URL.createObjectURL(blob);
+                    }
+                    await this.imageStudioEngine.addImageFromUrl(dataUrl, read.name);
+                    this.refreshImageStudioLayers?.();
+                    this.message = `Arte na prancheta: ${read.name}`;
+                    return;
+                }
+
+                if (ext === '.json') {
+                    const buffer = await this.desktopReadToArrayBuffer(read);
+                    const text = new TextDecoder('utf-8').decode(new Uint8Array(buffer));
+                    const json = JSON.parse(text);
+                    const canvasJson = json.canvas || json;
+                    if (json.width && json.height) {
+                        this.imageStudioCustomWidth = json.width;
+                        this.imageStudioCustomHeight = json.height;
+                    }
+                    if (Array.isArray(json.deck_pages) && json.deck_pages.length) {
+                        this.imageStudioDeckPages = json.deck_pages;
+                        this.imageStudioDeckPageIndex = Math.max(
+                            0,
+                            Math.min(json.deck_page_index ?? 0, json.deck_pages.length - 1),
+                        );
+                    }
+                    await this.imageStudioEngine.loadFromJSON(canvasJson);
+                    this.refreshImageStudioLayers?.();
+                    this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+                    this.message = `Projeto na prancheta: ${read.name}`;
+                    return;
+                }
+
+                this.message = `${read.name} — tipo não suportado na prancheta.`;
+            } catch (e) {
+                this.error = e?.message || 'Falha ao abrir no Studio';
+                this.message = '';
+            } finally {
+                this._desktopOpeningFile = false;
+                this.desktopWorkspaceBusy = false;
+            }
+        },
+
         selectedThumbnailPlatform: null,
         thumbnailSettingsByPlatform: {},
         thumbnailPreviewUrl: null,
@@ -227,9 +488,21 @@ function markCraftStudioMethods() {
         },
 
         async loadImageStudioDesign() {
-            const p = this.resolveImageStudioPresetMeta?.() || { width: 1080, height: 1080 };
-            let w = this.imageStudioCustomWidth || p.width || 1080;
-            let h = this.imageStudioCustomHeight || p.height || 1080;
+            const urlPreset = document
+                .querySelector('meta[name="studio-initial-preset"]')
+                ?.getAttribute('content')
+                ?.trim();
+            const preferUrlPreset = !!urlPreset;
+
+            const p = this.resolveImageStudioPresetMeta?.(preferUrlPreset ? urlPreset : undefined)
+                || this.resolveImageStudioPresetMeta?.()
+                || { width: 1080, height: 1080 };
+            let w = preferUrlPreset
+                ? (p.width || 1080)
+                : (this.imageStudioCustomWidth || p.width || 1080);
+            let h = preferUrlPreset
+                ? (p.height || 1080)
+                : (this.imageStudioCustomHeight || p.height || 1080);
             let canvasJson = null;
 
             try {
@@ -237,32 +510,46 @@ function markCraftStudioMethods() {
                     || localStorage.getItem('markcraft-studio-draft-v2');
                 if (raw) {
                     const draft = JSON.parse(raw);
-                    if (draft?.width && draft?.height) {
-                        w = draft.width;
-                        h = draft.height;
-                    }
-                    if (draft?.preset) {
-                        this.imageStudioPreset = draft.preset;
-                    }
-                    if (Array.isArray(draft?.deck_pages) && draft.deck_pages.length) {
-                        this.imageStudioDeckPages = draft.deck_pages;
-                        this.imageStudioDeckPageIndex = Math.max(
-                            0,
-                            Math.min(draft.deck_page_index ?? 0, draft.deck_pages.length - 1),
-                        );
-                        canvasJson = this.imageStudioDeckPages[this.imageStudioDeckPageIndex]?.canvas || null;
-                    } else {
-                        canvasJson = draft?.canvas || null;
+                    // Atalho da home (?preset=) manda no formato; canvas limpo nesse tamanho.
+                    if (preferUrlPreset) {
+                        this.imageStudioPreset = urlPreset;
+                        canvasJson = null;
                         this.imageStudioDeckPages = [{
                             id: `slide-${Date.now()}`,
                             name: 'Slide 1',
-                            canvas: canvasJson,
+                            canvas: null,
                         }];
                         this.imageStudioDeckPageIndex = 0;
+                    } else {
+                        if (draft?.width && draft?.height) {
+                            w = draft.width;
+                            h = draft.height;
+                        }
+                        if (draft?.preset) {
+                            this.imageStudioPreset = draft.preset;
+                        }
+                        if (Array.isArray(draft?.deck_pages) && draft.deck_pages.length) {
+                            this.imageStudioDeckPages = draft.deck_pages;
+                            this.imageStudioDeckPageIndex = Math.max(
+                                0,
+                                Math.min(draft.deck_page_index ?? 0, draft.deck_pages.length - 1),
+                            );
+                            canvasJson = this.imageStudioDeckPages[this.imageStudioDeckPageIndex]?.canvas || null;
+                        } else {
+                            canvasJson = draft?.canvas || null;
+                            this.imageStudioDeckPages = [{
+                                id: `slide-${Date.now()}`,
+                                name: 'Slide 1',
+                                canvas: canvasJson,
+                            }];
+                            this.imageStudioDeckPageIndex = 0;
+                        }
+                        if (draft?.deck_kind) {
+                            this.imageStudioDeckKind = draft.deck_kind;
+                        }
                     }
-                    if (draft?.deck_kind) {
-                        this.imageStudioDeckKind = draft.deck_kind;
-                    }
+                } else if (preferUrlPreset) {
+                    this.imageStudioPreset = urlPreset;
                 }
             } catch {
                 /* draft inválido */
@@ -497,6 +784,9 @@ document.addEventListener('alpine:init', () => {
             await this.initImageStudio();
             this.imageStudioUnderlayEnabled = false;
             this.imageStudioEngine?.setUnderlayState?.(null, false);
+            if (this.isMarkCraftDesktopApp?.()) {
+                await this.browseDesktopWorkspace?.();
+            }
 
             const startPreset = document
                 .querySelector('meta[name="studio-initial-preset"]')

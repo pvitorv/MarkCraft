@@ -273,7 +273,7 @@
             <button type="button" class="text-zinc-400 hover:text-white text-sm px-2 py-1" @click="closeHub()" aria-label="Fechar">✕</button>
         </div>
         <div class="mt-5 grid gap-2">
-            @foreach(config('markcraft.affiliate_packs', []) as $pack)
+            @foreach(($cmsAffiliatePacks ?? config('markcraft.affiliate_packs', [])) as $pack)
                 <a
                     href="{{ $pack['affiliate_url'] ?: '#' }}"
                     @if(($pack['affiliate_url'] ?? '#') !== '#') target="_blank" rel="noopener" @endif
@@ -310,29 +310,29 @@
                 </span>
                 <div>
                     <h2 id="hub-apoiar-title" class="mc-brand text-xl font-bold text-white">Apoiar o MarkCraft</h2>
-                    <p class="mt-1 text-sm text-zinc-400">Contribuição opcional a partir de R$ {{ number_format(config('markcraft.donations.min_brl', 2), 2, ',', '.') }} — ajuda a manter o studio gratuito no ar.</p>
+                    <p class="mt-1 text-sm text-zinc-400">Contribuição opcional a partir de R$ {{ number_format(($cmsDonations['min_brl'] ?? config('markcraft.donations.min_brl', 2)), 2, ',', '.') }} — ajuda a manter o studio gratuito no ar.</p>
                 </div>
             </div>
             <button type="button" class="text-zinc-400 hover:text-white text-sm px-2 py-1" @click="closeHub()" aria-label="Fechar">✕</button>
         </div>
         <div class="mt-4 space-y-3 text-sm text-zinc-300 leading-relaxed">
-            <p>O MarkCraft é o studio gratuito da família CriaSys. Manter servidores e melhorias tem custo — um “obrigado” opcional ajuda. Para blog, cobrança e o editor no fluxo de conteúdo, use o <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a>.</p>
-            <p class="text-xs text-zinc-500">A vitrine de packs e produtos é da própria linha CriaSys — sem anúncios genéricos de terceiros.</p>
+            <p>O MarkCraft é o studio gratuito da família CriaSys. Manter servidores e melhorias tem custo — um “obrigado” opcional ajuda. Para blog, cobrança e o editor no fluxo de conteúdo, use o <a href="{{ $cmsBlog['url'] ?? '#' }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">{{ $cmsBlog['name'] ?? 'Blog CriaSys Web' }}</a>.</p>
+            <p class="text-xs text-zinc-500">Packs e afiliados controlados no CMS — sem anúncios genéricos soltos.</p>
         </div>
         <div class="mt-6 flex flex-wrap gap-2">
-            @if(config('markcraft.donations.gateway_url'))
-                <a href="{{ config('markcraft.donations.gateway_url') }}" target="_blank" rel="noopener"
+            @if(!empty($cmsDonations['gateway_url']))
+                <a href="{{ $cmsDonations['gateway_url'] }}" target="_blank" rel="noopener"
                    class="inline-flex rounded-md bg-teal-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-teal-400 transition">
-                    Contribuir a partir de R$ 2
+                    Contribuir a partir de R$ {{ number_format($cmsDonations['min_brl'] ?? 2, 2, ',', '.') }}
                 </a>
             @else
                 <button type="button" disabled class="inline-flex rounded-md bg-teal-500/50 px-4 py-2.5 text-sm font-semibold text-zinc-950 cursor-not-allowed">
                     Contribuir a partir de R$ 2
                 </button>
-                <p class="w-full text-[11px] text-zinc-500">Gateway em configuração — defina DONATION_GATEWAY_URL no .env.</p>
+                <p class="w-full text-[11px] text-zinc-500">Configure gateway/PIX no painel CMS.</p>
             @endif
-            @if(config('markcraft.donations.pix_key'))
-                <p class="w-full text-xs text-zinc-400">Pix: <code class="text-teal-200">{{ config('markcraft.donations.pix_key') }}</code></p>
+            @if(!empty($cmsDonations['pix_key']))
+                <p class="w-full text-xs text-zinc-400">Pix: <code class="text-teal-200">{{ $cmsDonations['pix_key'] }}</code></p>
             @endif
         </div>
     </div>

@@ -201,3 +201,77 @@
         </div>
     </div>
 </div>
+
+{{-- Desktop: galeria da pasta no modal (miniaturas + duplo clique) --}}
+<div
+    x-show="isMarkCraftDesktopApp() && desktopWorkspaceModalOpen"
+    x-cloak
+    class="studio-modal studio-modal--glass"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="studio-workspace-title"
+    @keydown.escape.window="desktopWorkspaceModalOpen && closeDesktopWorkspaceModal()"
+>
+    <div class="studio-modal-backdrop studio-modal-backdrop--glass" @click="closeDesktopWorkspaceModal()"></div>
+    <div class="studio-modal-panel studio-modal-panel--glass studio-modal-panel--gallery" @click.stop>
+        <header class="studio-modal-header">
+            <div>
+                <h2 id="studio-workspace-title">Biblioteca no PC</h2>
+                <p class="studio-modal-sub">Veja pastas e miniaturas aqui dentro. Duplo clique na arte/PSD/projeto manda para a prancheta.</p>
+            </div>
+            <button type="button" class="studio-btn" @click="closeDesktopWorkspaceModal()">Fechar</button>
+        </header>
+
+        <div class="studio-gallery-toolbar">
+            <button type="button" class="studio-btn studio-btn-primary" @click="pickDesktopWorkspaceFolder()" :disabled="desktopWorkspaceBusy">Escolher pasta</button>
+            <button type="button" class="studio-btn" @click="desktopWorkspaceGoUp()" :disabled="!desktopWorkspaceFolder || desktopWorkspaceCwd === desktopWorkspaceFolder || desktopWorkspaceBusy">Voltar</button>
+            <div class="studio-workspace-crumbs" x-show="desktopWorkspaceFolder" x-cloak>
+                <template x-for="crumb in desktopWorkspaceBreadcrumb()" :key="crumb.path">
+                    <button type="button" class="studio-workspace-crumb" @click="browseDesktopWorkspace(crumb.path)" x-text="crumb.name"></button>
+                </template>
+            </div>
+            <input type="search" x-model="desktopWorkspaceFilter" placeholder="Filtrar…" class="studio-modal-search studio-gallery-search">
+        </div>
+
+        <p class="studio-gallery-hint" x-show="desktopWorkspaceFolder" x-cloak x-text="desktopWorkspaceCwd"></p>
+        <p class="studio-workspace-warn" x-show="isMarkCraftDesktopApp() && !hasDesktopWorkspaceApi()" x-cloak>
+            Desktop desatualizado — instale o Setup 1.0.2.
+        </p>
+
+        <div class="studio-modal-body studio-gallery-grid">
+            <p x-show="desktopWorkspaceBusy" class="studio-modal-empty">Carregando miniaturas…</p>
+            <template x-if="!desktopWorkspaceBusy && !desktopWorkspaceFolder">
+                <p class="studio-modal-empty">Clique em <strong>Escolher pasta</strong> e selecione a pasta das suas artes.</p>
+            </template>
+            <template x-if="!desktopWorkspaceBusy && desktopWorkspaceFolder && desktopWorkspaceGalleryItems().length === 0">
+                <p class="studio-modal-empty">Pasta vazia.</p>
+            </template>
+            <template x-for="item in desktopWorkspaceGalleryItems()" :key="item.path">
+                <button
+                    type="button"
+                    class="studio-gallery-card"
+                    :class="{
+                        'studio-gallery-card--folder': item.kind === 'folder' || item.type === 'dir',
+                        'studio-gallery-card--psd': item.kind === 'psd',
+                        'studio-gallery-card--project': item.kind === 'project',
+                    }"
+                    @click="(item.kind === 'folder' || item.type === 'dir') && browseDesktopWorkspace(item.path)"
+                    @dblclick.prevent="onDesktopWorkspaceActivate(item)"
+                    :title="item.path"
+                >
+                    <div class="studio-gallery-thumb">
+                        <img x-show="item.thumb" x-cloak :src="item.thumb" alt="" loading="lazy">
+                        <span
+                            x-show="!item.thumb"
+                            x-cloak
+                            class="studio-gallery-badge"
+                            x-text="(item.kind === 'folder' || item.type === 'dir') ? 'PASTA' : (item.kind === 'psd' ? 'PSD' : (item.kind === 'project' ? 'JSON' : ((item.ext || '').replace('.','').toUpperCase() || 'FILE')))"
+                        ></span>
+                    </div>
+                    <span class="studio-gallery-name" x-text="item.name"></span>
+                    <span class="studio-gallery-meta" x-text="(item.kind === 'folder' || item.type === 'dir') ? ((item.childCount || 0) + ' itens · clique') : 'duplo clique → prancheta'"></span>
+                </button>
+            </template>
+        </div>
+    </div>
+</div>

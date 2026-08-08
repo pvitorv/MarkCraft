@@ -1,47 +1,51 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @php
+        $allowsRegister = \App\Support\MarkCraftShell::allowsRegister();
+    @endphp
 
-    <form method="POST" action="{{ route('login') }}">
+    <div class="mb-6">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-400/90">Acesso</p>
+        <h1 class="mc-brand mt-1 text-2xl font-bold text-white">Entrar no MarkCraft</h1>
+        <p class="mt-1.5 text-sm text-zinc-400">Use seu e-mail e senha para abrir o Studio.</p>
+    </div>
+
+    <x-auth-session-status class="mb-4 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-sm text-teal-100" :status="session('status')" />
+
+    <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <label class="mc-auth-label" for="email">E-mail</label>
+            <input id="email" class="mc-auth-input" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="voce@email.com">
+            <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-rose-300" />
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div>
+            <div class="mb-0.5 flex items-center justify-between gap-2">
+                <label class="mc-auth-label !mb-0" for="password">Senha</label>
+                @if (Route::has('password.request'))
+                    <a class="mc-auth-link text-xs" href="{{ route('password.request') }}">Esqueci a senha</a>
+                @endif
+            </div>
+            <input id="password" class="mc-auth-input" type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+            <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-rose-300" />
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+        <label for="remember_me" class="flex items-center gap-2 text-sm text-zinc-400">
+            <input id="remember_me" type="checkbox" name="remember" class="rounded border-zinc-600 bg-zinc-900 text-teal-500 focus:ring-teal-500/40">
+            Manter conectado
+        </label>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="mc-auth-btn mt-2">Entrar</button>
     </form>
+
+    @if ($allowsRegister)
+        <p class="mt-6 text-center text-sm text-zinc-400">
+            Ainda não tem conta?
+            <a
+                href="{{ !empty($startPreset) ? route('register', ['preset' => $startPreset]) : route('register') }}"
+                class="mc-auth-link font-semibold"
+            >Criar conta grátis</a>
+        </p>
+    @endif
 </x-guest-layout>

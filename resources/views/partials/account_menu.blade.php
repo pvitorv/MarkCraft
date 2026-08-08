@@ -39,6 +39,11 @@
                 <a href="{{ route('studio') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
                     Studio
                 </a>
+                @if(Auth::user()->is_admin)
+                    <a href="{{ route('admin.cms.index') }}" class="block rounded-lg px-3 py-2 text-amber-200 hover:bg-amber-500/10" role="menuitem" @click="accountOpen = false">
+                        Painel CMS
+                    </a>
+                @endif
                 <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" role="menuitem" @click="accountOpen = false">
                     Perfil · e-mail e senha
                 </a>

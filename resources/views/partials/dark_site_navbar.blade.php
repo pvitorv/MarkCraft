@@ -20,17 +20,21 @@
         </a>
 
         @if($isStudio && ! $desktop)
-            <div class="hidden xl:flex flex-1 min-w-0 max-w-sm mx-2 items-center">
+            <div class="hidden md:flex flex-1 min-w-0 items-center justify-center gap-2 mx-2">
+                <x-ad-slot key="studio_header_a" />
+                <x-ad-slot key="studio_header_b" />
+            </div>
+            <div class="hidden xl:flex min-w-0 max-w-[14rem] items-center">
                 <a
-                    href="{{ config('markcraft.blog.url') }}"
+                    href="{{ $cmsBlog['url'] ?? config('markcraft.blog.url') }}"
                     target="_blank"
                     rel="noopener"
                     class="truncate text-xs text-zinc-400 hover:text-amber-200 transition"
-                    title="{{ config('markcraft.blog.headline') }}"
+                    title="{{ $cmsBlog['headline'] ?? config('markcraft.blog.headline') }}"
                 >
                     <span class="text-amber-300/90">Blog CriaSys</span>
                     <span class="text-zinc-600"> · </span>
-                    blog + painel + studio no mesmo fluxo →
+                    blog + painel →
                 </a>
             </div>
         @endif

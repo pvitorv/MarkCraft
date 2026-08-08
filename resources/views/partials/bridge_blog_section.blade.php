@@ -1,6 +1,6 @@
 {{-- Mini-copy persuasiva MarkCraft → Blog CriaSys Web (abaixo do hub) --}}
 @php
-    $blog = config('markcraft.blog', []);
+    $blog = $cmsBlog ?? config('markcraft.blog', []);
     $blogName = $blog['name'] ?? 'Blog CriaSys Web';
     $url = trim((string) ($blog['url'] ?? '#'));
     if ($url === '') {

@@ -517,7 +517,7 @@
                     MarkCraft
                 </p>
                 <p class="mc-rise-2 mt-3 sm:mt-4 max-w-md text-base sm:text-lg md:text-xl text-zinc-200 leading-relaxed">
-                    Crie posts, stories e thumbnails no navegador — escolha o formato, edite e exporte. Sem instalar nada.
+                    {{ $cmsHome['hero_blurb'] ?? 'Crie posts, stories e thumbnails no navegador — escolha o formato, edite e exporte. Sem instalar nada.' }}
                 </p>
                 <div class="mc-rise-3 mt-5 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                     @auth
@@ -538,20 +538,22 @@
                 </p>
             </div>
 
-            @include('partials.hero_blog_panel')
+            @if(!empty($cmsHome['show_blog_bridge'] ?? true))
+                @include('partials.hero_blog_panel')
+            @endif
         </div>
     </section>
 
+    @if(!empty($cmsHome['show_format_shortcuts'] ?? true))
     {{-- Atalhos (inspiração Canva: “o que você quer criar”) --}}
     <section class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-12 sm:pb-14">
-        <h2 class="mc-brand text-xl sm:text-2xl md:text-3xl font-bold text-white">O que você quer criar agora?</h2>
+        <h2 class="mc-brand text-xl sm:text-2xl md:text-3xl font-bold text-white">{{ $cmsHome['formats_heading'] ?? 'O que você quer criar agora?' }}</h2>
         <p class="mt-2 max-w-xl text-zinc-400">
-            Escolha um formato e
+            {{ $cmsHome['formats_blurb'] ?? 'Escolha um formato e abra direto no Studio' }}
             @guest
-                <span class="text-teal-300">crie sua conta</span> para abrir no Studio.
-            @else
-                abra direto no Studio.
+                <span class="text-zinc-500">(se precisar, pedimos login na sequência)</span>
             @endguest
+            .
         </p>
 
         <div class="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
@@ -559,20 +561,15 @@
                 @php
                     $isStudioCard = !empty($item['featured']) || ($item['tone'] ?? '') === 'neon';
                     $icon = $item['icon'] ?? 'square';
-                    if ($isStudioCard) {
-                        $href = auth()->check() ? route('studio') : route('login');
-                    } else {
-                        $href = auth()->check()
-                            ? route('studio', ['preset' => $item['preset']])
-                            : route('register', ['preset' => $item['preset']]);
-                    }
+                    // Sempre aponta para o Studio (com preset). Guest → login com URL intended preservada.
+                    $href = $isStudioCard || empty($item['preset'])
+                        ? route('studio')
+                        : route('studio', ['preset' => $item['preset']]);
                 @endphp
                 <a
                     href="{{ $href }}"
                     class="mc-shortcut group block rounded-lg p-3 sm:p-4 text-left {{ $isStudioCard ? 'mc-shortcut-neon' : 'mc-shortcut-neon-blue' }}"
-                    @if($isStudioCard)
-                        @guest title="Entre para abrir o Studio" @endguest
-                    @endif
+                    @guest title="Entre para abrir no Studio com este formato" @endguest
                 >
                     <span class="mc-format-thumb {{ $isStudioCard ? 'text-[#39ff14]' : 'text-sky-300' }}" aria-hidden="true">
                         @if($icon === 'square')
@@ -599,7 +596,9 @@
             @endforeach
         </div>
     </section>
+    @endif
 
+    @if(!empty($cmsHome['show_hub'] ?? true))
     {{-- Ferramentas + produtos CriaSys --}}
     <section class="mx-auto max-w-6xl px-4 pt-4 sm:pt-6 pb-10" id="ferramentas">
         <div>
@@ -632,10 +631,13 @@
             @include('partials.hub_shortcut_buttons', ['variant' => 'grid'])
         </div>
     </section>
+    @endif
 
     @include('partials.social_proof_placeholder')
 
-    @include('partials.bridge_blog_section')
+    @if(!empty($cmsHome['show_blog_bridge'] ?? true))
+        @include('partials.bridge_blog_section')
+    @endif
 
     <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
         <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">Editor de verdade — feito para quem publica</h2>
@@ -651,7 +653,7 @@
             </li>
             <li>
                 <p class="text-sm font-semibold tracking-wide uppercase text-sky-300/90">Próximo nível</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Para blog, afiliados e cobrança no mesmo fluxo: <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a>.</p>
+                <p class="mt-2 text-zinc-300 leading-relaxed">Para blog, afiliados e cobrança no mesmo fluxo: <a href="{{ $cmsBlog['url'] ?? '#' }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">{{ $cmsBlog['name'] ?? 'Blog CriaSys Web' }}</a>.</p>
             </li>
         </ul>
     </section>
@@ -665,19 +667,19 @@
                 Criou a arte. E o resto do funil?
             </p>
             <p class="mt-3 max-w-md text-zinc-400">
-                {{ config('markcraft.blog.blurb') }}
+                {{ $cmsBlog['blurb'] ?? '' }}
             </p>
             <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
                 @php
-                    $blogUrl = trim((string) config('markcraft.blog.url', '#')) ?: '#';
-                    $blogRegister = trim((string) config('markcraft.blog.register_url', $blogUrl)) ?: $blogUrl;
+                    $blogUrl = trim((string) ($cmsBlog['url'] ?? '#')) ?: '#';
+                    $blogRegister = trim((string) ($cmsBlog['register_url'] ?? $blogUrl)) ?: $blogUrl;
                 @endphp
                 <a
                     href="{{ $blogUrl }}"
                     class="mc-cta mc-cta-blog inline-flex justify-center items-center rounded-md px-6 py-3.5 text-base font-semibold"
                     @if($blogUrl !== '#' && !str_starts_with($blogUrl, '#')) target="_blank" rel="noopener" @endif
                 >
-                    {{ config('markcraft.blog.cta') }}
+                    {{ $cmsBlog['cta'] ?? 'Conhecer' }}
                 </a>
                 <a
                     href="{{ $blogRegister }}"
@@ -695,37 +697,13 @@
         </div>
     </section>
 
+    @if(!empty($cmsHome['show_landing_promo'] ?? true))
     <div class="mx-auto max-w-6xl px-4 pb-10">
         <x-promo-slot slot="landing_mid" />
     </div>
+    @endif
 
-    <footer class="border-t border-white/5 bg-[#05070a] text-zinc-400">
-        <div class="mx-auto max-w-6xl px-4 py-10 text-sm">
-            <p class="mc-brand text-lg text-white">MarkCraft</p>
-            <p class="mt-2 max-w-2xl">Studio gratuito da família CriaSys · plataforma completa: <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">Blog CriaSys Web</a></p>
-            <div class="mt-5 flex flex-wrap gap-5">
-                <a href="{{ config('markcraft.blog.url') }}" target="_blank" rel="noopener" class="hover:text-teal-300 transition">Blog CriaSys Web</a>
-                <button type="button" @click="openHub('packs')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
-                    <span class="text-amber-300">@include('partials.tool_icon', ['icon' => 'packs', 'size' => 16])</span>
-                    Packs CriaSys
-                </button>
-                <a href="#ferramentas" class="hover:text-teal-300 transition">Ferramentas</a>
-                <button type="button" @click="openHub('apoiar')" class="inline-flex items-center gap-2 hover:text-teal-300 transition">
-                    <span class="text-rose-300">@include('partials.tool_icon', ['icon' => 'heart', 'size' => 16])</span>
-                    Apoiar
-                </button>
-                <button type="button" @click="openCredits()" class="hover:text-teal-300 transition" id="creditos">
-                    Créditos
-                </button>
-                @guest
-                    <a href="{{ route('register') }}" class="hover:text-teal-300 transition">Criar conta</a>
-                @else
-                    <a href="{{ route('studio') }}" class="hover:text-teal-300 transition">Studio</a>
-                @endguest
-                <span class="text-zinc-600">PSD · PNG · JPG · WebP · SVG · PDF</span>
-            </div>
-        </div>
-    </footer>
+    @include('partials.site_footer')
 
     @include('partials.hub_glass_modals')
 </body>

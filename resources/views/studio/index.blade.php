@@ -13,6 +13,18 @@
     <title>Studio — {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700|dm-sans:400,500&display=swap" rel="stylesheet" />
+    @php
+        $adsenseClient = null;
+        foreach (($cmsAds ?? []) as $adRow) {
+            if (($adRow['mode'] ?? '') === 'adsense' && filled($adRow['adsense_client'] ?? null)) {
+                $adsenseClient = $adRow['adsense_client'];
+                break;
+            }
+        }
+    @endphp
+    @if($adsenseClient)
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $adsenseClient }}" crossorigin="anonymous"></script>
+    @endif
     @vite(['resources/css/app.css', 'resources/css/studio.css', 'resources/js/image-studio/app-studio.js'])
     <style>
         html, body { overflow-x: hidden !important; max-width: 100% !important; }
@@ -148,9 +160,10 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 @unless(!empty($markcraftDesktop))
+                    @if(!empty($cmsStudio['show_blog_bridge_btn'] ?? true))
                     @php
-                        $blogUrl = trim((string) config('markcraft.blog.url', '#')) ?: '#';
-                        $blogName = config('markcraft.blog.name', 'Blog CriaSys Web');
+                        $blogUrl = trim((string) ($cmsBlog['url'] ?? '#')) ?: '#';
+                        $blogName = $cmsBlog['name'] ?? 'Blog CriaSys Web';
                     @endphp
                     <a
                         href="{{ $blogUrl }}"
@@ -159,6 +172,7 @@
                     >
                         Usar no {{ $blogName }}
                     </a>
+                    @endif
                 @endunless
                 <button type="button" @click="window.dispatchEvent(new Event('mc-open-credits'))" class="text-xs px-3 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800/80">Créditos</button>
                 <button type="button" @click="imageStudioExport('png')" class="text-xs px-3 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white">Baixar PNG</button>
@@ -176,9 +190,11 @@
                 @include('studio.partials.image_studio_workspace')
             </div>
             @unless(!empty($markcraftDesktop))
+                @if(!empty($cmsStudio['show_sidebar_promo'] ?? true))
                 <div class="hidden xl:block w-52 shrink-0 sticky top-16 space-y-3">
                     <x-promo-slot slot="studio_sidebar" />
                 </div>
+                @endif
             @endunless
         </div>
     </div>

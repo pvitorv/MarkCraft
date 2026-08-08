@@ -15,9 +15,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.login');
+        $this->captureStartPreset($request);
+
+        return view('auth.login', [
+            'startPreset' => $request->session()->get('markcraft_start_preset'),
+        ]);
     }
 
     /**
@@ -28,6 +32,22 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $preset = (string) $request->session()->pull('markcraft_start_preset', '');
+        if ($preset === '' || ! preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
+            $intended = (string) $request->session()->get('url.intended', '');
+            if ($intended !== '' && preg_match('/[?&]preset=([a-z0-9_]{2,64})/i', $intended, $m)) {
+                $preset = $m[1];
+                // Evita intended genérico sem query depois do redirect explícito
+                $request->session()->forget('url.intended');
+            } else {
+                $preset = '';
+            }
+        }
+
+        if ($preset !== '' && preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
+            return redirect()->route('studio', ['preset' => $preset]);
+        }
 
         return redirect()->intended(MarkCraftShell::homeUrl());
     }
@@ -44,5 +64,20 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect(MarkCraftShell::isDesktop() ? route('login') : '/');
+    }
+
+    /** Preserva preset da query ou da URL intended (atalhos da home). */
+    private function captureStartPreset(Request $request): void
+    {
+        $preset = (string) $request->query('preset', '');
+        if ($preset === '' || ! preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
+            $intended = (string) $request->session()->get('url.intended', '');
+            if ($intended !== '' && preg_match('/[?&]preset=([a-z0-9_]{2,64})/i', $intended, $m)) {
+                $preset = $m[1];
+            }
+        }
+        if ($preset !== '' && preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
+            $request->session()->put('markcraft_start_preset', $preset);
+        }
     }
 }

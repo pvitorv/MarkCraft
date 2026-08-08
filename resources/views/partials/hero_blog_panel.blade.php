@@ -1,6 +1,5 @@
-{{-- Painel secundário no hero: Blog CriaSys (não disputa com o CTA principal) --}}
 @php
-    $blog = config('markcraft.blog', []);
+    $blog = $cmsBlog ?? config('markcraft.blog', []);
     $url = trim((string) ($blog['url'] ?? '#')) ?: '#';
 @endphp
 
@@ -18,7 +17,7 @@
             class="mc-cta-outline mt-4 inline-flex w-full sm:w-auto justify-center rounded-md px-4 py-2 text-sm font-medium transition"
             @if($url !== '#' && !str_starts_with($url, '#')) target="_blank" rel="noopener" @endif
         >
-            Saiba mais sobre o Blog →
+            {{ $blog['cta'] ?? 'Conhecer' }}
         </a>
     </div>
 </div>

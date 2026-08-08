@@ -26,6 +26,11 @@ class RegisteredUserController extends Controller
         $preset = (string) $request->query('preset', '');
         if ($preset !== '' && preg_match('/^[a-z0-9_]{2,64}$/', $preset)) {
             $request->session()->put('markcraft_start_preset', $preset);
+        } else {
+            $intended = (string) $request->session()->get('url.intended', '');
+            if ($intended !== '' && preg_match('/[?&]preset=([a-z0-9_]{2,64})/i', $intended, $m)) {
+                $request->session()->put('markcraft_start_preset', $m[1]);
+            }
         }
 
         return view('auth.register', [

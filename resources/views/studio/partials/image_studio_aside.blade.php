@@ -1,8 +1,8 @@
 {{-- Sidebar estilo Canva: trilho de ícones + gaveta por aba --}}
 @php
-    $blogUrl = trim((string) config('markcraft.blog.url', '#')) ?: '#';
-    $blogRegister = trim((string) config('markcraft.blog.register_url', $blogUrl)) ?: $blogUrl;
-    $blogName = config('markcraft.blog.name', 'Blog CriaSys Web');
+    $blogUrl = trim((string) ($cmsBlog['url'] ?? '#')) ?: '#';
+    $blogRegister = trim((string) ($cmsBlog['register_url'] ?? $blogUrl)) ?: $blogUrl;
+    $blogName = $cmsBlog['name'] ?? 'Blog CriaSys Web';
 @endphp
 <aside
     class="is-workspace-aside is-sidebar-shell w-full lg:w-[320px] shrink-0 flex flex-col sm:flex-row border-b border-zinc-800/80 lg:border-b-0 lg:border-r pb-3 lg:pb-0 lg:pr-1"
@@ -45,6 +45,28 @@
                 @endif
             </button>
         @endforeach
+        {{-- Só Electron: pasta local do PC --}}
+        <button
+            type="button"
+            x-show="isMarkCraftDesktopApp()"
+            x-cloak
+            @click="openDesktopWorkspaceModal()"
+            class="is-rail-btn relative"
+            :class="desktopWorkspaceModalOpen ? 'is-rail-btn--active' : ''"
+            title="Abrir do PC"
+            aria-label="Abrir do PC"
+        >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+            </svg>
+            <span class="is-rail-label">Abrir</span>
+            <span
+                x-show="desktopWorkspaceFolder"
+                x-cloak
+                class="is-rail-layer-badge"
+                title="Biblioteca configurada"
+            ></span>
+        </button>
     </nav>
 
     <div class="is-sidebar-drawer flex-1 min-w-0 overflow-y-auto overscroll-contain space-y-3 p-2 sm:p-3">
@@ -378,7 +400,7 @@
             @unless(!empty($markcraftDesktop))
             <div class="rounded-xl border border-teal-500/30 bg-teal-950/20 p-3 space-y-2">
                 <p class="text-xs font-medium text-teal-200">Próximo passo · {{ $blogName }}</p>
-                <p class="text-[10px] text-zinc-400 leading-snug">Monte a arte aqui e continue no painel do Blog — posts, afiliados e Image Studio no mesmo fluxo.</p>
+                <p class="text-[10px] text-zinc-400 leading-snug">{{ $cmsStudio['aside_blog_blurb'] ?? 'Monte a arte aqui e continue no painel do Blog — posts, afiliados e Image Studio no mesmo fluxo.' }}</p>
                 <a
                     href="{{ $blogUrl }}"
                     class="is-blog-bridge-btn flex w-full items-center justify-center rounded-lg px-3 py-2.5 text-xs font-semibold"
@@ -398,9 +420,14 @@
             </div>
             @endunless
             @if(!empty($markcraftDesktop))
-            <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 space-y-1">
+            <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 space-y-2">
                 <p class="text-xs font-medium text-emerald-200">Modo desktop</p>
-                <p class="text-[10px] text-zinc-400 leading-snug">Sem landing · só login → Studio. Com Electron, exports vão para a pasta pai <code class="text-emerald-300">MarkCraftExports</code>.</p>
+                <p class="text-[10px] text-zinc-400 leading-snug">
+                    Botão <strong class="text-emerald-300">Abrir</strong>: escolha uma pasta no PC e puxe arte, projeto ou PSD para o Studio sem sair do app.
+                </p>
+                <button type="button" class="w-full text-[10px] py-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/50" @click="openDesktopWorkspaceModal()" x-show="isMarkCraftDesktopApp()" x-cloak>
+                    Abrir do PC
+                </button>
             </div>
             @endif
         </div>

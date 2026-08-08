@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\User;
-
 /**
  * Modo web (público) vs desktop (cópia local: login → Studio).
  */
@@ -38,8 +36,9 @@ class MarkCraftShell
     }
 
     /**
-     * No desktop: register só se nenhum usuário existir (bootstrap),
-     * a menos que MARKCRAFT_ALLOW_REGISTER force true/false.
+     * Cadastro público.
+     * - web: sempre liberado
+     * - desktop: liberado por padrão (testes); MARKCRAFT_ALLOW_REGISTER=false fecha
      */
     public static function allowsRegister(): bool
     {
@@ -48,18 +47,15 @@ class MarkCraftShell
         }
 
         $forced = config('markcraft.shell.allow_register');
-        if ($forced === true || $forced === 'true' || $forced === '1' || $forced === 1) {
-            return true;
-        }
         if ($forced === false || $forced === 'false' || $forced === '0' || $forced === 0) {
             return false;
         }
-
-        try {
-            return User::query()->count() === 0;
-        } catch (\Throwable) {
+        if ($forced === true || $forced === 'true' || $forced === '1' || $forced === 1) {
             return true;
         }
+
+        // null / vazio no desktop = aberto (fase de testes com pessoas reais)
+        return true;
     }
 
     /** Categoria de pasta pai para exports no Electron. */

@@ -34,15 +34,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Shell: web (público) | desktop (cópia local — só login → Studio)
+    | Shell: web (público) | desktop (cópia local)
     |--------------------------------------------------------------------------
-    | desktop: sem landing; home redireciona; register só se não houver usuários
-    | (ou MARKCRAFT_ALLOW_REGISTER=true). Sem dependência de MarkCraft online.
+    | web: landing de vendas em `/`.
+    | desktop: SEM landing — `/` vai para login → Studio.
+    | Cadastro no desktop aberto por padrão (MARKCRAFT_ALLOW_REGISTER=false fecha).
     | Electron em /desktop grava exports em MARKCRAFT_EXPORTS_DIR.
     */
     'shell' => [
         'mode' => env('MARKCRAFT_SHELL', 'web'), // web | desktop
-        'allow_register' => env('MARKCRAFT_ALLOW_REGISTER'), // true|false|null (null = auto)
+        'allow_register' => env('MARKCRAFT_ALLOW_REGISTER'), // true|false|null (null no desktop = aberto)
         'exports_dir' => env('MARKCRAFT_EXPORTS_DIR', ''), // vazio = ~/MarkCraftExports
         'app_url' => env('MARKCRAFT_DESKTOP_URL', env('APP_URL', 'http://127.0.0.1:8000')),
     ],

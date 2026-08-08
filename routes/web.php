@@ -7,8 +7,12 @@ use App\Http\Controllers\StudioController;
 use App\Support\MarkCraftShell;
 use Illuminate\Support\Facades\Route;
 
+/*
+| Dois produtos no mesmo código:
+| - web     → página de vendas (landing) no navegador
+| - desktop → SEM landing; só login → Studio
+*/
 if (MarkCraftShell::isDesktop()) {
-    // Cópia local: sem landing — só login → Studio
     Route::get('/', function () {
         return auth()->check()
             ? redirect()->route('studio')
@@ -50,6 +54,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'index'])->name('cms.index');
+    Route::post('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'update'])->name('cms.update');
 });
 
 require __DIR__.'/auth.php';

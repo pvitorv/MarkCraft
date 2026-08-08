@@ -135,10 +135,10 @@ mkcert*
 /*.tar.gz
 /*.tgz
 
-# Pack de divulgação (copiar e remover — não faz parte do app)
+# Packs / kits locais (não versionar)
 /_PACK_DIVULGACAO_MARKCRAFT/
-
-# Kits espelho / handoff (locais — não versionar no remoto)
+/_PACK_INSTALADORES_MARKCRAFT/
+/kitStartTransform/
 /image-studio-kit/
 /01-image-studio-kit/
 

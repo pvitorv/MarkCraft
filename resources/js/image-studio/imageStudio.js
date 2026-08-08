@@ -14,9 +14,22 @@ import {
     filters,
     Shadow,
     ActiveSelection,
+    Group,
     InteractiveFabricObject,
     controlsUtils,
 } from 'fabric';
+
+/** Props customizadas preservadas no JSON / histórico do canvas. */
+const FABRIC_JSON_PROPS = [
+    'name',
+    'criasysId',
+    'criasysGuide',
+    'criasysCropGuide',
+    'criasysSvgIcon',
+    'criasysRecolorable',
+    'criasysLastFill',
+    'criasysTemplateLayer',
+];
 
 /**
  * Trava overflow dos pais durante arraste (range / alças Fabric).
@@ -353,12 +366,199 @@ function isFabricImage(obj) {
     return !!obj && (obj instanceof FabricImage || normalizeFabricType(obj) === 'image');
 }
 
+function isFabricActiveSelection(obj) {
+    return !!obj && (
+        obj instanceof ActiveSelection
+        || normalizeFabricType(obj) === 'activeselection'
+    );
+}
+
+function isFabricGroup(obj) {
+    return !!obj && (
+        obj instanceof Group
+        || normalizeFabricType(obj) === 'group'
+    ) && !isFabricActiveSelection(obj);
+}
+
 function isFabricShape(obj) {
     if (!obj || obj.criasysGuide) {
         return false;
     }
+    if (isFabricActiveSelection(obj) || isFabricGroup(obj)) {
+        return false;
+    }
 
     return !isFabricText(obj) && !isFabricImage(obj);
+}
+
+/** Forma simples OU ícone SVG marcado como recolorível (não todo Group de usuário). */
+function isRecolorableObject(obj) {
+    if (!obj || obj.criasysGuide || obj.criasysCropGuide) {
+        return false;
+    }
+    if (isFabricActiveSelection(obj) || isFabricText(obj) || isFabricImage(obj)) {
+        return false;
+    }
+    if (isFabricGroup(obj)) {
+        return !!(obj.criasysSvgIcon || obj.criasysRecolorable);
+    }
+
+    return isFabricShape(obj);
+}
+
+/** Percorre folhas pintáveis (pula imagem/texto). */
+function forEachPaintLeaf(obj, fn) {
+    if (!obj) {
+        return;
+    }
+    const nested = typeof obj.getObjects === 'function'
+        ? obj.getObjects()
+        : (obj._objects || null);
+    if (Array.isArray(nested) && nested.length) {
+        nested.forEach((child) => forEachPaintLeaf(child, fn));
+        return;
+    }
+    if (isFabricImage(obj) || isFabricText(obj)) {
+        return;
+    }
+    fn(obj);
+}
+
+function findFirstPaintLeaf(obj) {
+    let found = null;
+    forEachPaintLeaf(obj, (leaf) => {
+        if (!found) {
+            found = leaf;
+        }
+    });
+
+    return found;
+}
+
+/**
+ * Aplica fill/stroke numa folha. Em ícones SVG, força fill mesmo se era "none"
+ * (senão o color picker parece não fazer nada).
+ */
+function paintLeafObject(leaf, { fill, stroke, strokeWidth, isLine, forceFill = true } = {}) {
+    if (!leaf) {
+        return;
+    }
+    const type = String(leaf.type || '').toLowerCase();
+    const leafIsLine = type === 'line' || isLine;
+    const updates = {};
+
+    if (!leafIsLine && fill !== undefined) {
+        if (fill === 'transparent' || fill === '') {
+            updates.fill = 'transparent';
+        } else if (fill != null) {
+            updates.fill = fill;
+        }
+    }
+
+    if (strokeWidth != null) {
+        const sw = Math.max(0, parseFloat(strokeWidth) || 0);
+        updates.strokeWidth = sw;
+        if (sw > 0) {
+            updates.stroke = stroke || leaf.stroke || '#ffffff';
+        } else {
+            updates.stroke = null;
+        }
+    } else if (stroke != null && leaf.stroke && leaf.stroke !== 'none') {
+        updates.stroke = stroke;
+    }
+
+    // Sem forceFill: não inventa fill em path que era só stroke — mas ícones usam forceFill=true
+    if (!forceFill && updates.fill !== undefined) {
+        const prev = leaf.fill;
+        const hadNoFill = prev == null || prev === '' || prev === 'none' || prev === 'transparent';
+        const hadStroke = leaf.stroke && leaf.stroke !== 'none' && (parseFloat(leaf.strokeWidth) || 0) > 0;
+        if (hadNoFill && hadStroke && updates.fill !== 'transparent') {
+            updates.stroke = updates.fill;
+            delete updates.fill;
+        }
+    }
+
+    if (Object.keys(updates).length) {
+        leaf.set(updates);
+        leaf.set('dirty', true);
+    }
+}
+
+/** Coords % para degradê linear a partir do ângulo (0° = esquerda→direita). */
+function linearGradientCoordsFromAngle(angleDeg = 0) {
+    const rad = ((Number(angleDeg) || 0) % 360) * (Math.PI / 180);
+    const x = Math.cos(rad);
+    const y = Math.sin(rad);
+
+    return {
+        x1: 0.5 - x / 2,
+        y1: 0.5 - y / 2,
+        x2: 0.5 + x / 2,
+        y2: 0.5 + y / 2,
+    };
+}
+
+function buildShapeGradientFill({ mode = 'linear', colorA, colorB, angle = 90 } = {}) {
+    const a = normalizeColorInput(colorA, '#0d9488');
+    const b = normalizeColorInput(colorB, '#0f172a');
+    const type = mode === 'radial' ? 'radial' : 'linear';
+    const coords = type === 'radial'
+        ? { x1: 0.5, y1: 0.5, r1: 0, x2: 0.5, y2: 0.5, r2: 0.65 }
+        : linearGradientCoordsFromAngle(angle);
+
+    return new Gradient({
+        type,
+        gradientUnits: 'percentage',
+        coords,
+        colorStops: [
+            { offset: 0, color: a },
+            { offset: 1, color: b },
+        ],
+    });
+}
+
+function readShapeFillState(fill) {
+    if (fill == null || fill === '' || fill === 'transparent') {
+        return {
+            mode: 'solid',
+            fill: '',
+            colorA: '#0d9488',
+            colorB: '#0f172a',
+            angle: 90,
+        };
+    }
+
+    if (typeof fill === 'object' && fill && (fill.type === 'linear' || fill.type === 'radial' || Array.isArray(fill.colorStops))) {
+        const stops = Array.isArray(fill.colorStops) ? fill.colorStops : [];
+        const first = stops[0]?.color || '#0d9488';
+        const last = stops[stops.length - 1]?.color || '#0f172a';
+        let angle = 90;
+        if (fill.type === 'linear' && fill.coords) {
+            const { x1 = 0, y1 = 0, x2 = 1, y2 = 0 } = fill.coords;
+            angle = Math.round((Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI);
+            if (angle < 0) {
+                angle += 360;
+            }
+        }
+
+        return {
+            mode: fill.type === 'radial' ? 'radial' : 'linear',
+            fill: normalizeColorInput(first, '#0d9488'),
+            colorA: normalizeColorInput(first, '#0d9488'),
+            colorB: normalizeColorInput(last, '#0f172a'),
+            angle,
+        };
+    }
+
+    const solid = normalizeColorInput(fill, '#ffffff');
+
+    return {
+        mode: 'solid',
+        fill: solid,
+        colorA: solid,
+        colorB: '#0f172a',
+        angle: 90,
+    };
 }
 
 const DEFAULT_FILTER_STATE = {
@@ -759,7 +959,7 @@ export class ImageStudioEngine {
         if (!this.canvas || this.historyPaused) {
             return;
         }
-        const json = JSON.stringify(this.canvas.toJSON());
+        const json = JSON.stringify(this.canvas.toJSON(FABRIC_JSON_PROPS));
         if (this.historyIndex >= 0 && this.history[this.historyIndex] === json) {
             return;
         }
@@ -1247,7 +1447,7 @@ export class ImageStudioEngine {
     }
 
     toJSON() {
-        const base = this.canvas?.toObject?.() ?? this.canvas?.toJSON?.() ?? null;
+        const base = this.canvas?.toObject?.(FABRIC_JSON_PROPS) ?? this.canvas?.toJSON?.(FABRIC_JSON_PROPS) ?? null;
         if (!base) {
             return null;
         }
@@ -1310,10 +1510,11 @@ export class ImageStudioEngine {
         const active = this.canvas.getActiveObject();
         const selected = new Set();
         if (active) {
-            const nested = typeof active.getObjects === 'function'
-                ? active.getObjects()
-                : (active._objects || null);
-            if (Array.isArray(nested) && nested.length) {
+            // ActiveSelection: marca filhos. Grupo permanente: marca o próprio grupo.
+            if (isFabricActiveSelection(active)) {
+                const nested = typeof active.getObjects === 'function'
+                    ? active.getObjects()
+                    : (active._objects || []);
                 nested.forEach((obj) => selected.add(obj));
             } else {
                 selected.add(active);
@@ -1325,7 +1526,7 @@ export class ImageStudioEngine {
             .reverse()
             .map((obj, idx) => ({
                 id: obj.criasysId || `${obj.type || 'layer'}_${idx}`,
-                name: obj.name || obj.type || `Camada ${idx + 1}`,
+                name: obj.name || (isFabricGroup(obj) ? 'Grupo' : (obj.type || `Camada ${idx + 1}`)),
                 type: obj.type,
                 visible: obj.visible !== false,
                 locked: obj.selectable === false,
@@ -1406,6 +1607,368 @@ export class ImageStudioEngine {
         this.emitChange();
 
         return cloned;
+    }
+
+    /**
+     * Objetos candidatas ao agrupamento (ActiveSelection, getActiveObjects, ou lista explícita).
+     */
+    resolveObjectsForGrouping(preferred = null) {
+        if (!this.canvas) {
+            return [];
+        }
+        const uniq = [];
+        const seen = new Set();
+        const push = (obj) => {
+            if (!obj || obj.criasysGuide || obj.criasysCropGuide || seen.has(obj)) {
+                return;
+            }
+            // Não agrupar o próprio ActiveSelection / Group wrapper como membro
+            if (isFabricActiveSelection(obj)) {
+                (obj.getObjects?.() || []).forEach(push);
+                return;
+            }
+            seen.add(obj);
+            uniq.push(obj);
+        };
+
+        if (Array.isArray(preferred) && preferred.length) {
+            preferred.forEach(push);
+        } else {
+            const activeList = typeof this.canvas.getActiveObjects === 'function'
+                ? this.canvas.getActiveObjects()
+                : [];
+            if (activeList.length) {
+                activeList.forEach(push);
+            } else {
+                const active = this.canvas.getActiveObject();
+                if (isFabricActiveSelection(active)) {
+                    (active.getObjects?.() || []).forEach(push);
+                } else if (active) {
+                    push(active);
+                }
+            }
+        }
+
+        return uniq;
+    }
+
+    /** AABB da seleção no plano do canvas (antes de mutar). */
+    getObjectsSceneBounds(objects) {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        let ok = false;
+        (objects || []).forEach((obj) => {
+            try {
+                obj.setCoords?.();
+                const r = obj.getBoundingRect();
+                if (!r) {
+                    return;
+                }
+                minX = Math.min(minX, r.left);
+                minY = Math.min(minY, r.top);
+                maxX = Math.max(maxX, r.left + r.width);
+                maxY = Math.max(maxY, r.top + r.height);
+                ok = true;
+            } catch {
+                /* ignore */
+            }
+        });
+        if (!ok) {
+            return null;
+        }
+
+        return {
+            left: minX,
+            top: minY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY),
+            centerX: (minX + maxX) / 2,
+            centerY: (minY + maxY) / 2,
+        };
+    }
+
+    /**
+     * Sai da ActiveSelection aplicando a matriz correta (objetos ficam no canvas).
+     * NÃO remova do canvas antes de new Group — isso zera transform e “some” a cor.
+     */
+    releaseActiveSelectionToCanvas() {
+        if (!this.canvas) {
+            return;
+        }
+        const active = this.canvas.getActiveObject();
+        if (isFabricActiveSelection(active) && typeof active.removeAll === 'function') {
+            try {
+                active.removeAll();
+            } catch {
+                /* ignore */
+            }
+        }
+        try {
+            this.canvas.discardActiveObject();
+        } catch {
+            /* ignore */
+        }
+    }
+
+    /**
+     * Puxa o grupo de volta se o centro tiver voado para fora da prancheta.
+     */
+    clampObjectCenterToArtboard(obj, padding = 24) {
+        if (!this.canvas || !obj) {
+            return;
+        }
+        const w = this.designWidth || this.canvas.getWidth() || 0;
+        const h = this.designHeight || this.canvas.getHeight() || 0;
+        if (w < 8 || h < 8) {
+            return;
+        }
+        obj.setCoords?.();
+        const c = obj.getCenterPoint?.() || { x: obj.left || 0, y: obj.top || 0 };
+        if (!Number.isFinite(c.x) || !Number.isFinite(c.y)) {
+            return;
+        }
+        // Só move se estiver claramente fora (evita “corrigir” e sumir com o grupo)
+        const outside = c.x < -50 || c.y < -50 || c.x > w + 50 || c.y > h + 50;
+        if (!outside) {
+            return;
+        }
+        const nx = Math.min(w - padding, Math.max(padding, c.x));
+        const ny = Math.min(h - padding, Math.max(padding, c.y));
+        if (typeof obj.setPositionByOrigin === 'function') {
+            obj.setPositionByOrigin({ x: nx, y: ny }, 'center', 'center');
+        } else {
+            obj.set({
+                left: (obj.left || 0) + (nx - c.x),
+                top: (obj.top || 0) + (ny - c.y),
+            });
+        }
+        obj.setCoords?.();
+    }
+
+    /**
+     * Agrupa N objetos preservando posição e cores (Fabric 6/7).
+     * @param {FabricObject[]|null} preferred
+     * @returns {Group|null}
+     */
+    groupObjects(preferred = null) {
+        if (!this.canvas) {
+            return null;
+        }
+        const objects = this.resolveObjectsForGrouping(preferred);
+        if (objects.length < 2) {
+            return null;
+        }
+
+        // Snapshot visual (se algo no Group constructor bagunçar)
+        const paintSnap = objects.map((obj) => ({
+            obj,
+            opacity: obj.opacity,
+            fill: obj.fill,
+            stroke: obj.stroke,
+            strokeWidth: obj.strokeWidth,
+            visible: obj.visible,
+        }));
+
+        this.historyPaused = true;
+        try {
+            // 1) ActiveSelection → plano do canvas (matriz correta)
+            this.releaseActiveSelectionToCanvas();
+
+            // 2) Garantir que cada membro está no canvas (Group.enterGroup precisa disso)
+            objects.forEach((obj) => {
+                if (!obj) {
+                    return;
+                }
+                // Não chamar group.remove manualmente aqui — removeAll da AS já saiu.
+                if (!this.canvas.getObjects().includes(obj)) {
+                    this.canvas.add(obj);
+                }
+                obj.setCoords?.();
+            });
+
+            // 3) new Group ENQUANTO ainda estão no canvas — NÃO canvas.remove antes
+            const group = new Group([...objects], {
+                name: 'Grupo',
+                criasysId: 'group_' + Date.now(),
+                subTargetCheck: false,
+                interactive: false,
+                objectCaching: false,
+            });
+
+            // enterGroup já tirou os filhos do canvas; só adiciona o grupo
+            if (!this.canvas.getObjects().includes(group)) {
+                this.canvas.add(group);
+            }
+
+            // Restaura paint/opacity se algum filho ficou transparente/sujo
+            paintSnap.forEach(({ obj, opacity, fill, stroke, strokeWidth, visible }) => {
+                if (!obj) {
+                    return;
+                }
+                const patch = {};
+                if (obj.opacity !== opacity && opacity != null) {
+                    patch.opacity = opacity;
+                }
+                if (fill !== undefined && obj.fill !== fill) {
+                    patch.fill = fill;
+                }
+                if (stroke !== undefined && obj.stroke !== stroke) {
+                    patch.stroke = stroke;
+                }
+                if (strokeWidth !== undefined && obj.strokeWidth !== strokeWidth) {
+                    patch.strokeWidth = strokeWidth;
+                }
+                if (visible === false) {
+                    patch.visible = false;
+                } else if (obj.visible === false && visible !== false) {
+                    patch.visible = true;
+                }
+                if (Object.keys(patch).length) {
+                    obj.set(patch);
+                    obj.set('dirty', true);
+                }
+            });
+
+            group.set({
+                objectCaching: false,
+                dirty: true,
+                visible: true,
+                opacity: 1,
+            });
+            this.configureSelectableObject(group);
+            // Não marcar grupo de usuário como recolorível (evita painel pintar tudo de branco)
+            group.set('criasysRecolorable', false);
+            group.setCoords?.();
+
+            this.clampObjectCenterToArtboard(group);
+            this.canvas.setActiveObject(group);
+            this.canvas.requestRenderAll();
+        } finally {
+            this.historyPaused = false;
+        }
+
+        this.emitChange();
+        return this.canvas.getActiveObject();
+    }
+
+    /**
+     * Transforma ActiveSelection (2+ camadas) num Group permanente.
+     * @returns {Group|null}
+     */
+    groupActiveSelection() {
+        return this.groupObjects(null);
+    }
+
+    /**
+     * Desfaz um Group → objetos livres + ActiveSelection (posição preservada).
+     * @returns {ActiveSelection|null}
+     */
+    ungroupActiveObject(preferredGroup = null) {
+        if (!this.canvas) {
+            return null;
+        }
+        const active = preferredGroup && isFabricGroup(preferredGroup)
+            ? preferredGroup
+            : this.canvas.getActiveObject();
+        if (!isFabricGroup(active)) {
+            return null;
+        }
+
+        const before = this.getObjectsSceneBounds([active]);
+        this.historyPaused = true;
+        let items = [];
+        try {
+            items = typeof active.removeAll === 'function'
+                ? active.removeAll()
+                : [];
+            try {
+                this.canvas.remove(active);
+            } catch {
+                /* ignore */
+            }
+            if (!items.length) {
+                this.canvas.requestRenderAll();
+                return null;
+            }
+            items.forEach((obj) => {
+                this.configureSelectableObject(obj);
+                if (!obj.criasysId) {
+                    obj.criasysId = (obj.type || 'obj') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                }
+                if (!this.canvas.getObjects().includes(obj)) {
+                    this.canvas.add(obj);
+                }
+                obj.setCoords?.();
+            });
+
+            const after = this.getObjectsSceneBounds(items);
+            if (before && after) {
+                const dx = before.centerX - after.centerX;
+                const dy = before.centerY - after.centerY;
+                if ((Math.abs(dx) > 1 || Math.abs(dy) > 1)
+                    && Number.isFinite(dx) && Number.isFinite(dy)
+                    && Math.abs(dx) < (this.designWidth || 4000)
+                    && Math.abs(dy) < (this.designHeight || 4000)) {
+                    items.forEach((obj) => {
+                        obj.set({
+                            left: (obj.left || 0) + dx,
+                            top: (obj.top || 0) + dy,
+                        });
+                        obj.setCoords?.();
+                    });
+                }
+            }
+
+            const selection = new ActiveSelection(items, { canvas: this.canvas });
+            this.canvas.setActiveObject(selection);
+            this.canvas.requestRenderAll();
+        } finally {
+            this.historyPaused = false;
+        }
+
+        this.emitChange();
+        return this.canvas.getActiveObject();
+    }
+
+    canGroupActiveSelection(preferred = null) {
+        return this.resolveObjectsForGrouping(preferred).length >= 2;
+    }
+
+    canUngroupActiveObject() {
+        return isFabricGroup(this.canvas?.getActiveObject());
+    }
+
+    /**
+     * Monta ActiveSelection a partir de uma lista (ex.: Ctrl+clique nas camadas).
+     */
+    setMultiSelection(objects) {
+        if (!this.canvas) {
+            return null;
+        }
+        const list = this.resolveObjectsForGrouping(objects);
+        this.canvas.discardActiveObject();
+        if (!list.length) {
+            this.canvas.requestRenderAll();
+            this.notifyChange();
+
+            return null;
+        }
+        if (list.length === 1) {
+            this.canvas.setActiveObject(list[0]);
+            this.canvas.requestRenderAll();
+            this.notifyChange();
+
+            return list[0];
+        }
+        list.forEach((obj) => this.configureSelectableObject(obj));
+        const selection = new ActiveSelection(list, { canvas: this.canvas });
+        this.canvas.setActiveObject(selection);
+        this.canvas.requestRenderAll();
+        this.notifyChange();
+
+        return selection;
     }
 
     flipObject(object, axis = 'x') {
@@ -1756,11 +2319,14 @@ export class ImageStudioEngine {
         }
         const { objects, options } = await loadSVGFromURL(url);
         const grouped = util.groupSVGElements(objects, options);
-        const color = spec.fill || '#ffffff';
+        const color = spec.fill || '#0d9488';
         const applyFill = (obj) => {
             if (!obj) return;
-            if (obj._objects?.length) obj._objects.forEach(applyFill);
-            else if (obj.fill && obj.fill !== 'none') obj.set('fill', color);
+            if (obj._objects?.length) {
+                obj._objects.forEach(applyFill);
+                return;
+            }
+            paintLeafObject(obj, { fill: color, forceFill: true });
         };
         applyFill(grouped);
         const size = spec.size || 100;
@@ -1773,6 +2339,9 @@ export class ImageStudioEngine {
             scaleY: scale,
             name: spec.name || 'Ícone',
             criasysId: 'icon_' + Date.now(),
+            criasysSvgIcon: true,
+            criasysRecolorable: true,
+            criasysLastFill: color,
         });
         this.canvas.add(grouped);
         this.configureSelectableObject(grouped);
@@ -2623,44 +3192,108 @@ export class ImageStudioEngine {
     }
 
     getShapeStyleFromObject(obj) {
-        if (!isFabricShape(obj)) {
+        if (!isRecolorableObject(obj)) {
             return null;
         }
-        const isLine = String(obj.type || '').toLowerCase() === 'line';
-        const strokeWidth = Math.max(0, parseFloat(obj.strokeWidth) || 0);
-        let fill = obj.fill;
-        if (fill === null || fill === undefined || fill === 'transparent') {
-            fill = '';
-        } else {
-            fill = normalizeColorInput(fill, '#ffffff');
-        }
+        const leaf = isFabricGroup(obj) ? (findFirstPaintLeaf(obj) || obj) : obj;
+        const isLine = String(leaf.type || '').toLowerCase() === 'line';
+        const strokeWidth = Math.max(0, parseFloat(leaf.strokeWidth) || 0);
+        const fillSource = (obj.criasysLastFill && typeof obj.criasysLastFill === 'string')
+            ? obj.criasysLastFill
+            : leaf.fill;
+        const fillState = readShapeFillState(fillSource);
 
         return {
-            fill,
-            stroke: normalizeColorInput(obj.stroke, '#ffffff'),
+            fill: fillState.fill || obj.criasysLastFill || '#0d9488',
+            fillMode: fillState.mode,
+            gradientColorA: fillState.colorA,
+            gradientColorB: fillState.colorB,
+            gradientAngle: fillState.angle,
+            stroke: normalizeColorInput(leaf.stroke, '#ffffff'),
             strokeWidth,
             isLine,
+            isElementGroup: isFabricGroup(obj),
         };
     }
 
     applyShapePaint(object, style) {
-        if (!isFabricShape(object) || !style) {
+        if (!isRecolorableObject(object) || !style) {
             return;
         }
         const strokeWidth = Math.max(0, parseFloat(style.strokeWidth) || 0);
         const stroke = strokeWidth > 0
             ? normalizeColorInput(style.stroke, '#ffffff')
             : '';
-        const updates = { stroke, strokeWidth };
-
+        const mode = style.fillMode || 'solid';
+        let fill = null;
         if (!style.isLine) {
-            updates.fill = style.fill
-                ? normalizeColorInput(style.fill, '#ffffff')
-                : 'transparent';
+            if (mode === 'linear' || mode === 'radial') {
+                fill = buildShapeGradientFill({
+                    mode,
+                    colorA: style.gradientColorA || style.fill,
+                    colorB: style.gradientColorB,
+                    angle: style.gradientAngle,
+                });
+            } else if (style.fill) {
+                fill = normalizeColorInput(style.fill, '#ffffff');
+            } else {
+                fill = 'transparent';
+            }
         }
 
-        object.set(updates);
-        object.setCoords();
+        if (isFabricGroup(object)) {
+            // Ícones SVG: tintas fill e/ou stroke das folhas sem zerar traço existente
+            forEachPaintLeaf(object, (leaf) => {
+                if (style.isLine) {
+                    return;
+                }
+                const prevFill = leaf.fill;
+                const prevStroke = leaf.stroke;
+                const leafSw = Math.max(0, parseFloat(leaf.strokeWidth) || 0);
+                const hasFill = prevFill != null && prevFill !== '' && prevFill !== 'none' && prevFill !== 'transparent';
+                const hasStroke = prevStroke != null && prevStroke !== '' && prevStroke !== 'none';
+
+                if (fill === 'transparent') {
+                    if (hasFill) {
+                        leaf.set('fill', 'transparent');
+                    }
+                } else if (fill != null) {
+                    if (hasFill || !hasStroke) {
+                        leaf.set('fill', fill);
+                    }
+                    if (hasStroke) {
+                        // Traço acompanha a cor sólida; degradê mantém stroke anterior
+                        leaf.set('stroke', typeof fill === 'string' ? fill : prevStroke);
+                    }
+                    if (!hasFill && !hasStroke) {
+                        leaf.set('fill', fill);
+                    }
+                }
+
+                if (strokeWidth > 0) {
+                    leaf.set({ stroke, strokeWidth });
+                }
+                leaf.set('dirty', true);
+            });
+            if (typeof fill === 'string' && fill && fill !== 'transparent') {
+                object.set('criasysLastFill', fill);
+            } else if (fill === 'transparent') {
+                object.set('criasysLastFill', '');
+            }
+            object.set({ dirty: true, criasysRecolorable: true });
+            object.setCoords?.();
+        } else {
+            const updates = {
+                stroke: strokeWidth > 0 ? stroke : '',
+                strokeWidth,
+            };
+            if (!style.isLine) {
+                updates.fill = fill;
+            }
+            object.set(updates);
+            object.setCoords();
+        }
+
         this.canvas.requestRenderAll();
         this.emitChange();
     }
@@ -3081,6 +3714,14 @@ export function imageStudioMethods() {
         imageStudioShapeStroke: '#ffffff',
         imageStudioShapeStrokeWidth: 0,
         imageStudioShapeIsLine: false,
+        imageStudioFillMode: 'solid',
+        imageStudioGradientColorA: '#0d9488',
+        imageStudioGradientColorB: '#0f172a',
+        imageStudioGradientAngle: 90,
+        imageStudioCanGroup: false,
+        imageStudioCanUngroup: false,
+        imageStudioGroupBagCount: 0,
+        imageStudioCanRecolorSelection: false,
         imageStudioZoom: 100,
         imageStudioShowFormatGuides: true,
         imageStudioBgRemoving: false,
@@ -4411,6 +5052,14 @@ export function imageStudioMethods() {
 
         refreshImageStudioLayers() {
             this.imageStudioLayers = this.imageStudioEngine?.getLayers() || [];
+            this.syncImageStudioGroupBagFromCanvas();
+            if (this._imageStudioGroupBag?.length >= 2) {
+                const bag = new Set(this._imageStudioGroupBag);
+                this.imageStudioLayers = this.imageStudioLayers.map((layer) => ({
+                    ...layer,
+                    active: !!(layer.active || bag.has(layer.object)),
+                }));
+            }
             // Sempre o objeto ativo real do Fabric (não o texto aninhado de uma seleção).
             const active = this.imageStudioEngine?.getActiveObject() || null;
             const usable = active && !active.criasysGuide && !active.criasysCropGuide ? active : null;
@@ -4480,15 +5129,21 @@ export function imageStudioMethods() {
             if (raw && isFabricImage(raw)) {
                 this.imageStudioFilters = this.imageStudioEngine.getFilterState(raw);
             }
-            if (raw && isFabricShape(raw)) {
+            if (raw && isRecolorableObject(raw)) {
                 const shapeStyle = this.imageStudioEngine.getShapeStyleFromObject(raw);
                 if (shapeStyle) {
                     this.imageStudioShapeFill = shapeStyle.fill || '#ffffff';
                     this.imageStudioShapeStroke = shapeStyle.stroke || '#ffffff';
                     this.imageStudioShapeStrokeWidth = shapeStyle.strokeWidth;
                     this.imageStudioShapeIsLine = shapeStyle.isLine;
+                    this.imageStudioFillMode = shapeStyle.fillMode || 'solid';
+                    this.imageStudioGradientColorA = shapeStyle.gradientColorA || shapeStyle.fill || '#0d9488';
+                    this.imageStudioGradientColorB = shapeStyle.gradientColorB || '#0f172a';
+                    this.imageStudioGradientAngle = shapeStyle.gradientAngle ?? 90;
                 }
             }
+            this.imageStudioCanUngroup = this.imageStudioEngine?.canUngroupActiveObject?.() ?? false;
+            this.imageStudioCanRecolorSelection = !!(raw && isRecolorableObject(raw));
             // NÃO scrollIntoView aqui — joga a sidebar inteira e estraga o arraste dos sliders.
         },
 
@@ -4574,17 +5229,70 @@ export function imageStudioMethods() {
             });
         },
 
+        /**
+         * Snapshot da multi-seleção — o clique no painel limpa o Fabric antes do @click.
+         * Usar sempre este bag em Agrupar (mousedown.prevent).
+         */
+        syncImageStudioGroupBagFromCanvas() {
+            const engine = this.imageStudioEngine;
+            if (!engine?.canvas) {
+                this._imageStudioGroupBag = [];
+                this.imageStudioGroupBagCount = 0;
+                this.imageStudioCanGroup = false;
+                return;
+            }
+            const live = engine.resolveObjectsForGrouping?.() || [];
+            // Se o canvas ainda tem multi-seleção, atualiza o bag.
+            // Se o clique no painel zerar a seleção, mantém o bag anterior (>=2).
+            if (live.length >= 1) {
+                this._imageStudioGroupBag = live;
+            } else if (!Array.isArray(this._imageStudioGroupBag)) {
+                this._imageStudioGroupBag = [];
+            } else {
+                // Limpa refs mortas
+                const canvasObjs = engine.canvas.getObjects?.() || [];
+                this._imageStudioGroupBag = this._imageStudioGroupBag.filter((o) => canvasObjs.includes(o));
+            }
+            this.imageStudioGroupBagCount = this._imageStudioGroupBag.length;
+            this.imageStudioCanGroup = this.imageStudioGroupBagCount >= 2
+                || (engine.canGroupActiveSelection?.(this._imageStudioGroupBag) ?? false);
+            this.imageStudioCanUngroup = engine.canUngroupActiveObject?.() ?? false;
+        },
+
         imageStudioOnShapeFillChange() {
+            if (this._imageStudioSkipShapePaint) {
+                return;
+            }
             const obj = this.imageStudioEngine?.getActiveObject();
-            if (!isFabricShape(obj)) {
+            if (!isRecolorableObject(obj)) {
                 return;
             }
             this.imageStudioEngine.applyShapePaint(obj, {
                 fill: this.imageStudioShapeFill,
+                fillMode: this.imageStudioFillMode || 'solid',
+                gradientColorA: this.imageStudioGradientColorA,
+                gradientColorB: this.imageStudioGradientColorB,
+                gradientAngle: this.imageStudioGradientAngle,
                 stroke: this.imageStudioShapeStroke,
                 strokeWidth: this.imageStudioShapeStrokeWidth,
                 isLine: this.imageStudioShapeIsLine,
             });
+        },
+
+        imageStudioSetFillMode(mode) {
+            const next = ['solid', 'linear', 'radial'].includes(mode) ? mode : 'solid';
+            this.imageStudioFillMode = next;
+            if (next !== 'solid' && !this.imageStudioGradientColorA) {
+                this.imageStudioGradientColorA = this.imageStudioShapeFill || '#0d9488';
+            }
+            this.imageStudioOnShapeFillChange();
+        },
+
+        imageStudioOnGradientChange() {
+            if (this.imageStudioFillMode === 'solid') {
+                this.imageStudioFillMode = 'linear';
+            }
+            this.imageStudioOnShapeFillChange();
         },
 
         imageStudioOnShapeStrokeChange() {
@@ -4599,8 +5307,48 @@ export function imageStudioMethods() {
         },
 
         imageStudioClearShapeFill() {
+            this.imageStudioFillMode = 'solid';
             this.imageStudioShapeFill = '';
             this.imageStudioOnShapeFillChange();
+        },
+
+        imageStudioGroupSelection() {
+            this.syncImageStudioGroupBagFromCanvas();
+            const bag = Array.isArray(this._imageStudioGroupBag) ? [...this._imageStudioGroupBag] : [];
+            // Evita o painel de cor disparar paint no meio do agrupamento
+            this._imageStudioSkipShapePaint = true;
+            const group = this.imageStudioEngine?.groupObjects?.(bag.length >= 2 ? bag : null);
+            this._imageStudioSkipShapePaint = false;
+            if (!group || !isFabricGroup(group)) {
+                this.error = 'Selecione 2 ou mais camadas (arraste na prancheta, Shift+clique ou Ctrl+clique na lista)';
+                return;
+            }
+            this._imageStudioGroupBag = [group];
+            this.imageStudioGroupBagCount = 1;
+            this._imageStudioStickyObject = group;
+            this.refreshImageStudioLayers();
+            this.scheduleImageStudioSave?.();
+            const n = typeof group.size === 'function' ? group.size() : (bag.length || 0);
+            this.message = `Grupo com ${n} camadas`;
+            this.error = '';
+        },
+
+        imageStudioUngroupSelection() {
+            const sticky = this._imageStudioStickyObject;
+            const selection = this.imageStudioEngine?.ungroupActiveObject?.(
+                sticky && normalizeFabricType(sticky) === 'group' ? sticky : null,
+            );
+            if (!selection) {
+                this.error = 'Selecione um grupo para desagrupar';
+                return;
+            }
+            const kids = typeof selection.getObjects === 'function' ? selection.getObjects() : [];
+            this._imageStudioGroupBag = [...kids];
+            this.imageStudioGroupBagCount = kids.length;
+            this.refreshImageStudioLayers();
+            this.scheduleImageStudioSave?.();
+            this.message = 'Grupo desfeito — itens ainda selecionados';
+            this.error = '';
         },
 
         imageStudioSetObjectScale(percent) {
@@ -4679,6 +5427,12 @@ export function imageStudioMethods() {
                 } else if (mod && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
                     e.preventDefault();
                     this.imageStudioRedo();
+                } else if (mod && (e.key === 'g' || e.key === 'G') && e.shiftKey) {
+                    e.preventDefault();
+                    this.imageStudioUngroupSelection();
+                } else if (mod && (e.key === 'g' || e.key === 'G')) {
+                    e.preventDefault();
+                    this.imageStudioGroupSelection();
                 } else if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
                     if (this.resolveImageStudioActiveObject()) {
                         e.preventDefault();
@@ -5658,9 +6412,38 @@ export function imageStudioMethods() {
             this.message = 'Marca do blog aplicada no canvas';
         },
 
-        imageStudioSelectLayer(layer) {
+        imageStudioSelectLayer(layer, event = null) {
             this._imageStudioSelectingFromLayersPanel = true;
-            this.imageStudioEngine?.selectLayer(layer.object);
+            const obj = layer?.object;
+            if (!obj) {
+                this._imageStudioSelectingFromLayersPanel = false;
+                return;
+            }
+
+            const additive = !!(event && (event.ctrlKey || event.metaKey || event.shiftKey));
+            if (additive) {
+                const bag = Array.isArray(this._imageStudioGroupBag) ? [...this._imageStudioGroupBag] : [];
+                const idx = bag.indexOf(obj);
+                if (idx >= 0 && (event.ctrlKey || event.metaKey)) {
+                    bag.splice(idx, 1);
+                } else if (idx < 0) {
+                    bag.push(obj);
+                }
+                this._imageStudioGroupBag = bag;
+                this.imageStudioGroupBagCount = bag.length;
+                this.imageStudioEngine?.setMultiSelection?.(bag);
+                this.imageStudioCanGroup = bag.length >= 2;
+                this.setImageStudioSidebarTab?.('layers');
+                this.refreshImageStudioLayers();
+                this.$nextTick?.(() => {
+                    this._imageStudioSelectingFromLayersPanel = false;
+                });
+                return;
+            }
+
+            this._imageStudioGroupBag = [obj];
+            this.imageStudioGroupBagCount = 1;
+            this.imageStudioEngine?.selectLayer(obj);
             this.setImageStudioSidebarTab?.('layers');
             this.refreshImageStudioLayers();
             this.$nextTick?.(() => {
