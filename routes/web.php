@@ -60,6 +60,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'index'])->name('cms.index');
     Route::post('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'update'])->name('cms.update');
     Route::post('/cms/testimonials/row', [\App\Http\Controllers\Admin\CmsController::class, 'addTestimonialRow'])->name('cms.testimonials.add-row');
+    Route::post('/cms/packs/row', [\App\Http\Controllers\Admin\CmsController::class, 'addPackRow'])->name('cms.packs.add-row');
 });
 
 require __DIR__.'/auth.php';

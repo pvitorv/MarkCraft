@@ -17,14 +17,11 @@
 
 <header class="sticky top-0 z-[500] border-b border-white/5 bg-[#07090c]/90 backdrop-blur-md">
     <div class="{{ $shellWidthClass }} py-3 flex items-center justify-between gap-3">
-        <a href="{{ $desktop ? route('studio') : route('home') }}" class="mc-brand text-lg sm:text-xl font-extrabold text-white tracking-tight shrink-0 relative z-[501]">
-            MarkCraft
-            @if($desktop)
-                <span class="ms-1.5 sm:ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-emerald-300/90 border border-emerald-500/30 px-1.5 py-0.5">Desktop</span>
-            @else
-                <span class="ms-1.5 sm:ms-2 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-teal-300/90 border border-teal-500/30 px-1.5 py-0.5">CriaSys</span>
-            @endif
-        </a>
+        @include('partials.markcraft_brand', [
+            'href' => $desktop ? route('studio') : route('home'),
+            'variant' => 'mark',
+            'badge' => $desktop ? 'desktop' : 'criasys',
+        ])
 
         @if($isStudio && ! $desktop)
             <div class="hidden xl:flex min-w-0 max-w-[14rem] items-center">

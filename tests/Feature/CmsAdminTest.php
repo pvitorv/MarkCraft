@@ -376,16 +376,26 @@ class CmsAdminTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
 
         $this->actingAs($admin)->post('/admin/cms', [
-            'section' => 'blog',
-            'name' => 'Blog CriaSys Web',
-            'headline' => 'Blog + painel',
-            'cta' => 'Ir para o Blog',
-            'cta_pending' => 'Em breve',
-            'cta_ready' => '1',
-            'url' => 'https://blog.criasysweb.com.br',
-            'register_url' => 'https://blog.criasysweb.com.br/cadastro',
-            'bullets' => '',
-        ])->assertRedirect();
+            'section' => 'landing',
+            'blog_cta_ready' => '1',
+            'blog_url' => 'https://blog.criasysweb.com.br',
+            'blog_cta' => 'Ir para o Blog',
+            'blog_cta_pending' => 'Em breve',
+            'blog_register_url' => 'https://blog.criasysweb.com.br/cadastro',
+            'bridge_eyebrow' => '',
+            'bridge_headline' => '',
+            'bridge_paragraph_1' => '',
+            'bridge_paragraph_2' => '',
+            'bridge_paragraph_3' => '',
+            'bridge_footnote' => '',
+            'hub_eyebrow' => '',
+            'hub_headline' => '',
+            'hub_intro' => '',
+            'editor_headline' => '',
+            'editor_intro' => '',
+            'funnel_eyebrow' => '',
+            'funnel_headline' => '',
+        ] + $this->landingFormModulesExtras())->assertRedirect();
 
         $this->get('/')
             ->assertOk()
@@ -398,11 +408,11 @@ class CmsAdminTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
 
         $this->actingAs($admin)
-            ->get('/admin/cms?tab=home')
+            ->get('/admin/cms?tab=landing')
             ->assertOk()
-            ->assertSee('Link do Blog no card do hero', false)
-            ->assertSee('URL da página de vendas', false)
-            ->assertSee('Salvar link do Blog', false);
+            ->assertSee('Botões e links do Blog', false)
+            ->assertSee('URL (página de vendas)', false)
+            ->assertSee('URL de cadastro', false);
     }
 
     public function test_home_never_shows_cms_configuration_hints(): void
@@ -411,5 +421,145 @@ class CmsAdminTest extends TestCase
 
         $this->actingAs($admin)->get('/')->assertDontSee('Configurar link do Blog', false);
         $this->get('/')->assertDontSee('Configurar link do Blog', false);
+    }
+
+    public function test_admin_can_edit_landing_blog_copy_and_home_reflects_it(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/cms', [
+            'section' => 'landing',
+            'bridge_eyebrow' => 'Do MarkCraft para o {blog}',
+            'bridge_headline' => 'Headline CMS de teste',
+            'bridge_paragraph_1' => 'Parágrafo um.',
+            'bridge_paragraph_2' => 'Parágrafo dois {blog}.',
+            'bridge_paragraph_3' => 'Parágrafo três.',
+            'bridge_footnote' => 'Nota trial CMS.',
+            'hub_eyebrow' => 'Hub CMS',
+            'hub_headline' => 'Módulos CMS headline',
+            'hub_intro' => 'Intro hub CMS.',
+            'editor_headline' => 'Editor CMS headline',
+            'editor_intro' => 'Editor intro CMS.',
+            'funnel_eyebrow' => 'Funil CMS',
+            'funnel_headline' => 'Funil headline CMS',
+            'blog_cta_ready' => '1',
+            'blog_url' => 'https://vendas.example.com',
+            'blog_cta' => 'Ir para vendas CMS',
+            'blog_register_url' => 'https://vendas.example.com/cadastro',
+            'blog_register_cta' => 'Cadastro CMS',
+        ] + $this->landingFormModulesExtras())->assertRedirect();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Headline CMS de teste', false)
+            ->assertSee('href="https://vendas.example.com"', false)
+            ->assertSee('href="https://vendas.example.com/cadastro"', false)
+            ->assertSee('Ir para vendas CMS', false)
+            ->assertSee('Cadastro CMS', false);
+    }
+
+    public function test_admin_cms_has_landing_blog_tab(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get('/admin/cms?tab=landing')
+            ->assertOk()
+            ->assertSee('Landing Blog', false)
+            ->assertSee('Ponte — Do MarkCraft para o Blog', false)
+            ->assertSee('Salvar landing + links dos botões', false);
+    }
+
+    public function test_admin_cms_has_packs_and_donations_tabs(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get('/admin/cms?tab=packs')
+            ->assertOk()
+            ->assertSee('Packs CriaSys', false)
+            ->assertSee('Link da oferta', false)
+            ->assertSee('Salvar packs', false);
+
+        $this->actingAs($admin)
+            ->get('/admin/cms?tab=donations')
+            ->assertOk()
+            ->assertSee('Doações · Apoiar', false)
+            ->assertSee('URL do gateway', false)
+            ->assertSee('Salvar doações', false);
+    }
+
+    public function test_admin_can_save_packs_with_affiliate_links(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/cms', [
+            'section' => 'packs',
+            'packs_hub_title' => 'Hub Packs CMS',
+            'packs_hub_subtitle' => 'Subtítulo CMS packs',
+            'packs_hub_link_label' => 'Comprar agora →',
+            'packs' => [
+                ['tag' => 'Teste', 'title' => 'Pack CMS Teste', 'blurb' => 'Descrição pack CMS', 'affiliate_url' => 'https://packs.example.com/oferta'],
+            ],
+        ])->assertRedirect();
+
+        $this->assertSame('Hub Packs CMS', Cms::get('packs_hub.title'));
+        $this->assertSame('https://packs.example.com/oferta', Cms::get('affiliate_packs.0.affiliate_url'));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Pack CMS Teste', false)
+            ->assertSee('href="https://packs.example.com/oferta"', false);
+    }
+
+    public function test_admin_can_save_donations_and_modal_uses_gateway(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/cms', [
+            'section' => 'donations',
+            'donation_min_brl' => 5,
+            'donation_pix_key' => 'pix@teste.com',
+            'donation_gateway_url' => 'https://pay.example.com/doar',
+            'donation_button_label' => 'Doar a partir de R$ {min}',
+            'donation_modal_title' => 'Apoiar CMS título',
+            'donation_modal_intro' => 'Intro CMS {min}',
+            'donation_modal_body' => 'Corpo modal CMS',
+            'donation_modal_note' => 'Nota CMS',
+            'donation_page_title' => 'Página apoiar CMS',
+            'donation_page_body_1' => 'Parágrafo 1 CMS',
+            'donation_page_body_2' => 'Parágrafo 2 CMS',
+            'donation_page_body_3' => '',
+        ])->assertRedirect();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('href="https://pay.example.com/doar"', false)
+            ->assertSee('Doar a partir de R$ 5,00', false)
+            ->assertSee('Apoiar CMS título', false);
+    }
+
+    /** @return array<string, mixed> */
+    private function landingFormModulesExtras(): array
+    {
+        $defaults = Cms::landingDefaults();
+
+        return [
+            'bridge_steps' => $defaults['bridge']['steps'],
+            'hub_modules' => array_map(function (array $mod) {
+                $row = [
+                    'icon' => $mod['icon'],
+                    'title' => $mod['title'],
+                    'text' => $mod['text'],
+                ];
+                if (! empty($mod['wide'])) {
+                    $row['wide'] = '1';
+                }
+
+                return $row;
+            }, $defaults['hub']['modules']),
+            'hub_extras' => $defaults['hub']['extras'],
+            'editor_columns' => $defaults['editor']['columns'],
+        ];
     }
 }

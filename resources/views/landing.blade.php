@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>MarkCraft — studio de imagem gratuito · família CriaSys</title>
     <meta name="description" content="Editor de imagem gratuito da família CriaSys. Layouts, elementos e export no navegador. Para blog, cobrança e studio no mesmo fluxo, conheça o Blog CriaSys Web.">
+    @include('partials.head_favicon')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:500,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -639,32 +640,54 @@
         @include('partials.bridge_blog_section')
     @endif
 
+    @php
+        $editorSection = $cmsLanding['editor'] ?? \App\Support\Cms::landing('editor', []);
+        $editorToneClass = static function (string $tone): string {
+            return match ($tone) {
+                'amber' => 'text-amber-300/90',
+                'sky' => 'text-sky-300/90',
+                default => 'text-teal-300/90',
+            };
+        };
+        $blogName = $cmsBlog['name'] ?? 'Blog CriaSys Web';
+        $blogLinkUrl = \App\Support\Cms::blogCtaReady($cmsBlog ?? [])
+            ? \App\Support\Cms::blogCtaUrl($cmsBlog ?? [])
+            : ($cmsBlog['url'] ?? '#');
+    @endphp
     <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
-        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">Editor de verdade — feito para quem publica</h2>
-        <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">O mesmo tipo de Image Studio que roda no Blog CriaSys Web, disponível grátis aqui para criar, exportar e seguir no ecossistema.</p>
+        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">{{ $editorSection['headline'] ?? 'Editor de verdade — feito para quem publica' }}</h2>
+        @if(!empty($editorSection['intro']))
+            <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">{{ $editorSection['intro'] }}</p>
+        @endif
         <ul class="mt-8 sm:mt-10 grid gap-8 sm:gap-10 md:grid-cols-3">
-            <li>
-                <p class="text-sm font-semibold tracking-wide uppercase text-teal-300/90">Studio completo</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Layouts de redes, pacotes, tipografia, shapes, export e remoção de fundo no servidor.</p>
-            </li>
-            <li>
-                <p class="text-sm font-semibold tracking-wide uppercase text-amber-300/90">Baixe e limpe</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Edite → baixe PNG/JPG → limpe o workspace. Privacidade por padrão — artes não ficam no site.</p>
-            </li>
-            <li>
-                <p class="text-sm font-semibold tracking-wide uppercase text-sky-300/90">Próximo nível</p>
-                <p class="mt-2 text-zinc-300 leading-relaxed">Para blog, afiliados e cobrança no mesmo fluxo: <a href="{{ $cmsBlog['url'] ?? '#' }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">{{ $cmsBlog['name'] ?? 'Blog CriaSys Web' }}</a>.</p>
-            </li>
+            @foreach($editorSection['columns'] ?? [] as $col)
+                <li>
+                    <p class="text-sm font-semibold tracking-wide uppercase {{ $editorToneClass($col['tone'] ?? 'teal') }}">{{ $col['label'] ?? '' }}</p>
+                    <p class="mt-2 text-zinc-300 leading-relaxed">
+                        @if(str_contains($col['text'] ?? '', '{blog}'))
+                            @php
+                                [$beforeBlog, $afterBlog] = array_pad(explode('{blog}', $col['text'], 2), 2, '');
+                            @endphp
+                            {{ $beforeBlog }}<a href="{{ $blogLinkUrl }}" @if($blogLinkUrl !== '#' && !str_starts_with($blogLinkUrl, '#')) target="_blank" rel="noopener" @endif class="text-teal-300 hover:underline">{{ $blogName }}</a>{{ $afterBlog }}
+                        @else
+                            {{ $col['text'] ?? '' }}
+                        @endif
+                    </p>
+                </li>
+            @endforeach
         </ul>
     </section>
 
     {{-- Conversão MarkCraft → Blog --}}
+    @php
+        $funnel = $cmsLanding['funnel'] ?? \App\Support\Cms::landing('funnel', []);
+    @endphp
     <section class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
         <div class="relative overflow-hidden rounded-xl border border-white/10 px-5 py-10 sm:px-6 sm:py-12 md:px-12 md:py-14"
              style="background: radial-gradient(800px 280px at 20% 0%, rgba(20,184,166,0.18), transparent 55%), #0c1118;">
-            <p class="text-[10px] uppercase tracking-[0.16em] text-amber-300/90">Família CriaSys</p>
+            <p class="text-[10px] uppercase tracking-[0.16em] text-amber-300/90">{{ $funnel['eyebrow'] ?? 'Família CriaSys' }}</p>
             <p class="mc-brand mt-2 text-2xl sm:text-3xl md:text-4xl font-bold text-white max-w-xl leading-tight">
-                Criou a arte. E o resto do funil?
+                {{ $funnel['headline'] ?? 'Criou a arte. E o resto do funil?' }}
             </p>
             <p class="mt-3 max-w-md text-zinc-400">
                 {{ $cmsBlog['blurb'] ?? '' }}
@@ -672,9 +695,10 @@
             <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
                 @php
                     $blogReady = \App\Support\Cms::blogCtaReady($cmsBlog ?? []);
-                    $blogUrl = $blogReady ? \App\Support\Cms::blogCtaUrl($cmsBlog ?? []) : '#blog-criasys';
-                    $blogRegister = trim((string) (($cmsBlog ?? [])['register_url'] ?? $blogUrl)) ?: $blogUrl;
+                    $blogUrl = \App\Support\Cms::blogCtaUrl($cmsBlog ?? []);
+                    $blogRegister = \App\Support\Cms::blogRegisterUrl($cmsBlog ?? []);
                     $blogCtaLabel = \App\Support\Cms::blogCtaLabel($cmsBlog ?? []);
+                    $registerLabel = \App\Support\Cms::blogRegisterLabel($cmsBlog ?? []);
                 @endphp
                 @if($blogReady)
                     <a
@@ -690,7 +714,7 @@
                         class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-3.5 font-medium text-violet-100 hover:bg-violet-500/20 transition"
                         @if(!str_starts_with($blogRegister, '#')) target="_blank" rel="noopener" @endif
                     >
-                        Começar teste grátis
+                        {{ $registerLabel }}
                     </a>
                 @else
                     <span class="inline-flex justify-center rounded-md border border-dashed border-violet-400/35 bg-violet-500/5 px-6 py-3.5 text-base font-semibold text-violet-200/90">
@@ -698,9 +722,9 @@
                     </span>
                 @endif
                 @auth
-                    <a href="{{ route('studio') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">Continuar no Studio</a>
+                    <a href="{{ \App\Support\Cms::blogStudioButtonUrl() }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">{{ \App\Support\Cms::blogContinueStudioLabel($cmsBlog ?? []) }}</a>
                 @else
-                    <a href="{{ route('register') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">Criar conta no MarkCraft</a>
+                    <a href="{{ \App\Support\Cms::blogMarkcraftRegisterUrl() }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">{{ \App\Support\Cms::blogCreateAccountLabel($cmsBlog ?? []) }}</a>
                 @endauth
             </div>
         </div>

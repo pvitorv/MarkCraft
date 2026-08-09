@@ -6,7 +6,10 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('home') }}">
-                        <span class="mc-brand text-xl font-bold text-zinc-800">MarkCraft</span>
+                        <span class="mc-brand text-xl font-bold text-zinc-800 inline-flex items-center gap-2">
+                            <img src="{{ asset('brand/markcraft-mark.svg') }}" alt="" class="h-7 w-7" width="28" height="28" aria-hidden="true">
+                            MarkCraft
+                        </span>
                     </a>
                 </div>
 

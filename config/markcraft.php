@@ -25,6 +25,11 @@ return [
         'cta_ready' => (bool) env('BLOG_CRIASYS_CTA_READY', false),
         'cta_pending' => 'Página de vendas em breve',
         'early_access_note' => 'Acesso antecipado em teste fechado · depoimentos entram só com feedback real',
+        'register_cta' => 'Começar teste grátis',
+        'continue_studio_cta' => 'Continuar no Studio',
+        'create_account_cta' => 'Criar conta no MarkCraft',
+        'studio_url' => '',
+        'markcraft_register_url' => '',
         'bullets' => [
             'Multi-blog com painel profissional',
             'Mercado Pago, afiliados e landings',
@@ -54,6 +59,21 @@ return [
         'min_brl' => 2,
         'pix_key' => env('DONATION_PIX_KEY', ''),
         'gateway_url' => env('DONATION_GATEWAY_URL', ''),
+        'button_label' => 'Contribuir a partir de R$ {min}',
+        'modal_title' => 'Apoiar o MarkCraft',
+        'modal_intro' => 'Contribuição opcional a partir de R$ {min} — ajuda a manter o studio gratuito no ar.',
+        'modal_body' => 'O MarkCraft é o studio gratuito da família CriaSys. Manter servidores e melhorias tem custo — um “obrigado” opcional ajuda.',
+        'modal_note' => 'Packs e afiliados controlados no CMS — sem anúncios genéricos soltos.',
+        'page_title' => 'Ajude o MarkCraft a continuar',
+        'page_body_1' => 'O MarkCraft é gratuito para quem cria, vende e experimenta. Manter servidores, ferramentas e melhorias tem custo.',
+        'page_body_2' => 'Se esta ferramenta te ajudou e você quiser que ela continue existindo, considere uma contribuição a partir de R$ {min} — via Pix ou cartão.',
+        'page_body_3' => 'Não é obrigatório. É um “obrigado” opcional de quem acredita no projeto.',
+    ],
+
+    'packs_hub' => [
+        'title' => 'Packs CriaSys',
+        'subtitle' => 'Produtos da linha CriaSys — Blog, packs e planos. Sem anúncios genéricos.',
+        'link_label' => 'Ver oferta →',
     ],
 
     'tools' => [

@@ -16,10 +16,13 @@ class CmsController extends Controller
         $tab = (string) $request->query('tab', 'home');
         $tabs = [
             'home' => ['label' => 'Home', 'hint' => 'Hero, link do Blog e seções'],
-            'blog' => ['label' => 'Blog CriaSys', 'hint' => 'Textos da ponte MarkCraft → Blog'],
+            'landing' => ['label' => 'Landing Blog', 'hint' => 'Ponte, hub, editor e funil'],
+            'blog' => ['label' => 'Blog CriaSys', 'hint' => 'Link do hero e blurb do funil'],
             'testimonials' => ['label' => 'Depoimentos', 'hint' => 'Prova social da home'],
             'footer' => ['label' => 'Rodapé', 'hint' => 'Redes, portfólio e CriaSys Web'],
-            'promos' => ['label' => 'Promos e packs', 'hint' => 'Cards, afiliados e doações'],
+            'packs' => ['label' => 'Packs CriaSys', 'hint' => 'Modal hub · links afiliados'],
+            'donations' => ['label' => 'Doações', 'hint' => 'Apoiar · Pix e gateway'],
+            'promos' => ['label' => 'Promos', 'hint' => 'Cards na home e Studio'],
             'ads' => ['label' => 'Ads do Studio', 'hint' => 'Faixa retangular abaixo do menu'],
             'studio' => ['label' => 'Studio', 'hint' => 'Botões e textos do editor'],
         ];
@@ -68,19 +71,39 @@ class CmsController extends Controller
             ->with('status', 'cms-saved');
     }
 
+    public function addPackRow(): RedirectResponse
+    {
+        $packs = array_values((array) Cms::get('affiliate_packs', config('markcraft.affiliate_packs', [])));
+        $packs[] = [
+            'title' => '',
+            'blurb' => '',
+            'affiliate_url' => '',
+            'tag' => '',
+        ];
+        Cms::put('affiliate_packs', $packs);
+
+        return redirect()
+            ->route('admin.cms.index', ['tab' => 'packs'])
+            ->withFragment('cms-packs')
+            ->with('status', 'cms-saved');
+    }
+
     public function update(Request $request): RedirectResponse
     {
         $section = (string) $request->input('section', '');
-        $allowed = ['home', 'footer', 'promos', 'ads', 'studio', 'blog', 'testimonials'];
+        $allowed = ['home', 'footer', 'promos', 'packs', 'donations', 'ads', 'studio', 'blog', 'landing', 'testimonials'];
         abort_unless(in_array($section, $allowed, true), 422);
 
         $payload = match ($section) {
             'home' => $this->homePayload($request),
             'footer' => $this->footerPayload($request),
             'promos' => $this->promosPayload($request),
+            'packs' => $this->packsPayload($request),
+            'donations' => $this->donationsPayload($request),
             'ads' => $this->adsPayload($request),
             'studio' => $this->studioPayload($request),
             'blog' => $this->blogPayload($request),
+            'landing' => $this->landingPayload($request),
             'testimonials' => $this->testimonialsPayload($request),
             default => [],
         };
@@ -93,8 +116,17 @@ class CmsController extends Controller
 
         if ($section === 'promos') {
             Cms::put('promos', $payload['promos']);
+        } elseif ($section === 'packs') {
+            Cms::put('packs_hub', $payload['packs_hub']);
             Cms::put('affiliate_packs', $payload['affiliate_packs']);
-            Cms::put('donations', $payload['donations']);
+        } elseif ($section === 'donations') {
+            Cms::put('donations', $payload);
+        } elseif ($section === 'landing') {
+            Cms::put('landing', $payload);
+            Cms::put('blog', array_merge(
+                array_merge(Cms::defaults()['blog'], (array) Cms::get('blog', [])),
+                $this->blogLinksPayload($request)
+            ));
         } else {
             Cms::put($section, $payload);
         }
@@ -107,6 +139,14 @@ class CmsController extends Controller
         $redirect = redirect()
             ->route('admin.cms.index', ['tab' => $returnTab])
             ->with('status', 'cms-saved');
+
+        if ($section === 'landing') {
+            $redirect->withFragment('cms-blog-links');
+        } elseif ($section === 'packs') {
+            $redirect->withFragment('cms-packs');
+        } elseif ($section === 'donations') {
+            $redirect->withFragment('cms-donations');
+        }
 
         if ($section === 'testimonials') {
             $published = count(Cms::publishedTestimonials());
@@ -182,6 +222,11 @@ class CmsController extends Controller
             ];
         }
 
+        return ['promos' => $promos];
+    }
+
+    private function packsPayload(Request $request): array
+    {
         $packs = [];
         foreach ((array) $request->input('packs', []) as $row) {
             $packs[] = [
@@ -192,14 +237,35 @@ class CmsController extends Controller
             ];
         }
 
+        $existingHub = array_merge(config('markcraft.packs_hub', []), (array) Cms::get('packs_hub', []));
+
         return [
-            'promos' => $promos,
-            'affiliate_packs' => array_values(array_filter($packs, fn ($p) => $p['title'] !== '')),
-            'donations' => [
-                'min_brl' => (float) $request->input('donation_min_brl', 2),
-                'pix_key' => trim((string) $request->input('donation_pix_key', '')),
-                'gateway_url' => trim((string) $request->input('donation_gateway_url', '')),
+            'packs_hub' => [
+                'title' => trim((string) $request->input('packs_hub_title', $existingHub['title'] ?? 'Packs CriaSys')),
+                'subtitle' => trim((string) $request->input('packs_hub_subtitle', $existingHub['subtitle'] ?? '')),
+                'link_label' => trim((string) $request->input('packs_hub_link_label', $existingHub['link_label'] ?? 'Ver oferta →')),
             ],
+            'affiliate_packs' => array_values(array_filter($packs, fn ($p) => $p['title'] !== '')),
+        ];
+    }
+
+    private function donationsPayload(Request $request): array
+    {
+        $existing = array_merge(config('markcraft.donations', []), (array) Cms::get('donations', []));
+
+        return [
+            'min_brl' => (float) $request->input('donation_min_brl', $existing['min_brl'] ?? 2),
+            'pix_key' => trim((string) $request->input('donation_pix_key', '')),
+            'gateway_url' => trim((string) $request->input('donation_gateway_url', '')),
+            'button_label' => trim((string) $request->input('donation_button_label', $existing['button_label'] ?? 'Contribuir a partir de R$ {min}')),
+            'modal_title' => trim((string) $request->input('donation_modal_title', $existing['modal_title'] ?? '')),
+            'modal_intro' => trim((string) $request->input('donation_modal_intro', $existing['modal_intro'] ?? '')),
+            'modal_body' => trim((string) $request->input('donation_modal_body', $existing['modal_body'] ?? '')),
+            'modal_note' => trim((string) $request->input('donation_modal_note', $existing['modal_note'] ?? '')),
+            'page_title' => trim((string) $request->input('donation_page_title', $existing['page_title'] ?? '')),
+            'page_body_1' => trim((string) $request->input('donation_page_body_1', $existing['page_body_1'] ?? '')),
+            'page_body_2' => trim((string) $request->input('donation_page_body_2', $existing['page_body_2'] ?? '')),
+            'page_body_3' => trim((string) $request->input('donation_page_body_3', $existing['page_body_3'] ?? '')),
         ];
     }
 
@@ -247,14 +313,112 @@ class CmsController extends Controller
             'eyebrow' => trim((string) $request->input('eyebrow', $existing['eyebrow'] ?? '')),
             'headline' => trim((string) $request->input('headline', $existing['headline'] ?? '')),
             'blurb' => trim((string) $request->input('blurb', $existing['blurb'] ?? '')),
-            'cta' => trim((string) $request->input('cta', $existing['cta'] ?? '')),
-            'cta_pending' => trim((string) $request->input('cta_pending', $existing['cta_pending'] ?? 'Página de vendas em breve')),
-            'cta_ready' => $this->formTruthy($request->input('cta_ready')),
-            'url' => trim((string) $request->input('url', $existing['url'] ?? '')),
-            'register_url' => trim((string) $request->input('register_url', $existing['register_url'] ?? '')),
-            'early_access_note' => trim((string) $request->input('early_access_note', $existing['early_access_note'] ?? '')),
             'bullets' => $bullets,
         ]);
+    }
+
+    /** Links e textos dos botões do Blog (hero, ponte, funil). */
+    private function blogLinksPayload(Request $request): array
+    {
+        return [
+            'cta_ready' => $this->formTruthy($request->input('blog_cta_ready', $request->input('cta_ready'))),
+            'url' => trim((string) $request->input('blog_url', $request->input('url', ''))),
+            'cta' => trim((string) $request->input('blog_cta', $request->input('cta', ''))),
+            'cta_pending' => trim((string) $request->input('blog_cta_pending', $request->input('cta_pending', 'Página de vendas em breve'))),
+            'early_access_note' => trim((string) $request->input('blog_early_access_note', $request->input('early_access_note', ''))),
+            'register_url' => trim((string) $request->input('blog_register_url', $request->input('register_url', ''))),
+            'register_cta' => trim((string) $request->input('blog_register_cta', $request->input('register_cta', 'Começar teste grátis'))),
+            'continue_studio_cta' => trim((string) $request->input('blog_continue_studio_cta', $request->input('continue_studio_cta', 'Continuar no Studio'))),
+            'create_account_cta' => trim((string) $request->input('blog_create_account_cta', $request->input('create_account_cta', 'Criar conta no MarkCraft'))),
+            'studio_url' => trim((string) $request->input('blog_studio_url', $request->input('studio_url', ''))),
+            'markcraft_register_url' => trim((string) $request->input('blog_markcraft_register_url', $request->input('markcraft_register_url', ''))),
+        ];
+    }
+
+    private function landingPayload(Request $request): array
+    {
+        $existing = Cms::landing();
+
+        $steps = [];
+        foreach ((array) $request->input('bridge_steps', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $steps[] = [
+                'label' => trim((string) ($row['label'] ?? '')),
+                'text' => trim((string) ($row['text'] ?? '')),
+                'tone' => trim((string) ($row['tone'] ?? 'green')),
+            ];
+        }
+
+        $modules = [];
+        foreach ((array) $request->input('hub_modules', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $icon = (string) ($row['icon'] ?? 'image');
+            if (! in_array($icon, ['image', 'link', 'convert', 'pdf', 'landing'], true)) {
+                $icon = 'image';
+            }
+            $modules[] = [
+                'icon' => $icon,
+                'title' => trim((string) ($row['title'] ?? '')),
+                'text' => trim((string) ($row['text'] ?? '')),
+                'wide' => $this->formTruthy($row['wide'] ?? false),
+            ];
+        }
+
+        $extras = [];
+        foreach ((array) $request->input('hub_extras', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $extras[] = [
+                'title' => trim((string) ($row['title'] ?? '')),
+                'text' => trim((string) ($row['text'] ?? '')),
+            ];
+        }
+
+        $columns = [];
+        foreach ((array) $request->input('editor_columns', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $columns[] = [
+                'label' => trim((string) ($row['label'] ?? '')),
+                'text' => trim((string) ($row['text'] ?? '')),
+                'tone' => trim((string) ($row['tone'] ?? 'teal')),
+            ];
+        }
+
+        return [
+            'bridge' => array_merge($existing['bridge'] ?? [], [
+                'eyebrow' => trim((string) $request->input('bridge_eyebrow', '')),
+                'headline' => trim((string) $request->input('bridge_headline', '')),
+                'paragraph_1' => trim((string) $request->input('bridge_paragraph_1', '')),
+                'paragraph_2' => trim((string) $request->input('bridge_paragraph_2', '')),
+                'paragraph_3' => trim((string) $request->input('bridge_paragraph_3', '')),
+                'footnote' => trim((string) $request->input('bridge_footnote', '')),
+                'register_cta' => trim((string) $request->input('bridge_register_cta', 'Começar teste grátis')),
+                'steps' => $steps !== [] ? $steps : ($existing['bridge']['steps'] ?? []),
+            ]),
+            'hub' => array_merge($existing['hub'] ?? [], [
+                'eyebrow' => trim((string) $request->input('hub_eyebrow', '')),
+                'headline' => trim((string) $request->input('hub_headline', '')),
+                'intro' => trim((string) $request->input('hub_intro', '')),
+                'modules' => $modules !== [] ? $modules : ($existing['hub']['modules'] ?? []),
+                'extras' => $extras !== [] ? $extras : ($existing['hub']['extras'] ?? []),
+            ]),
+            'editor' => array_merge($existing['editor'] ?? [], [
+                'headline' => trim((string) $request->input('editor_headline', '')),
+                'intro' => trim((string) $request->input('editor_intro', '')),
+                'columns' => $columns !== [] ? $columns : ($existing['editor']['columns'] ?? []),
+            ]),
+            'funnel' => array_merge($existing['funnel'] ?? [], [
+                'eyebrow' => trim((string) $request->input('funnel_eyebrow', '')),
+                'headline' => trim((string) $request->input('funnel_headline', '')),
+            ]),
+        ];
     }
 
     private function testimonialsPayload(Request $request): array

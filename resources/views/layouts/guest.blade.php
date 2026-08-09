@@ -18,6 +18,7 @@
         @endphp
         {{ $authTitle }} — {{ config('app.name', 'MarkCraft') }}
     </title>
+    @include('partials.head_favicon')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -120,10 +121,11 @@
 
     <div class="relative z-10 flex min-h-screen flex-col px-4 py-8 sm:px-6">
         <header class="mx-auto flex w-full max-w-md items-center justify-between gap-3">
-            <a href="{{ \App\Support\MarkCraftShell::isDesktop() ? route('login') : url('/') }}" class="mc-brand text-2xl font-extrabold text-white">
-                MarkCraft
-                <span class="ms-1.5 align-middle text-[9px] font-semibold tracking-[0.14em] uppercase text-teal-300/90 border border-teal-500/30 px-1.5 py-0.5">CriaSys</span>
-            </a>
+            @include('partials.markcraft_brand', [
+                'href' => \App\Support\MarkCraftShell::isDesktop() ? route('login') : url('/'),
+                'variant' => 'full',
+                'badge' => 'criasys',
+            ])
             @auth
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

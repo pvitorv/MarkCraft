@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="MarkCraft">
+  <defs>
+    <linearGradient id="mc-ring" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4bf"/>
+      <stop offset="0.5" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="mc-m" x1="22" y1="22" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#99f6e4"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+    <radialGradient id="mc-spark" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(47 17) rotate(90) scale(14)">
+      <stop stop-color="#39ff14" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#39ff14" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#090c10"/>
+  <rect x="5.5" y="5.5" width="53" height="53" rx="13.5" fill="#0e1218" stroke="url(#mc-ring)" stroke-width="2.25"/>
+  <path d="M5.5 17h7M5.5 17V10M58.5 17h-7M58.5 17V10M5.5 47h7M5.5 47v7M58.5 47h-7M58.5 47v7" stroke="#2dd4bf" stroke-width="1.6" stroke-linecap="round" opacity="0.42"/>
+  <path d="M19.5 41.5V24.5l7.5 10.5L34.5 24.5v17" stroke="url(#mc-m)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M19.5 41.5V24.5l7.5 10.5L34.5 24.5v17" stroke="url(#mc-ring)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+  <circle cx="47" cy="17" r="9" fill="url(#mc-spark)"/>
+  <circle cx="47" cy="17" r="3.2" fill="#39ff14"/>
+</svg>

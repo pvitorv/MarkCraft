@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CMS — {{ config('app.name') }}</title>
+    @include('partials.head_favicon')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700|dm-sans:400,500&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -32,8 +33,6 @@
     $ads = $cms['ads'] ?? [];
     $studio = $cms['studio'] ?? [];
     $blog = $cms['blog'] ?? [];
-    $packs = $cms['affiliate_packs'] ?? [];
-    $donations = $cms['donations'] ?? [];
 @endphp
 <body class="antialiased min-h-screen">
     <header class="border-b border-white/5 bg-[#07090c]/95 sticky top-0 z-40 backdrop-blur">
@@ -44,7 +43,10 @@
             </div>
             <div class="flex gap-2 text-sm">
                 <a href="{{ route('home') }}" target="_blank" class="cms-btn-ghost">Abrir home</a>
-                <a href="{{ route('admin.cms.index', ['tab' => 'home']) }}" class="cms-btn-ghost {{ $activeTab === 'home' ? 'border-teal-400/40 text-teal-100' : '' }}">Link Blog</a>
+                <a href="{{ route('admin.cms.index', ['tab' => 'landing']) }}#cms-blog-links" class="cms-btn-ghost {{ $activeTab === 'landing' ? 'border-teal-400/40 text-teal-100' : '' }}">Links Blog</a>
+                <a href="{{ route('admin.cms.index', ['tab' => 'packs']) }}#cms-packs" class="cms-btn-ghost {{ $activeTab === 'packs' ? 'border-amber-400/40 text-amber-100' : '' }}">Packs</a>
+                <a href="{{ route('admin.cms.index', ['tab' => 'donations']) }}#cms-donations" class="cms-btn-ghost {{ $activeTab === 'donations' ? 'border-rose-400/40 text-rose-100' : '' }}">Doações</a>
+                <a href="{{ route('admin.cms.index', ['tab' => 'landing']) }}" class="cms-btn-ghost {{ $activeTab === 'landing' ? 'border-teal-400/40 text-teal-100' : '' }}">Landing Blog</a>
                 <a href="{{ route('admin.cms.index', ['tab' => 'testimonials']) }}" class="cms-btn-ghost {{ $activeTab === 'testimonials' ? 'border-teal-400/40 text-teal-100' : '' }}">Depoimentos</a>
                 <a href="{{ route('studio') }}" class="cms-btn-ghost">Studio</a>
             </div>
@@ -97,21 +99,11 @@
                 <div class="cms-card space-y-4">
                     <div>
                         <h1 class="mc-brand text-lg font-bold text-white">Home</h1>
-                        <p class="cms-help">Textos principais e o que aparece na página inicial.</p>
-                    </div>
-
-                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-3">
-                        @csrf
-                        <input type="hidden" name="section" value="blog">
-                        <input type="hidden" name="return_tab" value="home">
-                        @include('admin.cms.partials.blog_hero_link')
-                        <button type="submit" class="cms-btn">Salvar link do Blog</button>
-                    </form>
-                </div>
-
-                <div class="cms-card space-y-4">
-                    <div>
-                        <h2 class="text-base font-bold text-white">Demais textos da home</h2>
+                        <p class="cms-help">Atalhos de formato, hub e o que aparece na página.</p>
+                        <p class="cms-help mt-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-teal-100">
+                            <strong>Botões e links do Blog</strong> (hero, ponte, funil) → aba
+                            <a href="{{ route('admin.cms.index', ['tab' => 'landing']) }}#cms-blog-links" class="underline font-semibold">Landing Blog</a>
+                        </p>
                     </div>
                     <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-4" enctype="multipart/form-data">
                         @csrf
@@ -148,8 +140,13 @@
                     </form>
                 </div>
                 @endif
+
                 @if($activeTab === 'testimonials')
                     @include('admin.cms.partials.testimonials')
+                @endif
+
+                @if($activeTab === 'landing')
+                    @include('admin.cms.partials.landing')
                 @endif
 
                 {{-- FOOTER --}}
@@ -197,12 +194,20 @@
                 </div>
                 @endif
 
+                @if($activeTab === 'packs')
+                    @include('admin.cms.partials.packs')
+                @endif
+
+                @if($activeTab === 'donations')
+                    @include('admin.cms.partials.donations')
+                @endif
+
                 {{-- PROMOS --}}
                 @if($activeTab === 'promos')
                 <div class="cms-card space-y-6">
                     <div>
-                        <h1 class="mc-brand text-lg font-bold text-white">Promos e packs</h1>
-                        <p class="cms-help">Cards de promoção, ofertas do modal Packs e doações do Apoiar.</p>
+                        <h1 class="mc-brand text-lg font-bold text-white">Promos</h1>
+                        <p class="cms-help">Cards promocionais na home e no Studio. Packs afiliados → aba <a href="{{ route('admin.cms.index', ['tab' => 'packs']) }}#cms-packs" class="text-amber-300 underline">Packs CriaSys</a>. Doações → aba <a href="{{ route('admin.cms.index', ['tab' => 'donations']) }}#cms-donations" class="text-rose-300 underline">Doações</a>.</p>
                     </div>
                     <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-6">
                         @csrf
@@ -225,24 +230,7 @@
                                 </div>
                             </div>
                         @endforeach
-
-                        <p class="text-sm font-semibold text-white">Packs / afiliados (modal)</p>
-                        @foreach(array_pad($packs, 3, ['title'=>'','blurb'=>'','affiliate_url'=>'','tag'=>'']) as $i => $pack)
-                            <div class="grid sm:grid-cols-2 gap-2 rounded-xl border border-white/5 p-3">
-                                <input class="cms-input" name="packs[{{ $i }}][tag]" value="{{ $pack['tag'] ?? '' }}" placeholder="Tag">
-                                <input class="cms-input" name="packs[{{ $i }}][title]" value="{{ $pack['title'] ?? '' }}" placeholder="Título">
-                                <input class="cms-input sm:col-span-2" name="packs[{{ $i }}][blurb]" value="{{ $pack['blurb'] ?? '' }}" placeholder="Descrição">
-                                <input class="cms-input sm:col-span-2" name="packs[{{ $i }}][affiliate_url]" value="{{ $pack['affiliate_url'] ?? '' }}" placeholder="URL afiliado">
-                            </div>
-                        @endforeach
-
-                        <p class="text-sm font-semibold text-white">Doações (modal Apoiar)</p>
-                        <div class="grid sm:grid-cols-3 gap-2">
-                            <input class="cms-input" name="donation_min_brl" value="{{ $donations['min_brl'] ?? 2 }}" placeholder="Mín R$">
-                            <input class="cms-input" name="donation_pix_key" value="{{ $donations['pix_key'] ?? '' }}" placeholder="Pix">
-                            <input class="cms-input" name="donation_gateway_url" value="{{ $donations['gateway_url'] ?? '' }}" placeholder="Gateway URL">
-                        </div>
-                        <button type="submit" class="cms-btn">Salvar promos e packs</button>
+                        <button type="submit" class="cms-btn">Salvar promos</button>
                     </form>
                 </div>
                 @endif
@@ -309,24 +297,19 @@
                 <div class="cms-card space-y-4">
                     <div>
                         <h1 class="mc-brand text-lg font-bold text-white">Blog CriaSys</h1>
-                        <p class="cms-help">Nome, links e textos da ponte MarkCraft → Blog.</p>
+                        <p class="cms-help">Nome do produto e blurb do card funil. Links dos botões → aba <a href="{{ route('admin.cms.index', ['tab' => 'landing']) }}#cms-blog-links" class="text-teal-300 underline">Landing Blog</a>.</p>
                     </div>
                     <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-4">
                         @csrf
                         <input type="hidden" name="section" value="blog">
-
-                        @include('admin.cms.partials.blog_hero_link')
-
-                        <div class="space-y-3 pt-1">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Conteúdo da seção Blog</p>
-                            <input class="cms-input" name="name" value="{{ $blog['name'] ?? '' }}" placeholder="Nome">
-                            <input class="cms-input" name="eyebrow" value="{{ $blog['eyebrow'] ?? '' }}" placeholder="Eyebrow">
-                            <input class="cms-input" name="headline" value="{{ $blog['headline'] ?? '' }}" placeholder="Headline">
-                            <textarea class="cms-input" name="blurb" rows="3" placeholder="Descrição">{{ $blog['blurb'] ?? '' }}</textarea>
-                            <input class="cms-input" name="register_url" value="{{ $blog['register_url'] ?? '' }}" placeholder="URL de cadastro / teste grátis">
-                            <textarea class="cms-input" name="bullets" rows="4" placeholder="Bullets (1 por linha)">{{ implode("\n", $blog['bullets'] ?? []) }}</textarea>
+                        <input class="cms-input" name="name" value="{{ $blog['name'] ?? '' }}" placeholder="Nome (ex.: Blog CriaSys Web)">
+                        <input class="cms-input" name="eyebrow" value="{{ $blog['eyebrow'] ?? '' }}" placeholder="Eyebrow (opcional)">
+                        <input class="cms-input" name="headline" value="{{ $blog['headline'] ?? '' }}" placeholder="Headline card hero">
+                        <div>
+                            <label class="cms-label">Blurb — parágrafo do card “Família CriaSys” no final da home</label>
+                            <textarea class="cms-input" name="blurb" rows="3">{{ $blog['blurb'] ?? '' }}</textarea>
                         </div>
-
+                        <textarea class="cms-input" name="bullets" rows="4" placeholder="Bullets (1 por linha, opcional)">{{ implode("\n", $blog['bullets'] ?? []) }}</textarea>
                         <button type="submit" class="cms-btn">Salvar Blog</button>
                     </form>
                 </div>

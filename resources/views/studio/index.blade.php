@@ -11,6 +11,7 @@
         <meta name="studio-initial-preset" content="{{ $initialPreset }}">
     @endif
     <title>Studio — {{ config('app.name') }}</title>
+    @include('partials.head_favicon')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700|dm-sans:400,500&display=swap" rel="stylesheet" />
     @php
