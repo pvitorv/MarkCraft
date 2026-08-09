@@ -3,7 +3,7 @@
 Subdomínio sugerido: **`markcraft.criasysweb.com.br`**  
 Document root do subdomínio: **pasta `public/`** dentro da app (não a raiz do Laravel).
 
-O domínio principal [criasysweb.com.br](http://criasysweb.com.br/) pode estar suspenso — o subdomínio é independente.
+O Blog CriaSys Web fica em **[https://blog.criasysweb.com.br](https://blog.criasysweb.com.br/)** (MarkCraft no subdomínio `markcraft`; site principal em `criasysweb.com.br`).
 
 ---
 

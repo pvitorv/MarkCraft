@@ -134,13 +134,21 @@ mkcert*
 /*.tar
 /*.tar.gz
 /*.tgz
+markcraft-deploy-*.zip
+**/markcraft-deploy-*.zip
 
-# Packs / kits locais (não versionar)
+# Staging local do script de deploy (nunca versionar)
+/deploy-staging/
+
+# Packs / kits locais (não versionar — só máquina de dev)
 /_PACK_DIVULGACAO_MARKCRAFT/
 /_PACK_INSTALADORES_MARKCRAFT/
 /kitStartTransform/
 /image-studio-kit/
 /01-image-studio-kit/
+/*-kit/
+**/image-studio-kit/
+**/kitStartTransform/
 
 # Histórico de progresso particular (só máquina local)
 /docs/HISTORICO_PROGRESSO.md
