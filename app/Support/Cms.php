@@ -38,7 +38,7 @@ class Cms
             'ads' => [
                 'studio_header_a' => [
                     'enabled' => true,
-                    'label' => 'Ad header A',
+                    'label' => 'Ad faixa A',
                     'mode' => 'placeholder', // placeholder | adsense | html
                     'adsense_client' => env('ADSENSE_CLIENT', ''),
                     'adsense_slot' => env('ADSENSE_SLOT_STUDIO_A', ''),
@@ -46,10 +46,18 @@ class Cms
                 ],
                 'studio_header_b' => [
                     'enabled' => true,
-                    'label' => 'Ad header B',
+                    'label' => 'Ad faixa B',
                     'mode' => 'placeholder',
                     'adsense_client' => env('ADSENSE_CLIENT', ''),
                     'adsense_slot' => env('ADSENSE_SLOT_STUDIO_B', ''),
+                    'html' => '',
+                ],
+                'studio_header_c' => [
+                    'enabled' => true,
+                    'label' => 'Ad faixa C',
+                    'mode' => 'placeholder',
+                    'adsense_client' => env('ADSENSE_CLIENT', ''),
+                    'adsense_slot' => env('ADSENSE_SLOT_STUDIO_C', ''),
                     'html' => '',
                 ],
             ],
@@ -69,7 +77,139 @@ class Cms
                 'show_header_ads' => true,
                 'aside_blog_blurb' => 'Leve esta arte para o Blog CriaSys Web — publicar, afiliados e studio no mesmo fluxo.',
             ],
+            /*
+            | Depoimentos da home (#prova-social).
+            | Sem itens publicados → mantém o bloco “espaço reservado” atual.
+            */
+            'testimonials' => [
+                'section_enabled' => true,
+                'heading' => 'Depoimentos e prova social',
+                'intro' => 'Feedback real de quem testou o MarkCraft.',
+                'items' => [],
+            ],
         ];
+    }
+
+    /** Caminho público relativo (/storage/...) para arquivo no disco public. */
+    /** Link do Blog CriaSys no card do hero (URL + toggle no CMS). */
+    public static function blogCtaReady(?array $blog = null): bool
+    {
+        $blog = $blog ?? (array) self::get('blog', config('markcraft.blog', []));
+        if (empty($blog['cta_ready'])) {
+            return false;
+        }
+
+        $url = trim((string) ($blog['url'] ?? ''));
+
+        return $url !== '' && $url !== '#';
+    }
+
+    public static function blogCtaLabel(?array $blog = null): string
+    {
+        $blog = $blog ?? (array) self::get('blog', config('markcraft.blog', []));
+
+        if (self::blogCtaReady($blog)) {
+            return trim((string) ($blog['cta'] ?? 'Conhecer o Blog CriaSys Web'));
+        }
+
+        return trim((string) ($blog['cta_pending'] ?? 'Página de vendas em breve'));
+    }
+
+    public static function blogCtaUrl(?array $blog = null): string
+    {
+        $blog = $blog ?? (array) self::get('blog', config('markcraft.blog', []));
+
+        if (! self::blogCtaReady($blog)) {
+            return '#blog-criasys';
+        }
+
+        return trim((string) ($blog['url'] ?? '#')) ?: '#';
+    }
+
+    public static function publicStoragePath(string $storedPath): string
+    {
+        return '/storage/'.str_replace('\\', '/', ltrim($storedPath, '/'));
+    }
+
+    /** Normaliza URL absoluta antiga → /storage/... */
+    public static function normalizeStoragePath(?string $path): string
+    {
+        $path = trim((string) $path);
+        if ($path === '') {
+            return '';
+        }
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            $path = parse_url($path, PHP_URL_PATH) ?: $path;
+        }
+
+        return str_starts_with($path, '/') ? $path : '/'.$path;
+    }
+
+    /** URL absoluta correta para o host atual (Laragon, produção, etc.). */
+    public static function mediaUrl(?string $path): string
+    {
+        $path = self::normalizeStoragePath($path);
+        if ($path === '') {
+            return '';
+        }
+
+        return asset(ltrim($path, '/'));
+    }
+
+    /**
+     * Depoimentos salvos, no formato que o editor do painel consome.
+     * Sem limite de quantidade — o admin adiciona quantos quiser.
+     */
+    public static function testimonialItems(): array
+    {
+        $section = (array) self::get('testimonials', []);
+        $items = [];
+
+        foreach (array_values($section['items'] ?? []) as $i => $row) {
+            $row = (array) $row;
+            $id = (string) ($row['id'] ?? '');
+            $imagePath = self::normalizeStoragePath($row['image'] ?? '');
+
+            $items[] = [
+                'key' => $id !== '' ? $id : 'row-'.$i,
+                'id' => $id,
+                'enabled' => ! empty($row['enabled']),
+                'name' => (string) ($row['name'] ?? ''),
+                'role' => (string) ($row['role'] ?? ''),
+                'quote' => (string) ($row['quote'] ?? ''),
+                'image' => $imagePath,
+                'image_url' => self::mediaUrl($imagePath),
+                'preview' => '',
+            ];
+        }
+
+        return $items;
+    }
+
+    /** Depoimentos publicados: ligado + (imagem OU nome com texto). */
+    public static function publishedTestimonials(): array
+    {
+        $section = (array) self::get('testimonials', []);
+        if (empty($section['section_enabled'])) {
+            return [];
+        }
+
+        return collect($section['items'] ?? [])
+            ->filter(function ($item) {
+                $hasImage = filled($item['image'] ?? null);
+                $hasText = filled($item['name'] ?? null) && filled($item['quote'] ?? null);
+
+                return ! empty($item['enabled']) && ($hasImage || $hasText);
+            })
+            ->map(function ($item) {
+                $item = (array) $item;
+                $item['image'] = self::normalizeStoragePath($item['image'] ?? '');
+                $item['image_url'] = self::mediaUrl($item['image']);
+
+                return $item;
+            })
+            ->values()
+            ->all();
     }
 
     public static function all(): array

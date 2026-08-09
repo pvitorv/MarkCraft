@@ -8,8 +8,15 @@
     $desktop = ! empty($markcraftDesktop);
 @endphp
 
+@php
+    $studioWebFull = $context === 'studio' && empty($markcraftDesktop);
+    $shellWidthClass = $studioWebFull
+        ? 'w-full max-w-none px-3 lg:px-5 xl:px-6'
+        : ($isStudio ? 'mx-auto max-w-[1600px] w-full px-3' : 'mx-auto max-w-6xl px-4');
+@endphp
+
 <header class="sticky top-0 z-[500] border-b border-white/5 bg-[#07090c]/90 backdrop-blur-md">
-    <div class="mx-auto {{ $isStudio ? 'max-w-[1600px] px-3' : 'max-w-6xl px-4' }} py-3 flex items-center justify-between gap-3">
+    <div class="{{ $shellWidthClass }} py-3 flex items-center justify-between gap-3">
         <a href="{{ $desktop ? route('studio') : route('home') }}" class="mc-brand text-lg sm:text-xl font-extrabold text-white tracking-tight shrink-0 relative z-[501]">
             MarkCraft
             @if($desktop)
@@ -20,10 +27,6 @@
         </a>
 
         @if($isStudio && ! $desktop)
-            <div class="hidden md:flex flex-1 min-w-0 items-center justify-center gap-2 mx-2">
-                <x-ad-slot key="studio_header_a" />
-                <x-ad-slot key="studio_header_b" />
-            </div>
             <div class="hidden xl:flex min-w-0 max-w-[14rem] items-center">
                 <a
                     href="{{ $cmsBlog['url'] ?? config('markcraft.blog.url') }}"
@@ -43,19 +46,6 @@
         <nav class="hidden lg:flex flex-wrap items-center justify-end gap-1.5 xl:gap-2 text-sm text-zinc-300 relative z-[501]">
             @if($isStudio && ! $desktop)
                 <a href="{{ route('home') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Início</a>
-                @foreach($tools as $slug => $tool)
-                    <button
-                        type="button"
-                        @click="openTool('{{ $slug }}')"
-                        class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-white/5 text-zinc-300 hover:text-white"
-                        title="{{ $tool['name'] }}"
-                    >
-                        <span class="inline-flex h-4 w-4 text-teal-300">
-                            @include('partials.tool_icon', ['icon' => $tool['icon'] ?? 'link', 'size' => 16])
-                        </span>
-                        <span class="hidden xl:inline">{{ $tool['short'] ?? $tool['name'] }}</span>
-                    </button>
-                @endforeach
             @endif
             @include('partials.account_menu')
             @unless($desktop)
@@ -152,6 +142,7 @@
             </div>
 
             @unless($desktop)
+                @if(! $isStudio)
                 <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Ferramentas</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                     @foreach($tools as $slug => $tool)
@@ -170,6 +161,7 @@
                         </button>
                     @endforeach
                 </div>
+                @endif
 
                 <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Hub</p>
                 <div class="grid grid-cols-2 gap-2">

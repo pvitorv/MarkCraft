@@ -4,7 +4,7 @@
 >
     <div
         class="is-workspace-row flex flex-col lg:flex-row gap-3 min-h-0 w-full min-w-0 overflow-x-hidden"
-        :class="imageStudioExpanded ? 'w-full max-w-[1600px] h-full max-h-[100dvh] rounded-xl border border-zinc-700 bg-zinc-950 p-2 sm:p-3 shadow-2xl overflow-hidden' : ''"
+        :class="imageStudioExpanded ? 'w-full max-w-none h-full max-h-[100dvh] rounded-xl border border-zinc-700 bg-zinc-950 p-2 sm:p-3 shadow-2xl overflow-hidden' : ''"
     >
         {{-- Barra lateral esquerda (abas) --}}
         @include('studio.partials.image_studio_aside')
@@ -24,15 +24,6 @@
                         >
                             <strong>Todos os formatos</strong>
                             <small>Blog · redes · impressão</small>
-                        </button>
-                        <button
-                            type="button"
-                            class="studio-chip studio-chip-more"
-                            @click="openImageStudioPacksModal()"
-                            title="Templates de páginas, logomarcas e mockups com camadas editáveis"
-                        >
-                            <strong>Pacotes</strong>
-                            <small>Web · marca · mockups</small>
                         </button>
                     </div>
                 </div>
@@ -63,20 +54,37 @@
                         <span class="tabular-nums" x-text="imageStudioZoom + '%'"></span>
                         <button type="button" class="studio-btn" @click="imageStudioZoomReset()">100%</button>
                         <button type="button" class="studio-btn" @click="fitImageStudioCanvas()">Ajustar</button>
-                        <button
-                            type="button"
-                            class="studio-btn"
-                            :class="imageStudioExpanded ? 'studio-btn-warn' : ''"
-                            @click="toggleImageStudioExpanded()"
-                            :title="imageStudioExpanded ? 'Recolher (Esc)' : 'Expandir'"
-                            x-text="imageStudioExpanded ? 'Recolher' : 'Expandir'"
-                        ></button>
                     </div>
+                </div>
+
+                <div class="studio-toolbar-block studio-toolbar-block--expand">
+                    <span class="studio-toolbar-label">Área de edição</span>
+                    <button
+                        type="button"
+                        class="studio-btn-expand"
+                        :class="imageStudioExpanded ? 'studio-btn-expand--recolher' : 'studio-btn-expand--expandir'"
+                        @click="toggleImageStudioExpanded()"
+                        :title="imageStudioExpanded ? 'Recolher (Esc)' : 'Expandir tela cheia'"
+                        :aria-pressed="imageStudioExpanded.toString()"
+                    >
+                        <span class="studio-btn-expand__icon" aria-hidden="true">
+                            <svg x-show="!imageStudioExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>
+                            </svg>
+                            <svg x-show="imageStudioExpanded" x-cloak viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/>
+                            </svg>
+                        </span>
+                        <span class="studio-btn-expand__copy">
+                            <strong x-text="imageStudioExpanded ? 'Recolher' : 'Expandir'"></strong>
+                            <small x-text="imageStudioExpanded ? 'Esc · voltar ao layout' : 'Tela cheia · mais área'"></small>
+                        </span>
+                    </button>
                 </div>
             </div>
 
             <div
-                class="is-canvas-dropzone rounded-xl border border-zinc-700 bg-zinc-950 p-4 min-h-[320px] flex justify-center items-start relative flex-1 min-h-0"
+                class="is-canvas-dropzone rounded-xl border border-zinc-700 bg-zinc-950 p-4 min-h-[320px] flex justify-center items-start relative flex-1 min-h-0 w-full"
                 :class="{
                     'max-h-none': imageStudioExpanded,
                     'max-h-[min(85vh,920px)]': !imageStudioExpanded,

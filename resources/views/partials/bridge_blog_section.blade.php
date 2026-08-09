@@ -2,14 +2,13 @@
 @php
     $blog = $cmsBlog ?? config('markcraft.blog', []);
     $blogName = $blog['name'] ?? 'Blog CriaSys Web';
-    $url = trim((string) ($blog['url'] ?? '#'));
-    if ($url === '') {
-        $url = '#blog-criasys';
-    }
+    $blogReady = \App\Support\Cms::blogCtaReady($blog);
+    $url = $blogReady ? \App\Support\Cms::blogCtaUrl($blog) : '#blog-criasys';
     $registerUrl = trim((string) ($blog['register_url'] ?? ''));
     if ($registerUrl === '') {
         $registerUrl = $url;
     }
+    $ctaLabel = \App\Support\Cms::blogCtaLabel($blog);
 @endphp
 
 <section class="mc-bridge-section mx-auto max-w-6xl px-4 pb-14 pt-2" id="blog-criasys" aria-labelledby="mc-bridge-title">
@@ -40,20 +39,27 @@
             </div>
 
             <div class="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
-                <a
-                    href="{{ $url }}"
-                    class="mc-cta mc-cta-blog inline-flex justify-center rounded-md px-5 py-2.5 text-sm font-semibold"
-                    @if(!str_starts_with($url, '#')) target="_blank" rel="noopener" @endif
-                >
-                    Conhecer o {{ $blogName }} →
-                </a>
-                <a
-                    href="{{ $registerUrl }}"
-                    class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-violet-100 hover:bg-violet-500/20 transition"
-                    @if(!str_starts_with($registerUrl, '#')) target="_blank" rel="noopener" @endif
-                >
-                    Começar teste grátis
-                </a>
+                @if($blogReady)
+                    <a
+                        href="{{ $url }}"
+                        class="mc-cta mc-cta-blog inline-flex justify-center rounded-md px-5 py-2.5 text-sm font-semibold"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        {{ $ctaLabel }} →
+                    </a>
+                    <a
+                        href="{{ $registerUrl }}"
+                        class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-2.5 text-sm font-semibold text-violet-100 hover:bg-violet-500/20 transition"
+                        @if(!str_starts_with($registerUrl, '#')) target="_blank" rel="noopener" @endif
+                    >
+                        Começar teste grátis
+                    </a>
+                @else
+                    <span class="inline-flex justify-center rounded-md border border-dashed border-violet-400/35 bg-violet-500/5 px-5 py-2.5 text-sm font-semibold text-violet-200/90">
+                        {{ $ctaLabel }}
+                    </span>
+                @endif
             </div>
             <p class="mt-3 text-[11px] text-zinc-500 max-w-md">
                 Trial Pro Studio sem cartão no cadastro · depois Essencial, Pro Studio ou passe · cartão ou Pix.

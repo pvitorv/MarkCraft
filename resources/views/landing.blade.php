@@ -671,23 +671,32 @@
             </p>
             <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
                 @php
-                    $blogUrl = trim((string) ($cmsBlog['url'] ?? '#')) ?: '#';
-                    $blogRegister = trim((string) ($cmsBlog['register_url'] ?? $blogUrl)) ?: $blogUrl;
+                    $blogReady = \App\Support\Cms::blogCtaReady($cmsBlog ?? []);
+                    $blogUrl = $blogReady ? \App\Support\Cms::blogCtaUrl($cmsBlog ?? []) : '#blog-criasys';
+                    $blogRegister = trim((string) (($cmsBlog ?? [])['register_url'] ?? $blogUrl)) ?: $blogUrl;
+                    $blogCtaLabel = \App\Support\Cms::blogCtaLabel($cmsBlog ?? []);
                 @endphp
-                <a
-                    href="{{ $blogUrl }}"
-                    class="mc-cta mc-cta-blog inline-flex justify-center items-center rounded-md px-6 py-3.5 text-base font-semibold"
-                    @if($blogUrl !== '#' && !str_starts_with($blogUrl, '#')) target="_blank" rel="noopener" @endif
-                >
-                    {{ $cmsBlog['cta'] ?? 'Conhecer' }}
-                </a>
-                <a
-                    href="{{ $blogRegister }}"
-                    class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-3.5 font-medium text-violet-100 hover:bg-violet-500/20 transition"
-                    @if($blogRegister !== '#' && !str_starts_with($blogRegister, '#')) target="_blank" rel="noopener" @endif
-                >
-                    Começar teste grátis
-                </a>
+                @if($blogReady)
+                    <a
+                        href="{{ $blogUrl }}"
+                        class="mc-cta mc-cta-blog inline-flex justify-center items-center rounded-md px-6 py-3.5 text-base font-semibold"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        {{ $blogCtaLabel }} →
+                    </a>
+                    <a
+                        href="{{ $blogRegister }}"
+                        class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-3.5 font-medium text-violet-100 hover:bg-violet-500/20 transition"
+                        @if(!str_starts_with($blogRegister, '#')) target="_blank" rel="noopener" @endif
+                    >
+                        Começar teste grátis
+                    </a>
+                @else
+                    <span class="inline-flex justify-center rounded-md border border-dashed border-violet-400/35 bg-violet-500/5 px-6 py-3.5 text-base font-semibold text-violet-200/90">
+                        {{ $blogCtaLabel }}
+                    </span>
+                @endif
                 @auth
                     <a href="{{ route('studio') }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">Continuar no Studio</a>
                 @else

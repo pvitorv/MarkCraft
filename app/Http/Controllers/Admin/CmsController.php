@@ -6,29 +6,72 @@ use App\Http\Controllers\Controller;
 use App\Support\Cms;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class CmsController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $tab = (string) $request->query('tab', 'home');
+        $tabs = [
+            'home' => ['label' => 'Home', 'hint' => 'Hero, link do Blog e seções'],
+            'blog' => ['label' => 'Blog CriaSys', 'hint' => 'Textos da ponte MarkCraft → Blog'],
+            'testimonials' => ['label' => 'Depoimentos', 'hint' => 'Prova social da home'],
+            'footer' => ['label' => 'Rodapé', 'hint' => 'Redes, portfólio e CriaSys Web'],
+            'promos' => ['label' => 'Promos e packs', 'hint' => 'Cards, afiliados e doações'],
+            'ads' => ['label' => 'Ads do Studio', 'hint' => 'Faixa retangular abaixo do menu'],
+            'studio' => ['label' => 'Studio', 'hint' => 'Botões e textos do editor'],
+        ];
+        if (! array_key_exists($tab, $tabs)) {
+            $tab = 'home';
+        }
+
+        $testimonialFormRows = Cms::testimonialItems();
+        if ($tab === 'testimonials' && $testimonialFormRows === []) {
+            $testimonialFormRows = [[
+                'id' => '',
+                'enabled' => true,
+                'name' => '',
+                'role' => '',
+                'quote' => '',
+                'image' => '',
+                'image_url' => '',
+            ]];
+        }
+
         return view('admin.cms.index', [
             'cms' => Cms::all(),
-            'tabs' => [
-                'home' => 'Home',
-                'footer' => 'Rodapé',
-                'promos' => 'Promos / afiliados',
-                'ads' => 'Ads Studio',
-                'studio' => 'Studio / modais',
-                'blog' => 'Blog / CriaSys',
-            ],
+            'tabs' => $tabs,
+            'activeTab' => $tab,
+            'testimonialFormRows' => $testimonialFormRows,
         ]);
+    }
+
+    public function addTestimonialRow(): RedirectResponse
+    {
+        $section = array_merge(Cms::defaults()['testimonials'], (array) Cms::get('testimonials', []));
+        $items = array_values($section['items'] ?? []);
+        $items[] = [
+            'id' => (string) Str::uuid(),
+            'enabled' => true,
+            'name' => '',
+            'role' => '',
+            'quote' => '',
+            'image' => '',
+        ];
+        $section['items'] = $items;
+        Cms::put('testimonials', $section);
+
+        return redirect()
+            ->route('admin.cms.index', ['tab' => 'testimonials'])
+            ->with('status', 'cms-saved');
     }
 
     public function update(Request $request): RedirectResponse
     {
         $section = (string) $request->input('section', '');
-        $allowed = ['home', 'footer', 'promos', 'ads', 'studio', 'blog', 'affiliate_packs', 'donations'];
+        $allowed = ['home', 'footer', 'promos', 'ads', 'studio', 'blog', 'testimonials'];
         abort_unless(in_array($section, $allowed, true), 422);
 
         $payload = match ($section) {
@@ -38,13 +81,17 @@ class CmsController extends Controller
             'ads' => $this->adsPayload($request),
             'studio' => $this->studioPayload($request),
             'blog' => $this->blogPayload($request),
-            'affiliate_packs' => $this->packsPayload($request),
-            'donations' => $this->donationsPayload($request),
+            'testimonials' => $this->testimonialsPayload($request),
             default => [],
         };
 
+        $testimonialErrors = [];
+        if ($section === 'testimonials') {
+            $testimonialErrors = $payload['_errors'] ?? [];
+            unset($payload['_errors']);
+        }
+
         if ($section === 'promos') {
-            // packs + donations salvos junto na aba promos
             Cms::put('promos', $payload['promos']);
             Cms::put('affiliate_packs', $payload['affiliate_packs']);
             Cms::put('donations', $payload['donations']);
@@ -52,9 +99,37 @@ class CmsController extends Controller
             Cms::put($section, $payload);
         }
 
-        return redirect()
-            ->route('admin.cms.index', ['tab' => $section === 'affiliate_packs' ? 'promos' : $section])
+        $returnTab = (string) $request->input('return_tab', $section);
+        if (! in_array($returnTab, $allowed, true)) {
+            $returnTab = $section;
+        }
+
+        $redirect = redirect()
+            ->route('admin.cms.index', ['tab' => $returnTab])
             ->with('status', 'cms-saved');
+
+        if ($section === 'testimonials') {
+            $published = count(Cms::publishedTestimonials());
+            $saved = count(Cms::testimonialItems());
+            $redirect->with('testimonials_published', $published)
+                ->with('testimonials_saved', $saved);
+
+            if ($testimonialErrors !== []) {
+                $redirect->with('testimonial_errors', $testimonialErrors);
+            }
+        }
+
+        return $redirect;
+    }
+
+    /** Checkbox vindo como "0", "1" ou ["0","1"] do form. */
+    private function formTruthy(mixed $value): bool
+    {
+        if (is_array($value)) {
+            $value = end($value);
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     private function homePayload(Request $request): array
@@ -75,11 +150,10 @@ class CmsController extends Controller
     {
         $socials = [];
         foreach ((array) $request->input('socials', []) as $row) {
-            $url = trim((string) ($row['url'] ?? ''));
             $socials[] = [
                 'network' => (string) ($row['network'] ?? ''),
                 'label' => trim((string) ($row['label'] ?? '')),
-                'url' => $url,
+                'url' => trim((string) ($row['url'] ?? '')),
             ];
         }
 
@@ -131,8 +205,9 @@ class CmsController extends Controller
 
     private function adsPayload(Request $request): array
     {
+        $existing = array_merge(Cms::defaults()['ads'], (array) Cms::get('ads', []));
         $out = [];
-        foreach (['studio_header_a', 'studio_header_b'] as $key) {
+        foreach (['studio_header_a', 'studio_header_b', 'studio_header_c'] as $key) {
             $out[$key] = [
                 'enabled' => $request->boolean("{$key}_enabled"),
                 'label' => trim((string) $request->input("{$key}_label", '')),
@@ -145,7 +220,7 @@ class CmsController extends Controller
             ];
         }
 
-        return $out;
+        return array_merge($existing, $out);
     }
 
     private function studioPayload(Request $request): array
@@ -160,31 +235,87 @@ class CmsController extends Controller
 
     private function blogPayload(Request $request): array
     {
+        $existing = array_merge(Cms::defaults()['blog'], (array) Cms::get('blog', []));
+
         $bullets = array_values(array_filter(array_map(
             'trim',
-            preg_split('/\r\n|\r|\n/', (string) $request->input('bullets', '')) ?: []
+            preg_split('/\r\n|\r|\n/', (string) $request->input('bullets', implode("\n", $existing['bullets'] ?? []))) ?: []
         )));
 
-        return [
-            'name' => trim((string) $request->input('name', '')),
-            'eyebrow' => trim((string) $request->input('eyebrow', '')),
-            'headline' => trim((string) $request->input('headline', '')),
-            'blurb' => trim((string) $request->input('blurb', '')),
-            'cta' => trim((string) $request->input('cta', '')),
-            'url' => trim((string) $request->input('url', '')),
-            'register_url' => trim((string) $request->input('register_url', '')),
-            'early_access_note' => trim((string) $request->input('early_access_note', '')),
+        return array_merge($existing, [
+            'name' => trim((string) $request->input('name', $existing['name'] ?? '')),
+            'eyebrow' => trim((string) $request->input('eyebrow', $existing['eyebrow'] ?? '')),
+            'headline' => trim((string) $request->input('headline', $existing['headline'] ?? '')),
+            'blurb' => trim((string) $request->input('blurb', $existing['blurb'] ?? '')),
+            'cta' => trim((string) $request->input('cta', $existing['cta'] ?? '')),
+            'cta_pending' => trim((string) $request->input('cta_pending', $existing['cta_pending'] ?? 'Página de vendas em breve')),
+            'cta_ready' => $this->formTruthy($request->input('cta_ready')),
+            'url' => trim((string) $request->input('url', $existing['url'] ?? '')),
+            'register_url' => trim((string) $request->input('register_url', $existing['register_url'] ?? '')),
+            'early_access_note' => trim((string) $request->input('early_access_note', $existing['early_access_note'] ?? '')),
             'bullets' => $bullets,
+        ]);
+    }
+
+    private function testimonialsPayload(Request $request): array
+    {
+        $items = [];
+        $errors = [];
+        $rows = (array) $request->input('items', []);
+        $fileRows = (array) ($request->allFiles()['items'] ?? []);
+        $indices = array_unique(array_merge(array_keys($rows), array_keys($fileRows)));
+        sort($indices, SORT_NUMERIC);
+
+        foreach ($indices as $i) {
+            $row = (array) ($rows[$i] ?? []);
+
+            if ($this->formTruthy($row['remove'] ?? false)) {
+                continue;
+            }
+
+            $name = trim((string) ($row['name'] ?? ''));
+            $quote = trim((string) ($row['quote'] ?? ''));
+            $role = trim((string) ($row['role'] ?? ''));
+            $image = Cms::normalizeStoragePath(trim((string) ($row['image'] ?? '')));
+
+            $file = $request->file("items.$i.image_file");
+            if ($file !== null && ! $file->isValid()) {
+                $errors[] = 'Imagem do depoimento '.((int) $i + 1).' não foi aceita (muito grande ou inválida).';
+            }
+
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('cms/testimonials', 'public');
+                $image = Cms::publicStoragePath($stored);
+            }
+
+            if ($name === '' && $quote === '' && $image === '') {
+                if ($file !== null) {
+                    $errors[] = 'Imagem do depoimento '.((int) $i + 1).' não salvou. Tente JPG ou PNG.';
+                }
+
+                continue;
+            }
+
+            $items[] = [
+                'id' => filled($row['id'] ?? null) ? (string) $row['id'] : (string) Str::uuid(),
+                'enabled' => $this->formTruthy($row['enabled'] ?? false),
+                'name' => $name,
+                'role' => $role,
+                'quote' => $quote,
+                'image' => $image,
+            ];
+        }
+
+        if ($indices !== [] && $items === []) {
+            $errors[] = 'Nenhum depoimento salvo. Envie uma imagem ou marque remover em linhas vazias.';
+        }
+
+        return [
+            'section_enabled' => $this->formTruthy($request->input('section_enabled', '1')),
+            'heading' => trim((string) $request->input('heading', 'Depoimentos e prova social')),
+            'intro' => trim((string) $request->input('intro', '')),
+            'items' => array_values($items),
+            '_errors' => array_values(array_unique($errors)),
         ];
-    }
-
-    private function packsPayload(Request $request): array
-    {
-        return $this->promosPayload($request)['affiliate_packs'];
-    }
-
-    private function donationsPayload(Request $request): array
-    {
-        return $this->promosPayload($request)['donations'];
     }
 }

@@ -139,24 +139,31 @@
     <div class="mc-app">
     @include('partials.dark_site_navbar', ['context' => 'studio'])
 
+    @include('studio.partials.ad_strip')
+
     <div
-        class="mc-app-shell mx-auto max-w-[1600px] px-3 py-3 overflow-x-hidden min-w-0 w-full"
+        class="mc-app-shell mc-app-shell--studio w-full py-3 overflow-x-hidden min-w-0 {{ empty($markcraftDesktop) ? '' : 'mx-auto max-w-[1600px] px-3' }}"
         x-data="markCraftStudio"
         x-init="init()"
     >
-        <div class="mb-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3">
-            <div class="min-w-0">
-                <h1 class="mc-brand text-lg sm:text-xl font-bold text-white">{{ !empty($markcraftDesktop) ? 'Studio local' : 'Monte seu post' }}</h1>
-                <p class="text-xs text-zinc-400">
-                    @if(!empty($markcraftDesktop))
-                        Cópia desktop · Layouts · Pacotes · Sequência · rembg.
-                        Exports vão para download ou pasta MarkCraftExports (Electron).
-                    @else
-                        Studio gratuito CriaSys · Layouts · Pacotes · Elementos · rembg.
-                        Artes não ficam no site — baixe e limpe.
-                    @endif
-                    <span x-show="imageStudioBgRemovalLabel" x-cloak class="text-zinc-500" x-text="' · ' + imageStudioBgRemovalLabel"></span>
-                </p>
+        <div class="{{ empty($markcraftDesktop) ? 'px-3 lg:px-5 xl:px-6' : '' }} mb-3 flex flex-col lg:flex-row lg:flex-wrap lg:items-center lg:justify-between gap-3">
+            <div class="min-w-0 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 flex-1">
+                <div class="min-w-0">
+                    <h1 class="mc-brand text-lg sm:text-xl font-bold text-white">{{ !empty($markcraftDesktop) ? 'Studio local' : 'Monte seu post' }}</h1>
+                    <p class="text-xs text-zinc-400">
+                        @if(!empty($markcraftDesktop))
+                            Cópia desktop · Layouts · Pacotes · Sequência · rembg.
+                            Exports vão para download ou pasta MarkCraftExports (Electron).
+                        @else
+                            Studio gratuito CriaSys · Layouts · Pacotes · Elementos · rembg.
+                            Artes não ficam no site — baixe e limpe.
+                        @endif
+                        <span x-show="imageStudioBgRemovalLabel" x-cloak class="text-zinc-500" x-text="' · ' + imageStudioBgRemovalLabel"></span>
+                    </p>
+                </div>
+                @unless(!empty($markcraftDesktop))
+                    @include('studio.partials.tool_nav_buttons')
+                @endunless
             </div>
             <div class="flex flex-wrap gap-2">
                 @unless(!empty($markcraftDesktop))
@@ -182,20 +189,26 @@
             </div>
         </div>
 
-        <p x-show="message" x-cloak x-text="message" class="mb-2 text-xs text-emerald-300"></p>
-        <p x-show="error" x-cloak x-text="error" class="mb-2 text-xs text-red-300"></p>
+        <div class="{{ empty($markcraftDesktop) ? 'px-3 lg:px-5 xl:px-6' : '' }}">
+            <p x-show="message" x-cloak x-text="message" class="mb-2 text-xs text-emerald-300"></p>
+            <p x-show="error" x-cloak x-text="error" class="mb-2 text-xs text-red-300"></p>
+        </div>
 
-        <div class="flex gap-3 items-start min-w-0 w-full overflow-x-hidden">
-            <div class="flex-1 min-w-0 overflow-x-hidden">
-                @include('studio.partials.image_studio_workspace')
-            </div>
-            @unless(!empty($markcraftDesktop))
-                @if(!empty($cmsStudio['show_sidebar_promo'] ?? true))
-                <div class="hidden xl:block w-52 shrink-0 sticky top-16 space-y-3">
-                    <x-promo-slot slot="studio_sidebar" />
+        <div class="mc-studio-workspace-stage w-full min-w-0">
+            @if(!empty($markcraftDesktop))
+                <div class="flex gap-3 items-start min-w-0 w-full overflow-x-hidden px-3">
+                    <div class="flex-1 min-w-0 overflow-x-hidden">
+                        @include('studio.partials.image_studio_workspace')
+                    </div>
+                    @if(!empty($cmsStudio['show_sidebar_promo'] ?? true))
+                        <div class="hidden xl:block w-52 shrink-0 sticky top-16 space-y-3">
+                            <x-promo-slot slot="studio_sidebar" />
+                        </div>
+                    @endif
                 </div>
-                @endif
-            @endunless
+            @else
+                @include('studio.partials.image_studio_workspace')
+            @endif
         </div>
     </div>
 

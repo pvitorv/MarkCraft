@@ -22,6 +22,8 @@ return [
         'cta' => 'Conhecer o Blog CriaSys Web',
         'url' => env('BLOG_CRIASYS_URL', '#'),
         'register_url' => env('BLOG_CRIASYS_REGISTER_URL', env('BLOG_CRIASYS_URL', '#')),
+        'cta_ready' => (bool) env('BLOG_CRIASYS_CTA_READY', false),
+        'cta_pending' => 'Página de vendas em breve',
         'early_access_note' => 'Acesso antecipado em teste fechado · depoimentos entram só com feedback real',
         'bullets' => [
             'Multi-blog com painel profissional',

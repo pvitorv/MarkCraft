@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'index'])->name('cms.index');
     Route::post('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'update'])->name('cms.update');
+    Route::post('/cms/testimonials/row', [\App\Http\Controllers\Admin\CmsController::class, 'addTestimonialRow'])->name('cms.testimonials.add-row');
 });
 
 require __DIR__.'/auth.php';

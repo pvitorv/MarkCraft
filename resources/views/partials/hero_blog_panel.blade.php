@@ -1,6 +1,8 @@
 @php
     $blog = $cmsBlog ?? config('markcraft.blog', []);
-    $url = trim((string) ($blog['url'] ?? '#')) ?: '#';
+    $blogReady = \App\Support\Cms::blogCtaReady($blog);
+    $ctaUrl = \App\Support\Cms::blogCtaUrl($blog);
+    $ctaLabel = \App\Support\Cms::blogCtaLabel($blog);
 @endphp
 
 <div class="mc-hero-visual mc-rise-2">
@@ -12,12 +14,26 @@
         <p class="mt-1.5 text-xs sm:text-sm text-zinc-400 leading-snug line-clamp-3">
             {{ $blog['headline'] ?? 'Blog, painel e Image Studio no mesmo fluxo' }}
         </p>
-        <a
-            href="{{ $url }}"
-            class="mc-cta-outline mt-4 inline-flex w-full sm:w-auto justify-center rounded-md px-4 py-2 text-sm font-medium transition"
-            @if($url !== '#' && !str_starts_with($url, '#')) target="_blank" rel="noopener" @endif
-        >
-            {{ $blog['cta'] ?? 'Conhecer' }}
-        </a>
+
+        @if($blogReady)
+            <a
+                href="{{ $ctaUrl }}"
+                class="mc-cta mc-cta-blog mt-4 inline-flex w-full sm:w-auto justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition"
+                target="_blank"
+                rel="noopener"
+            >
+                {{ $ctaLabel }} →
+            </a>
+        @else
+            <a
+                href="#blog-criasys"
+                class="mc-cta-outline mt-4 inline-flex w-full sm:w-auto justify-center rounded-md px-4 py-2.5 text-sm font-medium transition border-dashed opacity-90"
+            >
+                {{ $ctaLabel }}
+            </a>
+            @if(!empty($blog['early_access_note']))
+                <p class="mt-2 text-[11px] text-zinc-500 leading-snug">{{ $blog['early_access_note'] }}</p>
+            @endif
+        @endif
     </div>
 </div>

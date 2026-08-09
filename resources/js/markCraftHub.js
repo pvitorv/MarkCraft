@@ -24,6 +24,12 @@ export default function markCraftHub() {
                 this.$nextTick(() => this.openCredits());
             }
             window.addEventListener('mc-open-credits', () => this.openCredits());
+            window.addEventListener('mc-open-tool', (e) => {
+                const slug = e?.detail;
+                if (slug) {
+                    this.openTool(slug);
+                }
+            });
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     if (this.creditsOpen) {

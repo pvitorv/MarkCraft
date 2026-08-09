@@ -26,8 +26,7 @@ class AppServiceProvider extends ServiceProvider
         View::share('markcraftAllowsRegister', MarkCraftShell::allowsRegister());
 
         View::composer('*', function ($view) {
-            static $cms = null;
-            $cms ??= Cms::all();
+            $cms = Cms::all();
             $view->with('cms', $cms);
             $view->with('cmsBlog', $cms['blog'] ?? config('markcraft.blog'));
             $view->with('cmsFooter', $cms['footer'] ?? []);
@@ -36,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('cmsStudio', $cms['studio'] ?? []);
             $view->with('cmsAffiliatePacks', $cms['affiliate_packs'] ?? config('markcraft.affiliate_packs'));
             $view->with('cmsDonations', $cms['donations'] ?? config('markcraft.donations'));
+            $view->with('cmsTestimonials', $cms['testimonials'] ?? []);
         });
     }
 }
