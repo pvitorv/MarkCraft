@@ -71,3 +71,7 @@ Laravel 12 · Breeze · Vite · Alpine · Tailwind · Fabric.js · ag-psd · `@i
 - MarkCraft mantém: baixar/limpar (sem salvar no servidor), modal Elementos com sidebar, cor padrão teal nas formas
 
 Origem do kit: pasta `image-studio-kit/` (espelho atual). Arquivo antigo: `01-image-studio-kit/`.
+
+
+https://markcraft.criasysweb.com.br/
+
