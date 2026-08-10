@@ -45,6 +45,7 @@ find "$STAGING/storage/framework/cache/data" -mindepth 1 ! -name '.gitignore' -d
 find "$STAGING/storage/framework/sessions" -mindepth 1 ! -name '.gitignore' -delete 2>/dev/null || true
 find "$STAGING/storage/framework/views" -mindepth 1 ! -name '.gitignore' -delete 2>/dev/null || true
 find "$STAGING/storage/app/public" -mindepth 1 ! -name '.gitignore' -delete 2>/dev/null || true
+find "$STAGING/storage/app/tmp" -mindepth 1 ! -name '.gitignore' -delete 2>/dev/null || true
 find "$STAGING/bootstrap/cache" -name '*.php' ! -name '.gitignore' -delete 2>/dev/null || true
 
 # Incluir guia de deploy dentro do pacote
@@ -60,5 +61,6 @@ rm -rf "$ROOT/deploy-staging"
 
 SIZE="$(du -h "$ROOT/$ZIP_NAME" 2>/dev/null | cut -f1 || echo '?')"
 echo "==> Pronto: $ROOT/$ZIP_NAME ($SIZE)"
+echo "    Public separado: php scripts/make-public-deploy-zip.php → public/markcraft-public-deploy.zip"
 echo "    Subdomínio: https://markcraft.criasysweb.com.br"
 echo "    Document root Hostoo: .../markcraft/public"

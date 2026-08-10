@@ -79,10 +79,31 @@ python3 --version
 which python3
 ```
 
-- Se mostrar `Python 3.9+` (ideal 3.10+): continue.
-- Se **não** existir: peça ao suporte Hostoo para habilitar Python 3, **ou** use pyenv/miniconda **somente se** o plano permitir instalar na home do usuário. Sem Python, pare e use `DRIVER=off`.
+- Se mostrar `Python 3.9+` (ideal 3.10+): continue com venv abaixo.
+- Se **só** existir Python 3.6 (comum na Hostoo): use **Miniconda** (passo 2b). Sem Python 3.9+, pare e use `DRIVER=off`.
 
-### 3) Criar pasta e ambiente virtual (recomendado)
+### 2b) Miniconda (Hostoo — Python 3.6 no sistema)
+
+Requer **≥ 2 GB RAM** (instalação pode derrubar SSH em planos menores).
+
+```bash
+cd ~
+wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+bash miniconda.sh -b -p ~/miniconda3
+~/miniconda3/bin/python --version
+~/miniconda3/bin/pip install rembg pillow onnxruntime
+~/miniconda3/bin/python -c "import rembg; print('rembg OK')"
+```
+
+`.env`:
+
+```env
+REMBG_PYTHON=/home/SEU_USUARIO/miniconda3/bin/python
+```
+
+Pule para o passo 6 (teste do script). MarkCraft em produção (2026-08): ~30–40 s por remoção em 2 GB.
+
+### 3) Criar pasta e ambiente virtual (recomendado se python3 ≥ 3.9)
 
 ```bash
 mkdir -p ~/apps/rembg-venv-src

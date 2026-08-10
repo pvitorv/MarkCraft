@@ -23,7 +23,8 @@ docs/HISTORICO_PROGRESSO.md
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-public/hot
+public
+storage/app/tmp
 deploy-staging
 markcraft-deploy-*.zip
 *.zip

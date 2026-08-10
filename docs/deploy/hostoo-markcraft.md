@@ -1,127 +1,144 @@
 # Deploy MarkCraft na Hostoo (subdomínio)
 
-Subdomínio sugerido: **`markcraft.criasysweb.com.br`**  
-Document root do subdomínio: **pasta `public/`** dentro da app (não a raiz do Laravel).
+**Produção:** [https://markcraft.criasysweb.com.br/](https://markcraft.criasysweb.com.br/)
 
 O Blog CriaSys Web fica em **[https://blog.criasysweb.com.br](https://blog.criasysweb.com.br/)** (MarkCraft no subdomínio `markcraft`; site principal em `criasysweb.com.br`).
 
 ---
 
-## 1. Gerar o zip (máquina local)
+## URLs de entrada (produção)
 
-Na branch `008-cms-links-brand` (ou main após merge):
+| O quê | URL |
+|-------|-----|
+| Landing | https://markcraft.criasysweb.com.br/ |
+| Login | https://markcraft.criasysweb.com.br/login |
+| Cadastro | https://markcraft.criasysweb.com.br/register |
+| Studio | https://markcraft.criasysweb.com.br/studio |
+| Health | https://markcraft.criasysweb.com.br/up |
+| CMS | https://markcraft.criasysweb.com.br/admin/cms |
+| CMS Blog links | https://markcraft.criasysweb.com.br/admin/cms?tab=landing#cms-blog-links |
+| CMS Packs | https://markcraft.criasysweb.com.br/admin/cms?tab=packs#cms-packs |
+| CMS Doações | https://markcraft.criasysweb.com.br/admin/cms?tab=donations#cms-donations |
+| CMS Promos | https://markcraft.criasysweb.com.br/admin/cms?tab=promos |
+
+Bookmark pessoal (não versionado): copie `docs/deploy/ACESSOS-LOCAL.example.md` → `docs/ACESSOS-LOCAL.md`.
+
+---
+
+## Estrutura na Hostoo (SamtooWeb)
+
+Na Hostoo o **document root** costuma ser `public_html`, **separado** da pasta Laravel:
+
+```text
+/home/SEU_USUARIO/
+  markcraft/              ← zip da app (artisan, app/, vendor/, .env)
+  public_html/            ← zip do public (index.php, build/, brand/)
+```
+
+O `index.php` em `public_html` deve apontar para a raiz Laravel (caminho absoluto recomendado):
+
+```php
+$laravelRoot = '/home/SEU_USUARIO/markcraft';
+```
+
+**Symlink obrigatório** (Laravel procura Vite em `markcraft/public/build/`):
+
+```bash
+ln -s /home/SEU_USUARIO/public_html/build /home/SEU_USUARIO/markcraft/public/build
+```
+
+**PHP 8.3 na web:** o CLI pode ser 8.3 enquanto o site usa 8.0 — force no topo do `.htaccess` do `public_html`:
+
+```apache
+AddHandler application/x-httpd-ea-php83 .php
+```
+
+**Evite** extrair o zip da app dentro de uma pasta que já se chama `markcraft` (vira `markcraft/markcraft`). Extraia um nível acima ou mova o conteúdo para cima.
+
+---
+
+## 1. Gerar os zips (máquina local)
 
 ```bash
 composer test
-composer audit          # revisar advisories
-npm audit --production
-
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build
 
 bash scripts/build-deploy-zip.sh
+php scripts/make-public-deploy-zip.php
 ```
 
-Saída: `markcraft-deploy-YYYYMMDD-hostoo.zip` na raiz do projeto.
+Saída:
 
-**Pastas excluídas do zip:** kits locais (`image-studio-kit`, `kitStartTransform`, `desktop`, `_PACK_*`), `node_modules`, `.git`, `tests`, `.env`, logs/cache.
+| Arquivo | Conteúdo | Tamanho típico |
+|---------|----------|----------------|
+| `markcraft-deploy-YYYYMMDD-hostoo.zip` | App Laravel **sem** `public/` | ~8 MB |
+| `public/markcraft-public-deploy.zip` | Conteúdo de `public/` | ~7 MB |
 
-**Incluído:** `vendor/` (prod), `public/build/`, código da app.
+**Excluído do zip da app:** `public/`, `storage/app/tmp`, kits locais, `node_modules`, `.git`, `tests`, `.env`.
 
 ---
 
-## 2. Hostoo — criar subdomínio
+## 2. Hostoo — subdomínio e banco
 
-1. Painel Hostoo → **Subdomínios** → criar `markcraft`
-2. **Document root:** apontar para `.../markcraft/public` (após upload)
-3. Ativar **SSL** (Let’s Encrypt)
-4. Criar banco **MySQL** e anotar host, nome, usuário, senha
-
-Estrutura típica:
-
-```text
-/home/SEU_USUARIO/
-  domains/markcraft.criasysweb.com.br/
-    markcraft/          ← extrair zip aqui (pasta interna do zip)
-      app/
-      public/           ← document root do subdomínio
-      artisan
-      ...
-```
+1. Painel → **Subdomínio** `markcraft.criasysweb.com.br`
+2. Document root → **`public_html`** (não a pasta `markcraft/`)
+3. SSL (Let's Encrypt)
+4. MySQL — anotar host, banco, usuário, senha
 
 ---
 
 ## 3. Upload e extração
 
-- Enviar o zip via **Gerenciador de arquivos** ou **SFTP**
-- Extrair mantendo a pasta `markcraft/` (conteúdo com `artisan` na raiz)
+1. **App:** extrair `markcraft-deploy-*.zip` em `~/markcraft/` (deve existir `artisan` na raiz).
+2. **Public:** extrair `markcraft-public-deploy.zip` **dentro** de `~/public_html/`.
+3. Ajustar `public_html/index.php` (caminho Laravel).
+4. Criar symlink `build` (ver acima).
 
 ---
 
-## 4. Configurar `.env` no servidor
+## 4. `.env` no servidor
 
-```bash
-cd /caminho/para/markcraft
-cp .env.hostoo.example .env
-nano .env   # preencher DB, APP_KEY, mail
-php artisan key:generate
-```
-
-Variáveis críticas:
+Copie `.env.hostoo.example` → `.env` e preencha DB.
 
 | Variável | Produção |
 |----------|----------|
-| `APP_ENV` | `production` |
-| `APP_DEBUG` | `false` |
 | `APP_URL` | `https://markcraft.criasysweb.com.br` |
+| `APP_DEBUG` | `false` |
 | `BLOG_CRIASYS_CTA_READY` | `false` até Blog no ar |
-| `IMAGE_STUDIO_BG_REMOVAL_DRIVER` | `off` na 1ª subida |
+| `IMAGE_STUDIO_BG_REMOVAL_DRIVER` | `off` na 1ª subida; `rembg` após Python (ver rembg-hostoo.md) |
 
 ---
 
 ## 5. Artisan pós-deploy
 
 ```bash
+cd ~/markcraft
+php artisan key:generate --force
 php artisan migrate --force
 php artisan storage:link
+chmod -R ug+rwx storage bootstrap/cache
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-
-chmod -R ug+rwx storage bootstrap/cache
-
 php artisan markcraft:make-admin seu@email.com
 ```
 
-Teste: `https://markcraft.criasysweb.com.br/up`  
-CMS: `https://markcraft.criasysweb.com.br/admin/cms`
+---
+
+## 6. rembg (remoção de fundo)
+
+Ver **`docs/deploy/rembg-hostoo.md`**. Hostoo costuma ter só Python 3.6 no sistema — use **Miniconda** na home. Requer **≥ 2 GB RAM**; remoção típica ~30–40 s/imagem.
 
 ---
 
-## 6. rembg (opcional — fase 2)
-
-Ver `docs/deploy/rembg-hostoo.md`. Só depois do site estável.
-
----
-
-## 7. Checklist segurança (pré-go-live)
+## 7. Checklist segurança
 
 - [ ] `APP_DEBUG=false`
 - [ ] HTTPS ativo
-- [ ] `.env` fora do web root (nunca em `public/`)
-- [ ] Admin criado via artisan (não seed público)
-- [ ] Links Blog no CMS desativados se destino suspenso
-- [ ] `composer audit` / `npm audit` revisados
-
----
-
-## Auditorias (última geração do pacote)
-
-Rodar localmente antes de cada deploy:
-
-- **PHPUnit:** 55 testes (auth, CMS, landing, studio shortcuts)
-- **composer audit:** advisories em `guzzlehttp/guzzle`, `league/commonmark` (transitivos Laravel) — avaliar `composer update` antes do próximo deploy
-- **npm audit:** `dompurify`, `image-size` via `pptxgenjs` — avaliar `npm audit fix` com cuidado
+- [ ] `.env` fora do `public_html`
+- [ ] Admin via artisan (usuário já cadastrado)
+- [ ] `info.php` de teste removido do `public_html`
 
 ---
 

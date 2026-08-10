@@ -136,9 +136,13 @@ mkcert*
 /*.tgz
 markcraft-deploy-*.zip
 **/markcraft-deploy-*.zip
+/public/markcraft-public-deploy.zip
+/public/*-public-deploy.zip
 
 # Staging local do script de deploy (nunca versionar)
 /deploy-staging/
+/markcraft-public-deploy.zip.tmp
+/storage/app/markcraft-public-deploy.zip.tmp
 
 # Packs / kits locais (não versionar — só máquina de dev)
 /_PACK_DIVULGACAO_MARKCRAFT/
@@ -152,6 +156,7 @@ markcraft-deploy-*.zip
 
 # Histórico de progresso particular (só máquina local)
 /docs/HISTORICO_PROGRESSO.md
+/docs/ACESSOS-LOCAL.md
 
 # Electron desktop shell (cópia pessoal — não versionar no remoto)
 /desktop/

@@ -2,6 +2,8 @@
 
 Ferramenta web gratuita da família **CriaSys** para criadores, marketing de vendas e designers aventureiros.
 
+**Produção:** [https://markcraft.criasysweb.com.br/](https://markcraft.criasysweb.com.br/) · Deploy Hostoo: `docs/deploy/hostoo-markcraft.md`
+
 ## O que é
 
 - **Studio** (login obrigatório): canvas Fabric.js — presets de redes, texto, formas, remover fundo, export PNG/JPG/WebP/SVG/PSD/PDF/JSON
