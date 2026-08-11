@@ -650,7 +650,8 @@ function markCraftStudioMethods() {
             try {
                 this.imageStudioDeckBusy = true;
                 this.flushImageStudioDeckPage?.();
-                const baseOpts = this.buildImageStudioExportOptions();
+                this.syncImageStudioBackgroundBeforeExport();
+                const baseOpts = this.buildImageStudioExportOptions(format);
                 const opts = { ...baseOpts };
 
                 if (format === 'pptx' || format === 'pdf' || format === 'zip' || format === 'png_zip') {

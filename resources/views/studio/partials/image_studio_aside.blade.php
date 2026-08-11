@@ -272,6 +272,10 @@
                     <input type="range" min="0" max="100" x-model.number="imageStudioBgTransparency" @pointerdown="imageStudioBeginControlDrag($event)" @pointerup="imageStudioEndControlDrag()" @pointercancel="imageStudioEndControlDrag()" @change="imageStudioEndControlDrag()" @input="onImageStudioBgChange()" class="w-full mt-2 is-control-range">
                     <span class="text-[10px] text-zinc-500" x-text="imageStudioBgTransparency + '%'"></span>
                 </label>
+                <p class="text-[10px] text-zinc-500 leading-snug">
+                    <span x-show="imageStudioBgTransparency >= 100">Transparência 100% = PNG exportado sem fundo do canvas (xadrez na tela).</span>
+                    <span x-show="imageStudioBgTransparency < 100" x-cloak>Abaixo de 100%, o PNG inclui a cor de fundo do canvas.</span>
+                </p>
                 <div class="pt-2 border-t border-zinc-800 space-y-2" x-show="(slides || []).length > 0">
                     <div class="flex items-center justify-between gap-2">
                         <p class="text-[10px] font-medium text-zinc-300">Slide por trás</p>

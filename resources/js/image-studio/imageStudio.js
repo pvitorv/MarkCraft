@@ -671,19 +671,18 @@ async function loadMediaDrawable(url, isVideo = false) {
     return loadHtmlImage(url);
 }
 
-async function compositeFrameOnCanvasDataUrl(canvas, frameUrl, frameVisible = true) {
-    const w = canvas.getWidth();
-    const h = canvas.getHeight();
-    const baseUrl = canvas.toDataURL({ format: 'png', multiplier: 1 });
+async function compositeFrameOnCanvasDataUrl(engine, frameUrl, frameVisible = true, exportOpts = {}) {
+    const exportCanvas = await engine.renderExportCanvas(1, exportOpts);
+    const w = exportCanvas.width;
+    const h = exportCanvas.height;
     if (!frameUrl || frameVisible === false) {
-        return baseUrl;
+        return exportCanvas.toDataURL('image/png');
     }
     const off = document.createElement('canvas');
     off.width = w;
     off.height = h;
     const ctx = off.getContext('2d');
-    const base = await loadHtmlImage(baseUrl);
-    ctx.drawImage(base, 0, 0, w, h);
+    ctx.drawImage(exportCanvas, 0, 0, w, h);
     const frame = await loadHtmlImage(frameUrl);
     ctx.drawImage(frame, 0, 0, w, h);
     return off.toDataURL('image/png');
@@ -732,7 +731,10 @@ export class ImageStudioEngine {
         };
     }
 
-    getBackgroundPaint() {
+    getBackgroundPaint(options = {}) {
+        if (options.omitCanvasBackground) {
+            return null;
+        }
         const transparency = Math.max(0, Math.min(100, Number(this._bgTransparency) || 0));
         if (transparency >= 100) {
             return null;
@@ -741,6 +743,10 @@ export class ImageStudioEngine {
         const alpha = transparency <= 0 ? 1 : 1 - (transparency / 100);
 
         return { r, g, b, a: alpha };
+    }
+
+    canvasBackgroundIsTransparent() {
+        return (Number(this._bgTransparency) || 0) >= 100;
     }
 
     syncBackgroundUiState() {
@@ -1464,7 +1470,7 @@ export class ImageStudioEngine {
 
     async renderExportCanvas(multiplier = 1, options = {}) {
         return this.withDesignViewport(async () => {
-            const { underlayUrl = null, underlayIsVideo = false } = options;
+            const { underlayUrl = null, underlayIsVideo = false, omitCanvasBackground = false } = options;
             const w = this.designWidth;
             const h = this.designHeight;
             const out = document.createElement('canvas');
@@ -1484,7 +1490,7 @@ export class ImageStudioEngine {
                 }
             }
 
-            const paint = this.getBackgroundPaint();
+            const paint = this.getBackgroundPaint({ omitCanvasBackground });
             if (paint) {
                 ctx.fillStyle = `rgba(${paint.r},${paint.g},${paint.b},${paint.a})`;
                 ctx.fillRect(0, 0, out.width, out.height);
@@ -3360,6 +3366,7 @@ export class ImageStudioEngine {
             pagePngDataUrls = null,
             pageJpegDataUrls = null,
             zipPrefix = null,
+            omitCanvasBackground = false,
         } = options;
         const exportOpts = {
             underlayUrl,
@@ -3367,6 +3374,7 @@ export class ImageStudioEngine {
             pagePngDataUrls,
             pageJpegDataUrls,
             zipPrefix,
+            omitCanvasBackground,
         };
         if (format === 'svg') {
             return this.withDesignViewport(async () => {
@@ -3404,7 +3412,7 @@ export class ImageStudioEngine {
             blob = await canvasToBlob(jpegOff, mime, quality);
         } else if (frameOverlayUrl && frameVisible !== false) {
             blob = await this.withDesignViewport(async () => {
-                let dataUrl = await compositeFrameOnCanvasDataUrl(this.canvas, frameOverlayUrl, frameVisible);
+                let dataUrl = await compositeFrameOnCanvasDataUrl(this, frameOverlayUrl, frameVisible, exportOpts);
                 if (format === 'jpg') {
                     const jpegOff = document.createElement('canvas');
                     jpegOff.width = this.designWidth;
@@ -3505,7 +3513,7 @@ export class ImageStudioEngine {
         const wantJpeg = format === 'jpg' || format === 'jpeg';
 
         if (frameOverlayUrl && frameVisible !== false) {
-            const pngUrl = await compositeFrameOnCanvasDataUrl(this.canvas, frameOverlayUrl, frameVisible);
+            const pngUrl = await compositeFrameOnCanvasDataUrl(this, frameOverlayUrl, frameVisible, exportOpts);
             if (!wantJpeg) {
                 return pngUrl;
             }
@@ -4172,7 +4180,23 @@ export function imageStudioMethods() {
             const h = this.imageStudioEngine?.designHeight || this.imageStudioCustomHeight || 1080;
             const z = (this.imageStudioZoom || 100) / 100;
             const checker = 'repeating-conic-gradient(#3f3f46 0% 25%, #27272a 0% 50%) 50% / 16px 16px';
-            const bg = this.imageStudioShowUnderlayMedia() ? 'transparent' : checker;
+            let bg = 'transparent';
+
+            if (this.imageStudioShowUnderlayMedia()) {
+                bg = 'transparent';
+            } else {
+                const transparency = Number(this.imageStudioBgTransparency) || 0;
+                if (transparency >= 100) {
+                    bg = checker;
+                } else {
+                    const paint = this.imageStudioEngine?.getBackgroundPaint?.();
+                    if (paint) {
+                        bg = `rgba(${paint.r},${paint.g},${paint.b},${paint.a})`;
+                    } else {
+                        bg = this.imageStudioBgColor || '#ffffff';
+                    }
+                }
+            }
 
             return {
                 width: `${Math.ceil(w * z)}px`,
@@ -4702,16 +4726,29 @@ export function imageStudioMethods() {
                 && !!(this.getImageStudioUnderlayImageUrl() || this.getImageStudioUnderlayVideoUrl());
         },
 
-        buildImageStudioExportOptions() {
+        buildImageStudioExportOptions(format = null) {
             const slide = this.resolveImageStudioUnderlaySlide();
             const underlayUrl = this.imageStudioUnderlayEnabled
                 ? (slide?.image_url || slide?.video_url || null)
                 : null;
+            const pngLike = format === 'png' || format === 'png_zip' || format === 'zip';
+            const transparency = Number(this.imageStudioBgTransparency) || 0;
 
             return {
                 underlayUrl,
                 underlayIsVideo: !!(underlayUrl && slide?.video_url && !slide?.image_url),
+                omitCanvasBackground: pngLike && transparency >= 100,
             };
+        },
+
+        syncImageStudioBackgroundBeforeExport() {
+            if (!this.imageStudioEngine) {
+                return;
+            }
+            this.imageStudioEngine.setBackgroundColor(
+                this.imageStudioBgColor,
+                this.imageStudioBgTransparency,
+            );
         },
 
         ensureImageStudioDeck() {
@@ -4962,7 +4999,9 @@ export function imageStudioMethods() {
             this.ensureImageStudioDeck();
             this.flushImageStudioDeckPage();
             const restoreIdx = this.imageStudioDeckPageIndex;
-            const opts = this.buildImageStudioExportOptions();
+            const exportFormat = kind === 'jpg' ? 'jpg' : 'png';
+            this.syncImageStudioBackgroundBeforeExport();
+            const opts = this.buildImageStudioExportOptions(exportFormat);
             const urls = [];
             for (let i = 0; i < this.imageStudioDeckPages.length; i += 1) {
                 await this.loadImageStudioDeckPage(i);
@@ -5778,6 +5817,18 @@ export function imageStudioMethods() {
             this.scheduleImageStudioSave();
         },
 
+        imageStudioApplyTransparentCanvasIfDefaultWhite() {
+            const bg = this.imageStudioEngine?.getBackgroundState?.();
+            const bgColor = (bg?.color || '').toLowerCase();
+            const bgTransparency = Number(bg?.transparency) || 0;
+            if (bgTransparency < 100 && (bgColor === '#ffffff' || bgColor === '#fff')) {
+                this.imageStudioBgTransparency = 100;
+                this.onImageStudioBgChange();
+                return true;
+            }
+            return false;
+        },
+
         async imageStudioSelectFont(slug) {
             this.imageStudioTextFontSlug = slug;
             const fontMeta = this.imageStudioFontMap[slug];
@@ -6209,7 +6260,11 @@ export function imageStudioMethods() {
                 const url = await this.imageStudioEngine.removeBackgroundFromBlob(file);
                 await this.imageStudioEngine.addImageFromUrl(url, 'Sem fundo');
                 this.refreshImageStudioLayers();
-                this.message = 'Fundo removido — imagem adicionada';
+                if (this.imageStudioApplyTransparentCanvasIfDefaultWhite()) {
+                    this.message = 'Fundo removido — imagem adicionada. Transparência do canvas em 100% para PNG sem fundo branco.';
+                } else {
+                    this.message = 'Fundo removido — imagem adicionada';
+                }
             } catch (e) {
                 this.error = e.message || 'Erro ao remover fundo';
             } finally {
@@ -6268,7 +6323,11 @@ export function imageStudioMethods() {
                 this._bgRemoveTarget = replaced;
                 this.refreshImageStudioLayers();
                 this.scheduleImageStudioSave?.();
-                this.message = 'Fundo removido da imagem selecionada';
+                if (this.imageStudioApplyTransparentCanvasIfDefaultWhite()) {
+                    this.message = 'Fundo removido da imagem. Transparência do canvas em 100% — o PNG sairá sem fundo branco.';
+                } else {
+                    this.message = 'Fundo removido da imagem selecionada. Para PNG sem fundo do canvas, use Transparência 100% em Fundo.';
+                }
             } catch (e) {
                 this.error = e.message || 'Erro ao remover fundo';
                 this.message = '';
@@ -6477,7 +6536,8 @@ export function imageStudioMethods() {
             }
             const openPreview = options.openPreview !== false;
             try {
-                const blob = await this.imageStudioEngine.exportBlob(format, 0.92, this.buildImageStudioExportOptions());
+                this.syncImageStudioBackgroundBeforeExport();
+                const blob = await this.imageStudioEngine.exportBlob(format, 0.92, this.buildImageStudioExportOptions(format));
                 if (!blob) {
                     return;
                 }
