@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\StudioController;
 use App\Support\MarkCraftShell;
@@ -21,6 +22,13 @@ if (MarkCraftShell::isDesktop()) {
 } else {
     Route::get('/', [LandingController::class, 'index'])->name('home');
 }
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+
+Route::get('/legal/{page}', [\App\Http\Controllers\LegalController::class, 'show'])
+    ->whereIn('page', array_keys(config('legal.pages', [])))
+    ->name('legal.show');
 
 Route::get('/s/{code}', [ShortLinkController::class, 'redirect'])
     ->where('code', '[A-Za-z0-9]{4,16}')

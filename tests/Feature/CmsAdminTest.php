@@ -539,6 +539,86 @@ class CmsAdminTest extends TestCase
             ->assertSee('Apoiar CMS título', false);
     }
 
+    public function test_admin_cms_has_analytics_tab(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)
+            ->get('/admin/cms?tab=analytics')
+            ->assertOk()
+            ->assertSee('Métricas', false)
+            ->assertSee('Google Analytics 4', false)
+            ->assertSee('Google Tag Manager', false)
+            ->assertSee('Microsoft Clarity', false)
+            ->assertSee('Salvar métricas', false);
+    }
+
+    public function test_admin_can_save_analytics_and_home_injects_ga(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/cms', [
+            'section' => 'analytics',
+            'analytics_enabled' => '1',
+            'inject_landing' => '1',
+            'inject_auth' => '0',
+            'inject_studio' => '0',
+            'google_analytics_id' => 'G-TESTMARK01',
+            'google_tag_manager_id' => '',
+            'microsoft_clarity_id' => '',
+            'meta_pixel_id' => '',
+            'plausible_domain' => '',
+            'plausible_script_url' => 'https://plausible.io/js/script.js',
+            'google_site_verification' => 'cms-google-verify-token',
+            'bing_site_verification' => '',
+            'head_html' => '',
+            'body_html' => '',
+            'admin_notes' => 'Nota interna GA',
+        ])->assertRedirect();
+
+        $this->assertTrue(Cms::analytics('enabled'));
+        $this->assertSame('G-TESTMARK01', Cms::analytics('google_analytics_id'));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('G-TESTMARK01', false)
+            ->assertSee('googletagmanager.com/gtag/js', false)
+            ->assertSee('cms-google-verify-token', false);
+
+        $this->actingAs($admin)
+            ->get('/admin/cms?tab=analytics')
+            ->assertOk()
+            ->assertDontSee('googletagmanager.com/gtag/js', false);
+    }
+
+    public function test_home_skips_direct_ga_when_gtm_is_set(): void
+    {
+        Cms::put('analytics', array_merge(Cms::defaults()['analytics'], [
+            'enabled' => true,
+            'inject_landing' => true,
+            'google_analytics_id' => 'G-SHOULDNOTINJECT',
+            'google_tag_manager_id' => 'GTM-TEST123',
+        ]));
+
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('GTM-TEST123', $html);
+        $this->assertStringContainsString('googletagmanager.com/gtm.js', $html);
+        $this->assertStringNotContainsString('G-SHOULDNOTINJECT', $html);
+    }
+
+    public function test_disabled_analytics_does_not_inject_scripts(): void
+    {
+        Cms::put('analytics', array_merge(Cms::defaults()['analytics'], [
+            'enabled' => false,
+            'inject_landing' => true,
+            'google_analytics_id' => 'G-DISABLED99',
+        ]));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('G-DISABLED99', false);
+    }
+
     /** @return array<string, mixed> */
     private function landingFormModulesExtras(): array
     {

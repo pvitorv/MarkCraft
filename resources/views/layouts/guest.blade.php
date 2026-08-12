@@ -4,21 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>
-        @php
-            $authTitle = match (true) {
-                request()->routeIs('login') => 'Entrar',
-                request()->routeIs('register') => 'Criar conta',
-                request()->routeIs('password.request') => 'Recuperar senha',
-                request()->routeIs('password.reset') => 'Nova senha',
-                request()->routeIs('verification.notice') => 'Confirmar e-mail',
-                request()->routeIs('password.confirm') => 'Confirmar senha',
-                default => 'Acesso',
-            };
-        @endphp
-        {{ $authTitle }} — {{ config('app.name', 'MarkCraft') }}
-    </title>
+    @php
+        $authTitle = match (true) {
+            request()->routeIs('login') => 'Entrar',
+            request()->routeIs('register') => 'Criar conta',
+            request()->routeIs('password.request') => 'Recuperar senha',
+            request()->routeIs('password.reset') => 'Nova senha',
+            request()->routeIs('verification.notice') => 'Confirmar e-mail',
+            request()->routeIs('password.confirm') => 'Confirmar senha',
+            default => 'Acesso',
+        };
+    @endphp
+    @include('partials.seo_head', [
+        'seo' => [
+            'title' => $authTitle.' — '.config('app.name', 'MarkCraft'),
+            'description' => 'Acesse o MarkCraft, studio de imagem gratuito da família CriaSys.',
+            'noindex' => true,
+            'canonical' => url()->current(),
+        ],
+        'seoJsonLd' => false,
+    ])
     @include('partials.head_favicon')
+    @include('partials.analytics_head', ['analyticsSurface' => 'auth'])
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -117,6 +124,7 @@
     </style>
 </head>
 <body class="mc-auth-body antialiased">
+    @include('partials.analytics_body', ['analyticsSurface' => 'auth'])
     <div class="mc-auth-grain" aria-hidden="true"></div>
 
     <div class="relative z-10 flex min-h-screen flex-col px-4 py-8 sm:px-6">
@@ -140,6 +148,11 @@
             </div>
             <p class="mt-6 text-center text-[11px] text-zinc-500">
                 Studio gratuito da família CriaSys
+            </p>
+            <p class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-zinc-600">
+                <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
+                <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos</a>
+                <a href="{{ route('legal.show', 'cookies') }}" class="hover:text-teal-300 transition">Cookies</a>
             </p>
         </main>
     </div>

@@ -24,6 +24,7 @@ class CmsController extends Controller
             'donations' => ['label' => 'Doações', 'hint' => 'Apoiar · Pix e gateway'],
             'promos' => ['label' => 'Promos', 'hint' => 'Cards na home e Studio'],
             'ads' => ['label' => 'Ads do Studio', 'hint' => 'Faixa retangular abaixo do menu'],
+            'analytics' => ['label' => 'Métricas', 'hint' => 'GA4, GTM, Clarity, Pixel…'],
             'studio' => ['label' => 'Studio', 'hint' => 'Botões e textos do editor'],
         ];
         if (! array_key_exists($tab, $tabs)) {
@@ -91,7 +92,7 @@ class CmsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $section = (string) $request->input('section', '');
-        $allowed = ['home', 'footer', 'promos', 'packs', 'donations', 'ads', 'studio', 'blog', 'landing', 'testimonials'];
+        $allowed = ['home', 'footer', 'promos', 'packs', 'donations', 'ads', 'analytics', 'studio', 'blog', 'landing', 'testimonials'];
         abort_unless(in_array($section, $allowed, true), 422);
 
         $payload = match ($section) {
@@ -101,6 +102,7 @@ class CmsController extends Controller
             'packs' => $this->packsPayload($request),
             'donations' => $this->donationsPayload($request),
             'ads' => $this->adsPayload($request),
+            'analytics' => $this->analyticsPayload($request),
             'studio' => $this->studioPayload($request),
             'blog' => $this->blogPayload($request),
             'landing' => $this->landingPayload($request),
@@ -287,6 +289,33 @@ class CmsController extends Controller
         }
 
         return array_merge($existing, $out);
+    }
+
+    private function analyticsPayload(Request $request): array
+    {
+        $existing = array_merge(Cms::defaults()['analytics'], (array) Cms::get('analytics', []));
+        $plausibleUrl = trim((string) $request->input('plausible_script_url', ''));
+        if ($plausibleUrl === '') {
+            $plausibleUrl = (string) ($existing['plausible_script_url'] ?? 'https://plausible.io/js/script.js');
+        }
+
+        return array_merge($existing, [
+            'enabled' => $request->boolean('analytics_enabled'),
+            'inject_landing' => $request->boolean('inject_landing'),
+            'inject_auth' => $request->boolean('inject_auth'),
+            'inject_studio' => $request->boolean('inject_studio'),
+            'google_analytics_id' => trim((string) $request->input('google_analytics_id', '')),
+            'google_tag_manager_id' => trim((string) $request->input('google_tag_manager_id', '')),
+            'microsoft_clarity_id' => trim((string) $request->input('microsoft_clarity_id', '')),
+            'meta_pixel_id' => trim((string) $request->input('meta_pixel_id', '')),
+            'plausible_domain' => trim((string) $request->input('plausible_domain', '')),
+            'plausible_script_url' => $plausibleUrl,
+            'google_site_verification' => trim((string) $request->input('google_site_verification', '')),
+            'bing_site_verification' => trim((string) $request->input('bing_site_verification', '')),
+            'head_html' => (string) $request->input('head_html', ''),
+            'body_html' => (string) $request->input('body_html', ''),
+            'admin_notes' => trim((string) $request->input('admin_notes', '')),
+        ]);
     }
 
     private function studioPayload(Request $request): array

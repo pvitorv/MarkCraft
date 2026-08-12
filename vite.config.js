@@ -51,6 +51,9 @@ export default defineConfig({
                     if (id.includes('@imgly/background-removal') || id.includes('onnxruntime')) {
                         return 'vendor-rembg';
                     }
+                    if (id.includes('nsfwjs') || id.includes('@tensorflow')) {
+                        return 'vendor-nsfw';
+                    }
                     return undefined;
                 },
             },

@@ -11,8 +11,27 @@
     @if(!empty($initialPreset))
         <meta name="studio-initial-preset" content="{{ $initialPreset }}">
     @endif
-    <title>Studio — {{ config('app.name') }}</title>
+    @php
+        $cs = config('image_studio.content_safety', []);
+        $csThresholds = json_encode([
+            'porn' => (float) ($cs['porn_threshold'] ?? 0.55),
+            'hentai' => (float) ($cs['hentai_threshold'] ?? 0.55),
+            'combined' => (float) ($cs['combined_threshold'] ?? 0.75),
+            'blockSexy' => ! empty($cs['block_sexy']),
+        ], JSON_UNESCAPED_UNICODE);
+    @endphp
+    <meta name="studio-content-safety" content="{{ !empty($cs['enabled']) ? '1' : '0' }}">
+    <meta name="studio-content-safety-thresholds" content="{{ $csThresholds }}">
+    @include('partials.seo_head', [
+        'seo' => [
+            'title' => 'Studio — '.config('app.name'),
+            'description' => 'Editor MarkCraft (área autenticada).',
+            'noindex' => true,
+        ],
+        'seoJsonLd' => false,
+    ])
     @include('partials.head_favicon')
+    @include('partials.analytics_head', ['analyticsSurface' => 'studio'])
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700|dm-sans:400,500&display=swap" rel="stylesheet" />
     @php
@@ -131,6 +150,7 @@
     </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen overflow-x-hidden max-w-full" x-data="markCraftHub">
+    @include('partials.analytics_body', ['analyticsSurface' => 'studio'])
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {

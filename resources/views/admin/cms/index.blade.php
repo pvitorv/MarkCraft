@@ -31,6 +31,7 @@
     $footer = $cms['footer'] ?? [];
     $promos = $cms['promos'] ?? [];
     $ads = $cms['ads'] ?? [];
+    $analytics = $cms['analytics'] ?? [];
     $studio = $cms['studio'] ?? [];
     $blog = $cms['blog'] ?? [];
 @endphp
@@ -266,6 +267,100 @@
                             </div>
                         @endforeach
                         <button type="submit" class="cms-btn">Salvar ads</button>
+                    </form>
+                </div>
+                @endif
+
+                {{-- MÉTRICAS / ANALYTICS --}}
+                @if($activeTab === 'analytics')
+                <div class="cms-card space-y-4">
+                    <div>
+                        <h1 class="mc-brand text-lg font-bold text-white">Métricas</h1>
+                        <p class="cms-help">Cole os IDs das ferramentas externas aqui. O MarkCraft só injeta os scripts — a conta e os relatórios ficam no painel de cada serviço (GA, Clarity, etc.).</p>
+                        <p class="cms-help mt-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-amber-100/95">
+                            Painel admin <strong>nunca</strong> recebe tracking. Ative o interruptor geral e marque onde carregar (home, login, studio).
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-5">
+                        @csrf
+                        <input type="hidden" name="section" value="analytics">
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Ativação</p>
+                            <label class="flex items-center gap-2 text-sm rounded-lg border border-white/10 px-3 py-2.5">
+                                <input type="checkbox" name="analytics_enabled" value="1" @checked(!empty($analytics['enabled']))>
+                                Ativar métricas no site
+                            </label>
+                            <div class="grid sm:grid-cols-3 gap-2">
+                                <label class="flex items-center gap-2 text-sm rounded-lg border border-white/10 px-3 py-2.5">
+                                    <input type="checkbox" name="inject_landing" value="1" @checked(!empty($analytics['inject_landing']))>
+                                    Home / landing
+                                </label>
+                                <label class="flex items-center gap-2 text-sm rounded-lg border border-white/10 px-3 py-2.5">
+                                    <input type="checkbox" name="inject_auth" value="1" @checked(!empty($analytics['inject_auth']))>
+                                    Login / conta
+                                </label>
+                                <label class="flex items-center gap-2 text-sm rounded-lg border border-white/10 px-3 py-2.5">
+                                    <input type="checkbox" name="inject_studio" value="1" @checked(!empty($analytics['inject_studio']))>
+                                    Studio
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Google Analytics 4</p>
+                            <p class="cms-help">Em <a href="https://analytics.google.com/" target="_blank" rel="noopener" class="text-teal-300 underline">analytics.google.com</a> → Admin → Fluxos de dados → copie o ID de medição (<code class="text-zinc-300">G-XXXXXXXX</code>). Se usar GTM abaixo, deixe GA vazio e configure o tag no container.</p>
+                            <input class="cms-input" name="google_analytics_id" value="{{ $analytics['google_analytics_id'] ?? '' }}" placeholder="G-XXXXXXXX" autocomplete="off">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Google Tag Manager</p>
+                            <p class="cms-help">Em <a href="https://tagmanager.google.com/" target="_blank" rel="noopener" class="text-teal-300 underline">tagmanager.google.com</a> → container → ID (<code class="text-zinc-300">GTM-XXXXXXX</code>). Preferível se for instalar vários tags (GA, Ads, Pixel) num só lugar.</p>
+                            <input class="cms-input" name="google_tag_manager_id" value="{{ $analytics['google_tag_manager_id'] ?? '' }}" placeholder="GTM-XXXXXXX" autocomplete="off">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Microsoft Clarity</p>
+                            <p class="cms-help">Em <a href="https://clarity.microsoft.com/" target="_blank" rel="noopener" class="text-teal-300 underline">clarity.microsoft.com</a> → projeto → Settings → Overview → Project ID.</p>
+                            <input class="cms-input" name="microsoft_clarity_id" value="{{ $analytics['microsoft_clarity_id'] ?? '' }}" placeholder="abc123xyz" autocomplete="off">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Meta Pixel (Facebook / Instagram)</p>
+                            <p class="cms-help">Em <a href="https://business.facebook.com/events_manager" target="_blank" rel="noopener" class="text-teal-300 underline">Events Manager</a> → Pixel → ID do conjunto de dados.</p>
+                            <input class="cms-input" name="meta_pixel_id" value="{{ $analytics['meta_pixel_id'] ?? '' }}" placeholder="123456789012345" autocomplete="off">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Plausible (opcional)</p>
+                            <p class="cms-help">Analytics leve sem cookies. Domínio do site como cadastrado no Plausible (ex.: <code class="text-zinc-300">markcraft.criasysweb.com.br</code>).</p>
+                            <input class="cms-input" name="plausible_domain" value="{{ $analytics['plausible_domain'] ?? '' }}" placeholder="markcraft.criasysweb.com.br" autocomplete="off">
+                            <input class="cms-input" name="plausible_script_url" value="{{ $analytics['plausible_script_url'] ?? 'https://plausible.io/js/script.js' }}" placeholder="https://plausible.io/js/script.js">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Verificação Search Console / Bing</p>
+                            <p class="cms-help">Token da meta tag (só o conteúdo, sem HTML). Também aceito via <code class="text-zinc-300">SEO_*</code> no .env — o CMS sobrescreve se preenchido aqui.</p>
+                            <input class="cms-input" name="google_site_verification" value="{{ $analytics['google_site_verification'] ?? '' }}" placeholder="Google Search Console — content=" autocomplete="off">
+                            <input class="cms-input" name="bing_site_verification" value="{{ $analytics['bing_site_verification'] ?? '' }}" placeholder="Bing Webmaster — msvalidate.01" autocomplete="off">
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">HTML custom (avançado)</p>
+                            <p class="cms-help">Snippets extras (Hotjar, LinkedIn Insight, etc.). Só cole código de fontes confiáveis — é renderizado cru.</p>
+                            <label class="cms-label">&lt;head&gt;</label>
+                            <textarea class="cms-input font-mono text-xs" name="head_html" rows="4" placeholder="<!-- scripts / metas extras -->">{{ $analytics['head_html'] ?? '' }}</textarea>
+                            <label class="cms-label">Após &lt;body&gt;</label>
+                            <textarea class="cms-input font-mono text-xs" name="body_html" rows="3" placeholder="<!-- noscript / pixels -->">{{ $analytics['body_html'] ?? '' }}</textarea>
+                        </div>
+
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Notas internas</p>
+                            <p class="cms-help">Lembretes só para o admin (não aparecem no site).</p>
+                            <textarea class="cms-input" name="admin_notes" rows="3" placeholder="Ex.: GA4 criado em … / GTM publicado em …">{{ $analytics['admin_notes'] ?? '' }}</textarea>
+                        </div>
+
+                        <button type="submit" class="cms-btn">Salvar métricas</button>
                     </form>
                 </div>
                 @endif

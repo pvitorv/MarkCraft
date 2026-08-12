@@ -3129,6 +3129,17 @@ export class ImageStudioEngine {
     }
 
     async addImageFromUrl(url, name = 'Imagem') {
+        const { assertImageContentAllowed, isContentSafetyError } = await import('./contentSafety.js');
+        try {
+            await assertImageContentAllowed(url);
+        } catch (e) {
+            if (isContentSafetyError(e)) {
+                throw e;
+            }
+            console.warn('[contentSafety] falha na verificação', e);
+            throw new Error('Não foi possível verificar o conteúdo da imagem. Tente novamente.');
+        }
+
         const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' });
         const maxW = this.designWidth * 0.85;
         const maxH = this.designHeight * 0.85;
@@ -3148,6 +3159,46 @@ export class ImageStudioEngine {
         this.canvas.setActiveObject(img);
         this.canvas.requestRenderAll();
         this.emitChange();
+    }
+
+    /**
+     * Snapshot JPEG leve da prancheta para bloquear export explícito.
+     */
+    async assertDesignContentAllowed() {
+        if (!this.canvas) {
+            return;
+        }
+        const { readContentSafetyConfig, assertImageContentAllowed, isContentSafetyError } = await import('./contentSafety.js');
+        if (!readContentSafetyConfig().enabled) {
+            return;
+        }
+
+        const maxSide = 512;
+        const base = Math.max(this.designWidth || 1, this.designHeight || 1);
+        const multiplier = Math.min(1, maxSide / base);
+        let dataUrl;
+        try {
+            dataUrl = this.canvas.toDataURL({
+                format: 'jpeg',
+                quality: 0.7,
+                multiplier,
+                enableRetinaScaling: false,
+            });
+        } catch (e) {
+            console.warn('[contentSafety] snapshot export falhou', e);
+
+            return;
+        }
+
+        try {
+            await assertImageContentAllowed(dataUrl);
+        } catch (e) {
+            if (isContentSafetyError(e)) {
+                throw e;
+            }
+            console.warn('[contentSafety] verificação de export falhou', e);
+            throw new Error('Não foi possível verificar o conteúdo da arte antes de exportar.');
+        }
     }
 
     /**
@@ -3242,6 +3293,16 @@ export class ImageStudioEngine {
             this.historyPaused = false;
             this.pushHistory();
             this.emitChange();
+        }
+
+        try {
+            await this.assertDesignContentAllowed();
+        } catch (e) {
+            this.canvas.clear();
+            this.setBackgroundColor(backgroundColor, 0);
+            this.pushHistory();
+            this.emitChange();
+            throw e;
         }
 
         return {
@@ -3521,6 +3582,10 @@ export class ImageStudioEngine {
     async exportBlob(format = 'png', quality = 0.92, options = {}) {
         if (!this.canvas) {
             return null;
+        }
+        const skipSafety = format === 'json';
+        if (!skipSafety) {
+            await this.assertDesignContentAllowed();
         }
         const {
             frameOverlayUrl = null,
@@ -6220,17 +6285,17 @@ export function imageStudioMethods() {
                 if (!window.criasys.readLocalFile) {
                     return;
                 }
-                try {
-                    const file = await window.criasys.readLocalFile(data.filePath);
-                    if (file?.dataUrl) {
-                        const name = data.filePath.split(/[/\\]/).pop();
-                        await this.imageStudioEngine?.addImageFromUrl(file.dataUrl, name);
-                        this.refreshImageStudioLayers();
-                        this.message = `Importado: ${name}`;
-                    }
-                } catch {
-                    /* arquivo pode ainda estar sendo gravado */
+            try {
+                const file = await window.criasys.readLocalFile(data.filePath);
+                if (file?.dataUrl) {
+                    const name = data.filePath.split(/[/\\]/).pop();
+                    await this.imageStudioEngine?.addImageFromUrl(file.dataUrl, name);
+                    this.refreshImageStudioLayers();
+                    this.message = `Importado: ${name}`;
                 }
+            } catch (e) {
+                this.error = e?.message || 'Falha ao importar arquivo da pasta monitorada';
+            }
             });
         },
 
@@ -6722,21 +6787,26 @@ export function imageStudioMethods() {
             }
 
             this.message = 'Lendo PSD…';
-            const buffer = await file.arrayBuffer();
-            const result = await this.imageStudioEngine.importPsdFromArrayBuffer(buffer, {
-                replaceWorkspace: true,
-                backgroundColor: this.imageStudioBgColor || '#ffffff',
-            });
+            try {
+                const buffer = await file.arrayBuffer();
+                const result = await this.imageStudioEngine.importPsdFromArrayBuffer(buffer, {
+                    replaceWorkspace: true,
+                    backgroundColor: this.imageStudioBgColor || '#ffffff',
+                });
 
-            this.imageStudioCustomWidth = result.width;
-            this.imageStudioCustomHeight = result.height;
-            this.imageStudioPreset = 'custom';
-            this.refreshImageStudioLayers?.();
-            this.$nextTick?.(() => this.fitImageStudioCanvas?.());
-            this.scheduleImageStudioSave?.();
-            this.message = `PSD importado: ${result.layers} camada(s) · ${result.width}×${result.height}px. Camadas entram como imagens editáveis.`;
+                this.imageStudioCustomWidth = result.width;
+                this.imageStudioCustomHeight = result.height;
+                this.imageStudioPreset = 'custom';
+                this.refreshImageStudioLayers?.();
+                this.$nextTick?.(() => this.fitImageStudioCanvas?.());
+                this.scheduleImageStudioSave?.();
+                this.message = `PSD importado: ${result.layers} camada(s) · ${result.width}×${result.height}px. Camadas entram como imagens editáveis.`;
 
-            return true;
+                return true;
+            } catch (e) {
+                this.error = e?.message || 'Falha ao importar PSD';
+                throw e;
+            }
         },
 
         async imageStudioAddImageFromFile(file) {
@@ -6755,7 +6825,13 @@ export function imageStudioMethods() {
                 return false;
             }
             const localUrl = URL.createObjectURL(file);
-            await this.imageStudioEngine.addImageFromUrl(localUrl, file.name || 'Imagem');
+            try {
+                await this.imageStudioEngine.addImageFromUrl(localUrl, file.name || 'Imagem');
+            } catch (e) {
+                URL.revokeObjectURL(localUrl);
+                this.error = e?.message || 'Não foi possível adicionar a imagem';
+                throw e;
+            }
             this.refreshImageStudioLayers();
 
             return true;
@@ -6779,11 +6855,16 @@ export function imageStudioMethods() {
             let psdCount = 0;
             try {
                 for (const file of files) {
-                    if (await this.imageStudioAddImageFromFile(file)) {
-                        added += 1;
-                        if (this.imageStudioIsPsdFile(file)) {
-                            psdCount += 1;
+                    try {
+                        if (await this.imageStudioAddImageFromFile(file)) {
+                            added += 1;
+                            if (this.imageStudioIsPsdFile(file)) {
+                                psdCount += 1;
+                            }
                         }
+                    } catch (e) {
+                        this.error = e?.message || 'Arquivo bloqueado pela moderação de conteúdo';
+                        break;
                     }
                 }
                 if (added > 0 && !psdCount) {

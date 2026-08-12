@@ -4,9 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>MarkCraft — studio de imagem gratuito · família CriaSys</title>
-    <meta name="description" content="Editor de imagem gratuito da família CriaSys. Layouts, elementos e export no navegador. Para blog, cobrança e studio no mesmo fluxo, conheça o Blog CriaSys Web.">
+    @include('partials.seo_head', [
+        'seo' => [
+            'title' => config('seo.default_title'),
+            'description' => config('seo.default_description'),
+            'canonical' => route('home'),
+            'type' => 'website',
+        ],
+        'seoIncludeWebSite' => true,
+    ])
     @include('partials.head_favicon')
+    @include('partials.analytics_head', ['analyticsSurface' => 'landing'])
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:500,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -497,6 +505,7 @@
     </style>
 </head>
 <body class="mc-landing antialiased min-h-screen overflow-x-hidden" x-data="markCraftHub">
+    @include('partials.analytics_body', ['analyticsSurface' => 'landing'])
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {

@@ -20,6 +20,21 @@ return [
         'python' => env('REMBG_PYTHON'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Moderação de conteúdo (NSFWJS no navegador)
+    |--------------------------------------------------------------------------
+    | Bloqueia Porn/Hentai; não bloqueia só "Sexy" (biquíni, lingerie, sunga).
+    | É barreira preventiva — não substitui denúncia de crimes (ex.: CSAM).
+    */
+    'content_safety' => [
+        'enabled' => filter_var(env('IMAGE_STUDIO_CONTENT_SAFETY', true), FILTER_VALIDATE_BOOLEAN),
+        'porn_threshold' => (float) env('IMAGE_STUDIO_NSFW_PORN', 0.55),
+        'hentai_threshold' => (float) env('IMAGE_STUDIO_NSFW_HENTAI', 0.55),
+        'combined_threshold' => (float) env('IMAGE_STUDIO_NSFW_COMBINED', 0.75),
+        'block_sexy' => filter_var(env('IMAGE_STUDIO_NSFW_BLOCK_SEXY', false), FILTER_VALIDATE_BOOLEAN),
+    ],
+
     'export_formats' => [
         ['id' => 'png', 'label' => 'PNG (transparência)', 'ext' => 'png', 'mime' => 'image/png', 'hint' => 'Photoshop, Affinity, web'],
         ['id' => 'jpg', 'label' => 'JPG (foto)', 'ext' => 'jpg', 'mime' => 'image/jpeg', 'hint' => 'Redes sociais, sites'],

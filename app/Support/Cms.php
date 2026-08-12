@@ -62,6 +62,27 @@ class Cms
                     'html' => '',
                 ],
             ],
+            /*
+            | Métricas / analytics — IDs e snippets configurados no CMS (sem código).
+            | Scripts só entram nas páginas marcadas; admin nunca recebe tracking.
+            */
+            'analytics' => [
+                'enabled' => false,
+                'inject_landing' => true,
+                'inject_auth' => false,
+                'inject_studio' => false,
+                'google_analytics_id' => '',
+                'google_tag_manager_id' => '',
+                'microsoft_clarity_id' => '',
+                'meta_pixel_id' => '',
+                'plausible_domain' => '',
+                'plausible_script_url' => 'https://plausible.io/js/script.js',
+                'google_site_verification' => env('SEO_GOOGLE_SITE_VERIFICATION', ''),
+                'bing_site_verification' => env('SEO_BING_SITE_VERIFICATION', ''),
+                'head_html' => '',
+                'body_html' => '',
+                'admin_notes' => '',
+            ],
             'home' => [
                 'hero_title' => 'Crie artes para redes — rápido e grátis',
                 'hero_blurb' => 'Image Studio da família CriaSys. Formatos prontos, exportação limpa, sem travar seu fluxo.',
@@ -256,6 +277,46 @@ class Cms
         $min = number_format((float) ($donations['min_brl'] ?? 2), 2, ',', '.');
 
         return str_replace('{min}', $min, $text);
+    }
+
+    /**
+     * Config de métricas (GA4, GTM, Clarity, Pixel, Plausible, HTML custom).
+     *
+     * @return array<string, mixed>|mixed
+     */
+    public static function analytics(?string $key = null, mixed $default = null): mixed
+    {
+        $analytics = array_replace_recursive(
+            self::defaults()['analytics'],
+            (array) data_get(self::all(), 'analytics', [])
+        );
+
+        return $key === null ? $analytics : data_get($analytics, $key, $default);
+    }
+
+    /**
+     * Injeta scripts só nas superfícies marcadas no CMS.
+     * Nunca no painel admin.
+     *
+     * @param  'landing'|'auth'|'studio'  $surface
+     */
+    public static function shouldInjectAnalytics(string $surface): bool
+    {
+        if (request()->routeIs('admin.*')) {
+            return false;
+        }
+
+        $analytics = self::analytics();
+        if (empty($analytics['enabled'])) {
+            return false;
+        }
+
+        return match ($surface) {
+            'landing' => ! empty($analytics['inject_landing']),
+            'auth' => ! empty($analytics['inject_auth']),
+            'studio' => ! empty($analytics['inject_studio']),
+            default => false,
+        };
     }
 
     public static function publicStoragePath(string $storedPath): string

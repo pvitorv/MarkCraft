@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('cmsBlog', $cms['blog'] ?? config('markcraft.blog'));
             $view->with('cmsFooter', $cms['footer'] ?? []);
             $view->with('cmsAds', $cms['ads'] ?? []);
+            $view->with('cmsAnalytics', Cms::analytics());
             $view->with('cmsHome', $cms['home'] ?? []);
             $view->with('cmsStudio', $cms['studio'] ?? []);
             $view->with('cmsAffiliatePacks', $cms['affiliate_packs'] ?? config('markcraft.affiliate_packs'));

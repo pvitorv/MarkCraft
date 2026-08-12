@@ -22,7 +22,7 @@
                 @endif
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
                 <div>
                     <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Navegar</p>
                     <div class="mt-2 flex flex-col gap-2">
@@ -39,6 +39,15 @@
                                 <a href="{{ route('admin.cms.index') }}" class="text-amber-300/90 hover:text-amber-200 transition">CMS</a>
                             @endif
                         @endguest
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Legal</p>
+                    <div class="mt-2 flex flex-col gap-2">
+                        @foreach(config('legal.pages', []) as $slug => $meta)
+                            <a href="{{ route('legal.show', $slug) }}" class="hover:text-teal-300 transition">{{ $meta['nav'] ?? $meta['title'] }}</a>
+                        @endforeach
                     </div>
                 </div>
 
@@ -60,7 +69,7 @@
                     </div>
                 </div>
 
-                <div class="col-span-2 sm:col-span-1">
+                <div>
                     <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Redes</p>
                     <div class="mt-2 flex flex-wrap gap-2">
                         @forelse($socials as $social)
@@ -77,6 +86,16 @@
                     <p class="mt-4 text-[11px] text-zinc-600">PSD · PNG · JPG · WebP · SVG · PDF</p>
                 </div>
             </div>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-zinc-600">
+            <p>© {{ date('Y') }} MarkCraft · família CriaSys. Todos os direitos reservados.</p>
+            <p class="flex flex-wrap gap-x-3 gap-y-1">
+                <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
+                <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos</a>
+                <a href="{{ route('legal.show', 'cookies') }}" class="hover:text-teal-300 transition">Cookies</a>
+                <a href="{{ route('legal.show', 'uso-aceitavel') }}" class="hover:text-teal-300 transition">Uso aceitável</a>
+            </p>
         </div>
     </div>
 </footer>

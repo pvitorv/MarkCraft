@@ -1,20 +1,27 @@
 {
     "name": "MarkCraft",
     "short_name": "MarkCraft",
-    "description": "Studio de imagem gratuito da família CriaSys",
+    "description": "Studio de imagem gratuito da família CriaSys — layouts, elementos e export no navegador.",
+    "lang": "pt-BR",
+    "start_url": "/",
+    "id": "/",
+    "scope": "/",
     "icons": [
         {
             "src": "/brand/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "/brand/icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ],
     "theme_color": "#07090c",
     "background_color": "#07090c",
-    "display": "standalone"
+    "display": "standalone",
+    "categories": ["design", "productivity", "photo"]
 }

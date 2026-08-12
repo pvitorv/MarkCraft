@@ -24,11 +24,13 @@
     "dependencies": {
         "@alpinejs/sort": "^3.15.12",
         "@imgly/background-removal": "^1.7.0",
+        "@tensorflow/tfjs": "^4.22.0",
         "ag-psd": "^31.0.2",
         "bootstrap-icons": "^1.13.1",
         "fabric": "^7.4.0",
         "jspdf": "^4.2.1",
         "jszip": "^3.10.1",
+        "nsfwjs": "^4.3.0",
         "pdfjs-dist": "^4.10.38",
         "pptxgenjs": "^4.0.1"
     }

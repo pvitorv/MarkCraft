@@ -4,8 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Minha conta') — {{ config('app.name', 'MarkCraft') }}</title>
+    @include('partials.seo_head', [
+        'seo' => [
+            'title' => trim($__env->yieldContent('title', 'Minha conta')).' — '.config('app.name', 'MarkCraft'),
+            'description' => 'Gerencie sua conta MarkCraft.',
+            'noindex' => true,
+        ],
+        'seoJsonLd' => false,
+    ])
     @include('partials.head_favicon')
+    @include('partials.analytics_head', ['analyticsSurface' => 'auth'])
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:600,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -99,6 +107,7 @@
     </style>
 </head>
 <body class="mc-account-body antialiased" x-data="markCraftHub">
+    @include('partials.analytics_body', ['analyticsSurface' => 'auth'])
     @include('partials.dark_site_navbar', ['context' => 'landing'])
 
     <main class="relative z-10 mx-auto w-full max-w-2xl px-4 py-8 sm:py-10">
