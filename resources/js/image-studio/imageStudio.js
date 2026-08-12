@@ -3962,6 +3962,8 @@ export function imageStudioMethods() {
         imageStudioCanGroup: false,
         imageStudioCanUngroup: false,
         imageStudioGroupBagCount: 0,
+        /** Mobile: toque nas camadas soma/remove da seleção para Agrupar */
+        imageStudioMobileMultiSelect: false,
         imageStudioCanRecolorSelection: false,
         imageStudioZoom: 100,
         imageStudioShowFormatGuides: true,
@@ -5617,7 +5619,10 @@ export function imageStudioMethods() {
             const group = this.imageStudioEngine?.groupObjects?.(bag.length >= 2 ? bag : null);
             this._imageStudioSkipShapePaint = false;
             if (!group || !isFabricGroup(group)) {
-                this.error = 'Selecione 2 ou mais camadas (arraste na prancheta, Shift+clique ou Ctrl+clique na lista)';
+                const mobile = typeof this.isImageStudioMobileShell === 'function' && this.isImageStudioMobileShell();
+                this.error = mobile
+                    ? 'Ative “Selecionar várias” em Camadas e toque em 2+ itens, depois Agrupar'
+                    : 'Selecione 2 ou mais camadas (arraste na prancheta, Shift+clique ou Ctrl+clique na lista)';
                 return;
             }
             this._imageStudioGroupBag = [group];
@@ -7125,11 +7130,17 @@ export function imageStudioMethods() {
                 return;
             }
 
-            const additive = !!(event && (event.ctrlKey || event.metaKey || event.shiftKey));
+            const mobileMulti = !!(
+                this.imageStudioMobileMultiSelect
+                && typeof this.isImageStudioMobileShell === 'function'
+                && this.isImageStudioMobileShell()
+            );
+            const additive = mobileMulti || !!(event && (event.ctrlKey || event.metaKey || event.shiftKey));
             if (additive) {
                 const bag = Array.isArray(this._imageStudioGroupBag) ? [...this._imageStudioGroupBag] : [];
                 const idx = bag.indexOf(obj);
-                if (idx >= 0 && (event.ctrlKey || event.metaKey)) {
+                const toggleOff = mobileMulti || !!(event && (event.ctrlKey || event.metaKey));
+                if (idx >= 0 && toggleOff) {
                     bag.splice(idx, 1);
                 } else if (idx < 0) {
                     bag.push(obj);
@@ -7154,6 +7165,24 @@ export function imageStudioMethods() {
             this.$nextTick?.(() => {
                 this._imageStudioSelectingFromLayersPanel = false;
             });
+        },
+
+        imageStudioLayerInGroupBag(layer) {
+            const obj = layer?.object;
+            if (!obj || !Array.isArray(this._imageStudioGroupBag)) {
+                return false;
+            }
+
+            return this._imageStudioGroupBag.includes(obj);
+        },
+
+        imageStudioToggleMobileMultiSelect() {
+            this.imageStudioMobileMultiSelect = !this.imageStudioMobileMultiSelect;
+            if (!this.imageStudioMobileMultiSelect) {
+                this.message = 'Seleção múltipla desligada';
+            } else {
+                this.message = 'Toque nas camadas para somar ou tirar da seleção · depois Agrupar';
+            }
         },
 
         imageStudioLayerAction(layer, action) {

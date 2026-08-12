@@ -12,6 +12,31 @@
             placeholder="Seu texto"
         ></textarea>
     </label>
+
+    <label class="sm-field">
+        Fonte
+        <select
+            class="sm-select"
+            x-model="imageStudioTextFontSlug"
+            @focus="ensureImageStudioTextObjectActive()"
+            @change="imageStudioSelectFont(imageStudioTextFontSlug)"
+        >
+            @php
+                $mobileFonts = collect($imageStudioCatalog['fonts'] ?? [])
+                    ->groupBy(fn ($f) => $f['group_label'] ?? $f['group'] ?? 'Outras');
+            @endphp
+            @forelse($mobileFonts as $groupLabel => $groupFonts)
+                <optgroup label="{{ $groupLabel }}">
+                    @foreach($groupFonts as $font)
+                        <option value="{{ $font['slug'] }}">{{ $font['label'] ?? $font['slug'] }}</option>
+                    @endforeach
+                </optgroup>
+            @empty
+                <option value="">Sem fontes no catálogo</option>
+            @endforelse
+        </select>
+    </label>
+
     <div class="sm-panel__row">
         <button type="button" class="sm-btn" @click="imageStudioToggleTextBold()" :class="imageStudioTextBold ? 'sm-btn--active' : ''"><strong>B</strong></button>
         <button type="button" class="sm-btn italic" @click="imageStudioToggleTextItalic()" :class="imageStudioTextItalic ? 'sm-btn--active' : ''">I</button>

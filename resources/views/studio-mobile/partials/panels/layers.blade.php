@@ -1,4 +1,31 @@
 <div class="sm-panel sm-panel--layers" x-show="imageStudioSidebarTab === 'layers'" x-cloak>
+    <div class="sm-group-bar">
+        <button
+            type="button"
+            class="sm-btn"
+            :class="imageStudioMobileMultiSelect ? 'sm-btn--active' : ''"
+            @click="imageStudioToggleMobileMultiSelect()"
+        >
+            <span x-text="imageStudioMobileMultiSelect ? 'Selecionar várias · ON' : 'Selecionar várias'"></span>
+        </button>
+        <button
+            type="button"
+            class="sm-btn sm-btn--primary"
+            @mousedown.prevent.stop="imageStudioGroupSelection()"
+            :disabled="!imageStudioCanGroup && imageStudioGroupBagCount < 2"
+        >Agrupar</button>
+        <button
+            type="button"
+            class="sm-btn"
+            @mousedown.prevent.stop="imageStudioUngroupSelection()"
+            :disabled="!imageStudioCanUngroup"
+        >Separar</button>
+    </div>
+    <p class="sm-hint" x-show="imageStudioMobileMultiSelect || imageStudioGroupBagCount >= 2" x-cloak>
+        <span x-show="imageStudioMobileMultiSelect">Toque nas camadas para somar/tirar · </span>
+        <span x-text="imageStudioGroupBagCount + ' na seleção'"></span>
+    </p>
+
     <template x-if="!imageStudioLayers.length">
         <p class="sm-hint">Nenhuma camada ainda. Use <strong>Criar</strong> ou <strong>Texto</strong> para começar.</p>
     </template>
@@ -7,8 +34,21 @@
         <template x-for="layer in imageStudioLayers" :key="layer.id">
             <div
                 class="sm-layer"
-                :class="(layer.active || layer.id === imageStudioActiveLayerId) ? 'sm-layer--active' : ''"
+                :class="{
+                    'sm-layer--active': layer.active || layer.id === imageStudioActiveLayerId,
+                    'sm-layer--picked': imageStudioLayerInGroupBag(layer),
+                }"
             >
+                <button
+                    type="button"
+                    class="sm-layer__pick"
+                    x-show="imageStudioMobileMultiSelect"
+                    x-cloak
+                    @click="imageStudioSelectLayer(layer, $event)"
+                    :aria-pressed="imageStudioLayerInGroupBag(layer)"
+                    x-text="imageStudioLayerInGroupBag(layer) ? '✓' : '+'"
+                    title="Somar à seleção"
+                ></button>
                 <button
                     type="button"
                     class="sm-layer__name"
@@ -44,7 +84,6 @@
         </template>
     </div>
 
-    {{-- Editor da camada/objeto selecionado --}}
     <div class="sm-inspector" x-show="imageStudioSelectedObject" x-cloak>
         <div class="sm-inspector__head">
             <p class="sm-panel__title" style="margin:0">Editando</p>
@@ -56,6 +95,18 @@
 
         <div class="sm-panel__row">
             <button type="button" class="sm-btn" @mousedown.prevent.stop="imageStudioDuplicateSelection()">Duplicar</button>
+            <button
+                type="button"
+                class="sm-btn sm-btn--primary"
+                @mousedown.prevent.stop="imageStudioGroupSelection()"
+                :disabled="!imageStudioCanGroup && imageStudioGroupBagCount < 2"
+            >Agrupar</button>
+            <button
+                type="button"
+                class="sm-btn"
+                @mousedown.prevent.stop="imageStudioUngroupSelection()"
+                :disabled="!imageStudioCanUngroup"
+            >Separar</button>
             <button type="button" class="sm-btn" @mousedown.prevent.stop="imageStudioFlipSelection('x')">Espelhar H</button>
             <button type="button" class="sm-btn" @mousedown.prevent.stop="imageStudioFlipSelection('y')">Espelhar V</button>
             <button type="button" class="sm-btn sm-btn--danger" @mousedown.prevent.stop="imageStudioDeleteSelection()">Excluir</button>
