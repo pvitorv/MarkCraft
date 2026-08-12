@@ -183,6 +183,25 @@ function installCornerHitFix(canvas, getViewportZoom) {
             return undefined;
         }
         const limit = forTouch ? Math.max(maxHitPx(), 24) : maxHitPx();
+
+        // Clique bem no miolo do objeto: não “roubar” para alças (mt/mb/ml/mr).
+        // Com zoom baixo o raio expandido cobria Textbox inteiro e impedia enterEditing.
+        const a = target.aCoords;
+        if (a?.tl && a?.tr && a?.br && a?.bl) {
+            const left = Math.min(a.tl.x, a.tr.x, a.bl.x, a.br.x);
+            const right = Math.max(a.tl.x, a.tr.x, a.bl.x, a.br.x);
+            const top = Math.min(a.tl.y, a.tr.y, a.bl.y, a.br.y);
+            const bottom = Math.max(a.tl.y, a.tr.y, a.bl.y, a.br.y);
+            const inset = Math.max(limit, 8);
+            const deepInside = pointer.x > left + inset
+                && pointer.x < right - inset
+                && pointer.y > top + inset
+                && pointer.y < bottom - inset;
+            if (deepInside) {
+                return undefined;
+            }
+        }
+
         let bestKey = null;
         let bestDist = limit;
         for (const key of Object.keys(target.controls)) {
@@ -252,10 +271,6 @@ function installCornerHitFix(canvas, getViewportZoom) {
         return setup(e, target, alreadySelected);
     };
 }
-import { writePsdBuffer, readPsd } from 'ag-psd';
-import { jsPDF } from 'jspdf';
-import PptxGenJS from 'pptxgenjs';
-import JSZip from 'jszip';
 import {
     EMOJI_FONT_STACK,
     addCanvasObject,
@@ -274,6 +289,25 @@ import {
     preloadStarterGoogleFonts,
     FALLBACK_FONTS,
 } from './imageStudioTextFonts';
+
+async function loadAgPsd() {
+    return import('ag-psd');
+}
+
+async function loadJsPdf() {
+    const mod = await import('jspdf');
+    return mod.jsPDF || mod.default;
+}
+
+async function loadPptxGen() {
+    const mod = await import('pptxgenjs');
+    return mod.default || mod;
+}
+
+async function loadJsZip() {
+    const mod = await import('jszip');
+    return mod.default || mod;
+}
 
 const OBJECT_SCALE_MIN_PERCENT = 5;
 const OBJECT_SCALE_MAX_PERCENT = 600;
@@ -306,68 +340,21 @@ function isFabricText(obj) {
     );
 }
 
-const LITERAL_LF = String.fromCharCode(92, 110); // "\" + "n"
-const LITERAL_CR = String.fromCharCode(92, 114); // "\" + "r"
-const LITERAL_CRLF = String.fromCharCode(92, 114, 92, 110); // "\r\n" literal
-const REAL_LF = String.fromCharCode(10);
-const REAL_CR = String.fromCharCode(13);
+import {
+    normalizeMultilineText,
+    normalizeTemplateTextFields,
+    normalizeTemplatesList,
+    parseHexColor,
+    parseCanvasBackgroundState,
+    shouldOmitCanvasBackground,
+    isFabricPaintObject,
+} from './studioPure.js';
 
-/**
- * Converte sequências literais \n / \r\n (dois chars) em Line Feed real.
- * Usa fromCharCode para não depender de escapes no bundler.
- */
-export function normalizeMultilineText(text) {
-    if (typeof text !== 'string' || text === '') {
-        return text;
-    }
-    let out = text;
-    for (let pass = 0; pass < 4; pass += 1) {
-        if (!out.includes(LITERAL_LF) && !out.includes(LITERAL_CR)) {
-            break;
-        }
-        out = out
-            .split(LITERAL_CRLF)
-            .join(REAL_LF)
-            .split(LITERAL_LF)
-            .join(REAL_LF)
-            .split(LITERAL_CR)
-            .join(REAL_LF);
-    }
-    return out
-        .split(REAL_CR + REAL_LF)
-        .join(REAL_LF)
-        .split(REAL_CR)
-        .join(REAL_LF);
-}
-
-/** Normaliza text em specs de template/pack antes de criar objetos Fabric. */
-export function normalizeTemplateTextFields(template) {
-    if (!template || typeof template !== 'object') {
-        return template;
-    }
-    const objects = Array.isArray(template.objects) ? template.objects : null;
-    if (!objects) {
-        return template;
-    }
-    template.objects = objects.map((spec) => {
-        if (!spec || typeof spec !== 'object') {
-            return spec;
-        }
-        const kind = spec.kind || spec.type;
-        if (kind === 'text' && typeof spec.text === 'string') {
-            return { ...spec, text: normalizeMultilineText(spec.text) };
-        }
-        return spec;
-    });
-    return template;
-}
-
-export function normalizeTemplatesList(list) {
-    if (!Array.isArray(list)) {
-        return list;
-    }
-    return list.map((tpl) => normalizeTemplateTextFields(tpl));
-}
+export {
+    normalizeMultilineText,
+    normalizeTemplateTextFields,
+    normalizeTemplatesList,
+};
 
 function createMultilineTextObject(text, options = {}) {
     const content = normalizeMultilineText(text ?? '');
@@ -596,44 +583,6 @@ function loadHtmlImage(url) {
         el.onerror = () => reject(new Error('Navegador não conseguiu decodificar a imagem'));
         el.src = url;
     });
-}
-
-function parseHexColor(hex) {
-    let h = String(hex || '#ffffff').replace('#', '').trim();
-    if (h.length === 3) {
-        h = h.split('').map((c) => c + c).join('');
-    }
-    if (h.length !== 6) {
-        return { r: 255, g: 255, b: 255 };
-    }
-
-    return {
-        r: parseInt(h.substring(0, 2), 16),
-        g: parseInt(h.substring(2, 4), 16),
-        b: parseInt(h.substring(4, 6), 16),
-    };
-}
-
-function parseCanvasBackgroundState(backgroundColor, fallbackColor = '#ffffff') {
-    const bg = backgroundColor;
-    if (!bg || bg === 'transparent') {
-        return { color: fallbackColor, transparency: 100 };
-    }
-    if (typeof bg === 'string' && bg.startsWith('rgba')) {
-        const match = bg.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);
-        if (match) {
-            const alpha = parseFloat(match[4]);
-            const r = Number(match[1]).toString(16).padStart(2, '0');
-            const g = Number(match[2]).toString(16).padStart(2, '0');
-            const b = Number(match[3]).toString(16).padStart(2, '0');
-            return {
-                color: `#${r}${g}${b}`,
-                transparency: Math.round((1 - alpha) * 100),
-            };
-        }
-    }
-
-    return { color: bg, transparency: 0 };
 }
 
 async function canvasToBlob(canvas, mime, quality = 0.92) {
@@ -880,6 +829,12 @@ export class ImageStudioEngine {
                 lockScalingY: false,
             });
         }
+        if (isFabricText(obj)) {
+            obj.set({
+                editable: obj.editable !== false,
+                objectCaching: false,
+            });
+        }
         obj.setCoords?.();
     }
 
@@ -940,6 +895,23 @@ export class ImageStudioEngine {
         this.canvas.on('selection:cleared', () => this.notifyChange());
         this.canvas.on('object:moving', (e) => this.handleObjectMoving(e));
         this.canvas.on('text:changed', () => this.emitChange(false));
+        this.canvas.on('mouse:dblclick', (opt) => {
+            const target = opt?.target;
+            if (!target || !isFabricText(target) || target.editable === false) {
+                return;
+            }
+            if (typeof target.enterEditing === 'function' && !target.isEditing) {
+                try {
+                    target.enterEditing(opt?.e);
+                    if (typeof target.selectAll === 'function') {
+                        target.selectAll();
+                    }
+                    this.canvas.requestRenderAll();
+                } catch {
+                    /* ignore */
+                }
+            }
+        });
         this.canvas.on('mouse:down', (opt) => {
             this.canvas?.calcOffset();
             // Escala / rotação / mover: trava scroll da área do canvas e da sidebar
@@ -977,7 +949,14 @@ export class ImageStudioEngine {
 
     scheduleHistory() {
         clearTimeout(this.historyTimeout);
-        this.historyTimeout = setTimeout(() => this.pushHistory(), 350);
+        this.historyTimeout = setTimeout(() => {
+            const push = () => this.pushHistory();
+            if (typeof requestIdleCallback === 'function') {
+                requestIdleCallback(() => push(), { timeout: 800 });
+            } else {
+                push();
+            }
+        }, 420);
     }
 
     pushHistory() {
@@ -3188,6 +3167,7 @@ export class ImageStudioEngine {
 
         let psd;
         try {
+            const { readPsd } = await loadAgPsd();
             psd = readPsd(buffer);
         } catch (e) {
             throw new Error(e?.message || 'Não foi possível ler o PSD (arquivo corrompido ou não suportado)');
@@ -3686,6 +3666,7 @@ export class ImageStudioEngine {
             });
         }
 
+        const { writePsdBuffer } = await loadAgPsd();
         const buffer = writePsdBuffer({ width: w, height: h, children: layers });
         return new Blob([buffer], { type: 'application/vnd.adobe.photoshop' });
         });
@@ -3740,6 +3721,7 @@ export class ImageStudioEngine {
             pageUrls = [await this.exportDesignDataUrl('jpg', quality, frameOverlayUrl, frameVisible, exportOpts)];
         }
         const orientation = w >= h ? 'landscape' : 'portrait';
+        const jsPDF = await loadJsPdf();
         const pdf = new jsPDF({
             orientation,
             unit: 'px',
@@ -3771,6 +3753,7 @@ export class ImageStudioEngine {
                 pageUrls = [await this.exportDesignDataUrl('png', quality, frameOverlayUrl, frameVisible, exportOpts)];
             }
 
+            const PptxGenJS = await loadPptxGen();
             const pptx = new PptxGenJS();
             const inchesW = w >= h ? 13.333 : 7.5;
             const inchesH = inchesW * (h / w);
@@ -3806,6 +3789,7 @@ export class ImageStudioEngine {
                 pageUrls = [await this.exportDesignDataUrl('png', quality, frameOverlayUrl, frameVisible, exportOpts)];
             }
 
+            const JSZip = await loadJsZip();
             const zip = new JSZip();
             const prefix = String(exportOpts.zipPrefix || 'frame').replace(/[^\w\-]+/g, '_');
             pageUrls.forEach((dataUrl, index) => {
@@ -3929,6 +3913,7 @@ export function imageStudioMethods() {
         imageStudioElementFilterGroup: '',
         imageStudioElementsModalOpen: false,
         _imageStudioElementsModalShown: false,
+        imageStudioShortcutsModalOpen: false,
         imageStudioExpanded: false,
         imageStudioMobileSheetOpen: false,
         imageStudioMobileMenuOpen: false,
@@ -4228,6 +4213,14 @@ export function imageStudioMethods() {
 
         closeImageStudioPacksModal() {
             this.imageStudioPacksModalOpen = false;
+        },
+
+        openImageStudioShortcutsModal() {
+            this.imageStudioShortcutsModalOpen = true;
+        },
+
+        closeImageStudioShortcutsModal() {
+            this.imageStudioShortcutsModalOpen = false;
         },
 
         imageStudioPacksItemCount() {
@@ -4918,13 +4911,12 @@ export function imageStudioMethods() {
             const underlayUrl = this.imageStudioUnderlayEnabled
                 ? (slide?.image_url || slide?.video_url || null)
                 : null;
-            const pngLike = format === 'png' || format === 'png_zip' || format === 'zip';
             const transparency = Number(this.imageStudioBgTransparency) || 0;
 
             return {
                 underlayUrl,
                 underlayIsVideo: !!(underlayUrl && slide?.video_url && !slide?.image_url),
-                omitCanvasBackground: pngLike && transparency >= 100,
+                omitCanvasBackground: shouldOmitCanvasBackground(format, transparency),
             };
         },
 
@@ -5410,8 +5402,18 @@ export function imageStudioMethods() {
                 if (this._imageStudioControlDragging || this._imageStudioSkipLayerScroll) {
                     return;
                 }
-                this.refreshImageStudioLayers();
-                this.scheduleImageStudioSave();
+                // Coalesce: vários emitChange no mesmo frame → 1 refresh (fluidez no arraste/digitação)
+                if (this._imageStudioLayersRaf) {
+                    return;
+                }
+                this._imageStudioLayersRaf = requestAnimationFrame(() => {
+                    this._imageStudioLayersRaf = 0;
+                    if (this._imageStudioControlDragging || this._imageStudioSkipLayerScroll) {
+                        return;
+                    }
+                    this.refreshImageStudioLayers();
+                    this.scheduleImageStudioSave();
+                });
             };
         },
 
@@ -5610,14 +5612,14 @@ export function imageStudioMethods() {
         },
 
         imageStudioApplyFilters() {
-            const obj = this.imageStudioEngine?.getActiveObject();
+            const obj = this.resolveImageStudioImageObject();
             if (isFabricImage(obj)) {
                 this.imageStudioEngine.applyFiltersToObject(obj, this.imageStudioFilters);
             }
         },
 
         imageStudioClearFilters() {
-            const obj = this.imageStudioEngine?.getActiveObject();
+            const obj = this.resolveImageStudioImageObject();
             if (isFabricImage(obj)) {
                 this.imageStudioEngine.clearFilters(obj);
                 this.imageStudioFilters = { ...DEFAULT_FILTER_STATE };
@@ -5653,12 +5655,17 @@ export function imageStudioMethods() {
                         this.closeImageStudioContextMenu();
                         return;
                     }
+                    if (this.imageStudioShortcutsModalOpen) {
+                        e.preventDefault();
+                        this.closeImageStudioShortcutsModal();
+                        return;
+                    }
                     if (this.imageStudioMobileSheetOpen) {
                         e.preventDefault();
                         this.closeImageStudioMobileSheet();
                         return;
                     }
-                    if (this.imageStudioExpanded && !this.imageStudioElementsModalOpen && !this.imageStudioDimensionsModalOpen && !this.imageStudioTemplatesModalOpen && !this.imageStudioPacksModalOpen) {
+                    if (this.imageStudioExpanded && !this.imageStudioElementsModalOpen && !this.imageStudioDimensionsModalOpen && !this.imageStudioTemplatesModalOpen && !this.imageStudioPacksModalOpen && !this.imageStudioShortcutsModalOpen) {
                         e.preventDefault();
                         this.closeImageStudioExpanded();
                         return;
@@ -5769,10 +5776,19 @@ export function imageStudioMethods() {
                     return;
                 }
 
-                // Setas = mover (Shift = 10px)
+                // Setas = mover (Shift = 10px) — sticky: clique no painel não deve “matar” as setas
                 if (!mod && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
-                    if (!this.imageStudioEngine?.canvas?.getActiveObject()) {
+                    const sticky = this.resolveImageStudioActiveObject();
+                    if (!sticky) {
                         return;
+                    }
+                    const canvas = this.imageStudioEngine?.canvas;
+                    if (canvas && canvas.getActiveObject() !== sticky) {
+                        try {
+                            canvas.setActiveObject(sticky);
+                        } catch {
+                            /* ignore */
+                        }
                     }
                     e.preventDefault();
                     const step = shift ? 10 : 1;
@@ -5810,6 +5826,15 @@ export function imageStudioMethods() {
         },
 
         imageStudioNudgeSelection(dx, dy) {
+            const sticky = this.resolveImageStudioActiveObject();
+            const canvas = this.imageStudioEngine?.canvas;
+            if (sticky && canvas && canvas.getActiveObject() !== sticky) {
+                try {
+                    canvas.setActiveObject(sticky);
+                } catch {
+                    /* ignore */
+                }
+            }
             if (this.imageStudioEngine?.nudgeActiveObjects?.(dx, dy)) {
                 this.refreshImageStudioLayers();
                 this.scheduleImageStudioSave?.();
@@ -5834,6 +5859,16 @@ export function imageStudioMethods() {
         },
 
         async imageStudioClipboardCopy() {
+            const sticky = this.resolveImageStudioActiveObject();
+            const canvas = this.imageStudioEngine?.canvas;
+            if (sticky && canvas && canvas.getActiveObject() !== sticky) {
+                try {
+                    canvas.setActiveObject(sticky);
+                    canvas.requestRenderAll();
+                } catch {
+                    /* ignore */
+                }
+            }
             const items = await this.imageStudioEngine?.serializeActiveObjectsForClipboard?.();
             if (!items?.length) {
                 this.error = 'Nada selecionado para copiar';
@@ -5925,6 +5960,81 @@ export function imageStudioMethods() {
             }
 
             return null;
+        },
+
+        /**
+         * Texto alvo dos controles do painel. Clique em input/textarea da sidebar
+         * desmarca o Fabric — sem sticky o conteúdo nunca atualiza no canvas.
+         */
+        resolveImageStudioTextObject() {
+            const fromEngine = this.imageStudioEngine?.getActiveTextObject?.() || null;
+            if (isFabricText(fromEngine)) {
+                return fromEngine;
+            }
+
+            const candidates = [
+                this.resolveImageStudioActiveObject(),
+                this._imageStudioStickyObject,
+                this._imageStudioActiveObject,
+            ];
+
+            for (const obj of candidates) {
+                if (isFabricText(obj)) {
+                    return obj;
+                }
+                if (obj && normalizeFabricType(obj) === 'activeselection') {
+                    const texts = (typeof obj.getObjects === 'function' ? obj.getObjects() : [])
+                        .filter((item) => isFabricText(item));
+                    if (texts.length === 1) {
+                        return texts[0];
+                    }
+                }
+            }
+
+            return null;
+        },
+
+        ensureImageStudioTextObjectActive(obj = null) {
+            const textObj = obj || this.resolveImageStudioTextObject();
+            const canvas = this.imageStudioEngine?.canvas;
+            if (!textObj || !canvas) {
+                return null;
+            }
+            this._imageStudioStickyObject = textObj;
+            this._imageStudioActiveObject = textObj;
+            if (canvas.getActiveObject() !== textObj) {
+                try {
+                    canvas.setActiveObject(textObj);
+                    canvas.requestRenderAll();
+                } catch {
+                    /* ignore */
+                }
+            }
+
+            return textObj;
+        },
+
+        /** Edição inline no canvas (2º clique / botão). */
+        imageStudioBeginInlineTextEdit(obj = null) {
+            const textObj = this.ensureImageStudioTextObjectActive(obj);
+            if (!textObj || typeof textObj.enterEditing !== 'function') {
+                return false;
+            }
+            if (textObj.editable === false) {
+                textObj.set('editable', true);
+            }
+            try {
+                if (!textObj.isEditing) {
+                    textObj.enterEditing();
+                }
+                if (typeof textObj.selectAll === 'function') {
+                    textObj.selectAll();
+                }
+                this.imageStudioEngine?.canvas?.requestRenderAll();
+                return true;
+            } catch {
+                return false;
+            }
         },
 
         imageStudioDeleteSelection() {
@@ -6126,7 +6236,15 @@ export function imageStudioMethods() {
 
         scheduleImageStudioSave() {
             clearTimeout(this.imageStudioSaveTimeout);
-            this.imageStudioSaveTimeout = setTimeout(() => this.saveImageStudioDesign(), 1500);
+            // 2.8s + idle: evita stringify pesado a cada micro-edição
+            this.imageStudioSaveTimeout = setTimeout(() => {
+                const run = () => this.saveImageStudioDesign();
+                if (typeof requestIdleCallback === 'function') {
+                    requestIdleCallback(() => run(), { timeout: 2500 });
+                } else {
+                    run();
+                }
+            }, 2800);
         },
 
         async saveImageStudioDesign() {
@@ -6265,13 +6383,32 @@ export function imageStudioMethods() {
             if (this._syncingTextUi) {
                 return;
             }
-            const obj = this.imageStudioEngine?.getActiveTextObject();
+            const obj = this.ensureImageStudioTextObjectActive();
             if (!isFabricText(obj)) {
+                return;
+            }
+            const payload = this.imageStudioTextStylePayload();
+            // Digitação no painel: aplica texto na hora (sem await de fonte) para não perder teclas.
+            const fillOk = isFabricPaintObject(obj.fill)
+                || payload.fill === normalizeColorInput(obj.fill, payload.fill);
+            const contentOnly = payload.content != null
+                && normalizeMultilineText(String(payload.content)) !== (obj.text || '')
+                && payload.fontSlug === (obj.criasysFontSlug || payload.fontSlug)
+                && Number(payload.fontSize) === Number(obj.fontSize)
+                && fillOk;
+            if (contentOnly) {
+                obj.set('text', normalizeMultilineText(String(payload.content)));
+                if (typeof obj.initDimensions === 'function') {
+                    obj.initDimensions();
+                }
+                obj.set('dirty', true);
+                this.imageStudioEngine.canvas?.requestRenderAll();
+                this.imageStudioEngine.emitChange?.(false);
                 return;
             }
             await this.imageStudioEngine.applyTextStyle(
                 obj,
-                this.imageStudioTextStylePayload(),
+                payload,
                 this.imageStudioFontMap
             );
             this._syncingTextUi = true;
@@ -6327,7 +6464,7 @@ export function imageStudioMethods() {
                 italic: this.imageStudioTextItalic,
             });
             const text = this.imageStudioTextContent || 'Seu título aqui';
-            this.imageStudioEngine.addText(text, {
+            const textObj = this.imageStudioEngine.addText(text, {
                 ...style,
                 fontSize: this.imageStudioTextSize,
                 fill: this.imageStudioTextFill,
@@ -6343,8 +6480,23 @@ export function imageStudioMethods() {
                 shadowColor: this.imageStudioTextShadowColor,
                 shadowBlur: this.imageStudioTextShadowBlur,
             });
+            this._imageStudioStickyObject = textObj;
+            this._imageStudioActiveObject = textObj;
+            this.setImageStudioSidebarTab('text');
+            if (typeof this.isImageStudioMobileShell === 'function' && this.isImageStudioMobileShell()) {
+                this.openImageStudioMobileSheet('text');
+            }
             this.refreshImageStudioLayers();
             this.message = `Texto adicionado — ${fontMeta?.label || 'fonte'}`;
+            this.$nextTick(() => {
+                const el = this.$refs?.imageStudioTextContentEl;
+                if (el && typeof el.focus === 'function') {
+                    el.focus();
+                    if (typeof el.select === 'function') {
+                        el.select();
+                    }
+                }
+            });
         },
 
         async imageStudioAddIconGlyph(glyph) {

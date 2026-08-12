@@ -5,7 +5,9 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "icons:sync": "node scripts/sync-bootstrap-icons.mjs"
+        "icons:sync": "node scripts/sync-bootstrap-icons.mjs",
+        "test:js": "node --test tests/js/**/*.test.mjs",
+        "test": "php artisan test && npm run test:js"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

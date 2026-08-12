@@ -1130,6 +1130,34 @@ body.is-studio-drag-lock {
     color: #a1a1aa;
 }
 
+.studio-shortcuts-grid {
+    display: grid;
+    gap: 0.35rem 0.75rem;
+    margin: 0;
+}
+
+.studio-shortcuts-grid > div {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 9.5rem) 1fr;
+    gap: 0.5rem;
+    align-items: baseline;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #27272a;
+}
+
+.studio-shortcuts-grid dt {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    color: #c4b5fd;
+}
+
+.studio-shortcuts-grid dd {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #d4d4d8;
+}
+
 .studio-modal-toolbar {
     display: grid;
     gap: 0.65rem;

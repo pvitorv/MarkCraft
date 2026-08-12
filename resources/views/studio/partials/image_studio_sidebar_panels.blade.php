@@ -16,7 +16,6 @@
             title="Camada em edição"
         ></span>
     </div>
-    <p class="text-[9px] text-zinc-500">Ctrl/Shift+clique na lista para multi-selecionar · Ctrl+G agrupa</p>
     <div
         x-show="imageStudioGroupBagCount >= 2"
         x-cloak
@@ -291,6 +290,5 @@
     >
         Créditos e licenças
     </button>
-    <p class="text-[9px] text-zinc-500">ZIP: um PNG por página (carrossel/kit). PPTX: arte como imagem em cada slide. Baixe antes de limpar.</p>
 </div>
 @endif

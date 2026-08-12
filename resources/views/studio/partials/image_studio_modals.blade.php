@@ -269,9 +269,68 @@
                         ></span>
                     </div>
                     <span class="studio-gallery-name" x-text="item.name"></span>
-                    <span class="studio-gallery-meta" x-text="(item.kind === 'folder' || item.type === 'dir') ? ((item.childCount || 0) + ' itens · clique') : 'duplo clique → prancheta'"></span>
+                    <span class="studio-gallery-meta" x-text="(item.kind === 'folder' || item.type === 'dir') ? ((item.childCount || 0) + ' itens') : ((item.ext || '').replace('.','').toUpperCase() || item.kind || '')"></span>
                 </button>
             </template>
+        </div>
+    </div>
+</div>
+
+{{-- Modal: atalhos --}}
+<div
+    x-show="imageStudioShortcutsModalOpen"
+    x-cloak
+    class="studio-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="studio-shortcuts-title"
+    @keydown.escape.window="imageStudioShortcutsModalOpen && closeImageStudioShortcutsModal()"
+>
+    <div class="studio-modal-backdrop" @click="closeImageStudioShortcutsModal()"></div>
+    <div class="studio-modal-panel" @click.stop>
+        <header class="studio-modal-header">
+            <div>
+                <h2 id="studio-shortcuts-title">Atalhos</h2>
+                <p class="studio-modal-sub">Teclado e seleção</p>
+            </div>
+            <button type="button" class="studio-btn" @click="closeImageStudioShortcutsModal()">Fechar</button>
+        </header>
+        <div class="studio-modal-body space-y-4 text-sm">
+            <section>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">Edição</h3>
+                <dl class="studio-shortcuts-grid">
+                    <div><dt>Ctrl+Z</dt><dd>Desfazer</dd></div>
+                    <div><dt>Ctrl+Y</dt><dd>Refazer</dd></div>
+                    <div><dt>Ctrl+C / X / V</dt><dd>Copiar / recortar / colar</dd></div>
+                    <div><dt>Ctrl+J</dt><dd>Duplicar</dd></div>
+                    <div><dt>Delete</dt><dd>Excluir</dd></div>
+                    <div><dt>Esc</dt><dd>Limpar seleção</dd></div>
+                </dl>
+            </section>
+            <section>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">Camadas</h3>
+                <dl class="studio-shortcuts-grid">
+                    <div><dt>Ctrl+A</dt><dd>Selecionar tudo</dd></div>
+                    <div><dt>Ctrl+D</dt><dd>Desselecionar</dd></div>
+                    <div><dt>Ctrl+clique</dt><dd>Multi-selecionar</dd></div>
+                    <div><dt>Ctrl+G</dt><dd>Agrupar</dd></div>
+                    <div><dt>Ctrl+Shift+G</dt><dd>Desagrupar</dd></div>
+                    <div><dt>Ctrl+[ / ]</dt><dd>Trás / frente</dd></div>
+                    <div><dt>Ctrl+Shift+[ / ]</dt><dd>Fundo / topo</dd></div>
+                </dl>
+            </section>
+            <section>
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">Canvas</h3>
+                <dl class="studio-shortcuts-grid">
+                    <div><dt>Setas</dt><dd>Mover 1 px</dd></div>
+                    <div><dt>Shift+setas</dt><dd>Mover 10 px</dd></div>
+                    <div><dt>[ / ]</dt><dd>Rotacionar</dd></div>
+                    <div><dt>Ctrl+0</dt><dd>Ajustar</dd></div>
+                    <div><dt>Ctrl+1</dt><dd>Zoom 100%</dd></div>
+                    <div><dt>Ctrl+ / −</dt><dd>Zoom</dd></div>
+                    <div><dt>Duplo clique</dt><dd>Editar texto</dd></div>
+                </dl>
+            </section>
         </div>
     </div>
 </div>

@@ -141,6 +141,13 @@ export function normalizeColorInput(color, fallback = '#ffffff') {
         if (raw.length === 7) {
             return raw.toLowerCase();
         }
+
+        // #rrggbbaa → hex opaco p/ <input type="color">
+        if (raw.length === 9 && /^#[0-9a-f]{8}$/i.test(raw)) {
+            return raw.slice(0, 7).toLowerCase();
+        }
+
+        return fallback;
     }
 
     const rgb = raw.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
@@ -154,7 +161,21 @@ export function normalizeColorInput(color, fallback = '#ffffff') {
         return `#${hex}`;
     }
 
-    return raw || fallback;
+    const named = {
+        white: '#ffffff',
+        black: '#000000',
+        red: '#ff0000',
+        green: '#008000',
+        blue: '#0000ff',
+        transparent: fallback,
+    };
+    const namedHit = named[raw.toLowerCase()];
+    if (namedHit) {
+        return namedHit;
+    }
+
+    // Evita passar "teal"/lixo para <input type="color"> (quebra o picker)
+    return fallback;
 }
 
 export function findFontBySlug(fonts, slug) {

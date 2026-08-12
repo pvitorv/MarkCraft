@@ -451,8 +451,15 @@ function markCraftStudioMethods() {
                 this.imageStudioFontGroups = data.font_groups || {};
                 this.imageStudioIconGlyphs = data.icon_glyphs || [];
                 this.buildImageStudioFontMap();
-                preloadIconFontCdns(data.icon_fonts || []);
-                preloadStarterGoogleFonts(this.imageStudioFonts);
+                // Fontes: ícones sob demanda leve; Google só as 4 primeiras e em idle (não bloqueia 1º paint)
+                preloadIconFontCdns((data.icon_fonts || []).slice(0, 2));
+                const fonts = this.imageStudioFonts;
+                const warmFonts = () => preloadStarterGoogleFonts(fonts, 4);
+                if (typeof requestIdleCallback === 'function') {
+                    requestIdleCallback(warmFonts, { timeout: 4000 });
+                } else {
+                    setTimeout(warmFonts, 600);
+                }
                 this.imageStudioBgRemovalDriver = data.background_removal_driver || this.imageStudioBgRemovalDriver || 'rembg';
                 this.imageStudioBgRemovalLabel = data.background_removal_label || this.imageStudioBgRemovalLabel || '';
                 const removeUrl = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || '';
@@ -574,6 +581,10 @@ function markCraftStudioMethods() {
             if (!this.imageStudioEngine?.canvas) {
                 return;
             }
+            if (this._imageStudioSavingLock) {
+                return;
+            }
+            this._imageStudioSavingLock = true;
             this.imageStudioSaving = true;
             try {
                 this.flushImageStudioDeckPage?.();
@@ -595,6 +606,9 @@ function markCraftStudioMethods() {
                     saved_at: Date.now(),
                 };
                 const raw = JSON.stringify(payload);
+                if (raw === this._imageStudioLastDraftRaw) {
+                    return;
+                }
                 // localStorage ~5MB; PSD 2500px com várias camadas estoura fácil
                 const maxChars = 4.2 * 1024 * 1024;
                 if (raw.length > maxChars) {
@@ -616,6 +630,7 @@ function markCraftStudioMethods() {
                     return;
                 }
                 localStorage.setItem(this.studioDraftKey, raw);
+                this._imageStudioLastDraftRaw = raw;
             } catch (e) {
                 const quota = e?.name === 'QuotaExceededError'
                     || e?.code === 22
@@ -640,6 +655,7 @@ function markCraftStudioMethods() {
                 }
             } finally {
                 this.imageStudioSaving = false;
+                this._imageStudioSavingLock = false;
             }
         },
 

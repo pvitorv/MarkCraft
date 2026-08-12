@@ -19,6 +19,9 @@ class ProfileTest extends TestCase
             ->get('/profile');
 
         $response->assertOk();
+        $response->assertSee('Minha conta', false);
+        $response->assertSee('mc-account-body', false);
+        $response->assertDontSee('bg-gray-100', false);
     }
 
     public function test_profile_information_can_be_updated(): void

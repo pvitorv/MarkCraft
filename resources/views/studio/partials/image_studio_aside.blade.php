@@ -120,10 +120,17 @@
                     <p class="text-xs font-semibold text-violet-200">Texto</p>
                     <button type="button" @click="imageStudioAddText()" class="text-[10px] px-2 py-1 rounded bg-violet-700 hover:bg-violet-600 text-white">+ Adicionar</button>
                 </div>
-                <p class="text-[9px] text-zinc-500">Enter no campo ou no canvas = nova linha. Ícones em <button type="button" @click="imageStudioOpenElementsModal()" class="text-violet-400 hover:text-violet-200 underline">Elementos</button>.</p>
                 <label class="text-[10px] text-zinc-400 block">
                     Conteúdo
-                    <textarea x-model="imageStudioTextContent" @input="imageStudioOnTextControlChange()" rows="3" class="w-full mt-1 text-xs px-2 py-1.5 rounded bg-zinc-900 border border-zinc-700 resize-y" placeholder="Linha 1&#10;Linha 2"></textarea>
+                    <textarea
+                        x-ref="imageStudioTextContentEl"
+                        x-model="imageStudioTextContent"
+                        @focus="ensureImageStudioTextObjectActive()"
+                        @input="imageStudioOnTextControlChange()"
+                        rows="3"
+                        class="w-full mt-1 text-xs px-2 py-1.5 rounded bg-zinc-900 border border-zinc-700 resize-y"
+                        placeholder="Linha 1&#10;Linha 2"
+                    ></textarea>
                 </label>
                 <input type="search" x-model="imageStudioFontFilter" @input="imageStudioFilterFontList()" placeholder="Buscar fonte…" class="w-full text-xs px-2 py-1.5 rounded bg-zinc-900 border border-zinc-700">
                 <p class="text-[10px] text-zinc-500 flex justify-between gap-2">

@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
@@ -41,6 +39,11 @@ function canvasToBlob(canvas, mime, quality) {
             resolve(blob);
         }, mime, quality);
     });
+}
+
+async function getJsPdf() {
+    const mod = await import('jspdf');
+    return mod.jsPDF || mod.default;
 }
 
 async function getPdfjs() {
@@ -265,6 +268,7 @@ export function markCraftToolsMethods() {
         },
 
         async imagesToPdf() {
+            const jsPDF = await getJsPdf();
             const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
             let first = true;
             for (const file of this.pdfConv.files) {
@@ -317,6 +321,7 @@ export function markCraftToolsMethods() {
             this.toolMessage = null;
             try {
                 const pdfjs = await getPdfjs();
+                const jsPDF = await getJsPdf();
                 const data = new Uint8Array(await this.pdfCompress.file.arrayBuffer());
                 const pdf = await pdfjs.getDocument({ data }).promise;
                 let doc = null;

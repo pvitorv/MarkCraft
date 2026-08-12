@@ -19,6 +19,44 @@ export default defineConfig({
             ],
         }),
     ],
+    build: {
+        // Chunks separados = cache melhor + Studio não baixa PDF/PSD até exportar
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) {
+                        return undefined;
+                    }
+                    if (id.includes('fabric')) {
+                        return 'vendor-fabric';
+                    }
+                    if (id.includes('alpinejs') || id.includes('@alpinejs')) {
+                        return 'vendor-alpine';
+                    }
+                    if (id.includes('ag-psd')) {
+                        return 'vendor-psd';
+                    }
+                    if (id.includes('jspdf')) {
+                        return 'vendor-jspdf';
+                    }
+                    if (id.includes('pptxgenjs')) {
+                        return 'vendor-pptx';
+                    }
+                    if (id.includes('jszip')) {
+                        return 'vendor-jszip';
+                    }
+                    if (id.includes('pdfjs-dist')) {
+                        return 'vendor-pdfjs';
+                    }
+                    if (id.includes('@imgly/background-removal') || id.includes('onnxruntime')) {
+                        return 'vendor-rembg';
+                    }
+                    return undefined;
+                },
+            },
+        },
+        chunkSizeWarningLimit: 900,
+    },
     server: {
         watch: {
             ignored: [

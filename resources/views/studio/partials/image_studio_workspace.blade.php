@@ -1,6 +1,6 @@
 <div
     :class="imageStudioExpanded ? 'fixed inset-0 z-[550] flex items-stretch justify-center bg-zinc-950/95 p-2 sm:p-3' : ''"
-    @keydown.escape.window="imageStudioExpanded && !imageStudioElementsModalOpen && !imageStudioDimensionsModalOpen && !imageStudioTemplatesModalOpen && !imageStudioPacksModalOpen && closeImageStudioExpanded()"
+    @keydown.escape.window="imageStudioExpanded && !imageStudioElementsModalOpen && !imageStudioDimensionsModalOpen && !imageStudioTemplatesModalOpen && !imageStudioPacksModalOpen && !imageStudioShortcutsModalOpen && closeImageStudioExpanded()"
 >
     <div
         class="is-workspace-row flex flex-col lg:flex-row gap-3 min-h-0 w-full min-w-0 overflow-x-hidden"
