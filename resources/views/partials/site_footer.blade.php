@@ -89,7 +89,7 @@
         </div>
 
         <div class="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-zinc-600">
-            <p>© {{ date('Y') }} MarkCraft · família CriaSys. Todos os direitos reservados.</p>
+            <p>© {{ date('Y') }} CriaSys Web e MarkCraft. Todos os direitos reservados.</p>
             <p class="flex flex-wrap gap-x-3 gap-y-1">
                 <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
                 <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos</a>
