@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ImageStudio\ImageStudioService;
+use App\Support\StudioLayout;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -16,9 +17,14 @@ class StudioController extends Controller
             $preset = null;
         }
 
-        return view('studio.index', [
+        $view = StudioLayout::usesMobileStudio($request)
+            ? 'studio-mobile.index'
+            : 'studio.index';
+
+        return view($view, [
             'imageStudioCatalog' => $catalog,
             'initialPreset' => $preset,
+            'studioLayout' => StudioLayout::layoutName($request),
         ]);
     }
 }

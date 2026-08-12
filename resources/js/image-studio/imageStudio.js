@@ -19,6 +19,25 @@ import {
     controlsUtils,
 } from 'fabric';
 
+/** Detecção mobile: servidor envia meta `studio-layout`. */
+export const IMAGE_STUDIO_MOBILE_MQ = '(max-width: 1023px) and (pointer: coarse)';
+
+export function readStudioLayoutMeta() {
+    return document.querySelector('meta[name="studio-layout"]')?.getAttribute('content')?.trim() || '';
+}
+
+export function isImageStudioMobileShell() {
+    const layout = readStudioLayoutMeta();
+    if (layout === 'mobile') {
+        return true;
+    }
+    if (layout === 'desktop') {
+        return false;
+    }
+
+    return false;
+}
+
 /** Props customizadas preservadas no JSON / histórico do canvas. */
 const FABRIC_JSON_PROPS = [
     'name',
@@ -70,7 +89,7 @@ function lockStudioScrollDuringDrag(fromEl) {
             }
             el = el.parentElement;
         }
-        document.querySelectorAll('.is-canvas-dropzone, .is-sidebar-drawer').forEach((node) => roots.add(node));
+        document.querySelectorAll('.is-canvas-dropzone, .is-sidebar-drawer, .sm-canvas, .sm-sheet__body').forEach((node) => roots.add(node));
         studioScrollLockItems = [];
         roots.forEach((node) => {
             studioScrollLockItems.push({
@@ -115,7 +134,7 @@ function installStudioRangeScrollLock() {
         if (!(t instanceof HTMLInputElement) || t.type !== 'range') {
             return;
         }
-        if (!t.closest('.studio-shell, .is-workspace-row, .is-sidebar-drawer, .studio-canvas-toolbar')) {
+        if (!t.closest('.studio-shell, .is-workspace-row, .is-sidebar-drawer, .studio-canvas-toolbar, .sm-shell, .sm-sheet__body')) {
             return;
         }
         lockStudioScrollDuringDrag(t);
@@ -1613,6 +1632,171 @@ export class ImageStudioEngine {
         this.emitChange();
 
         return cloned;
+    }
+
+    /** Objetos editáveis (ignora guias). */
+    getEditableObjects() {
+        return (this.canvas?.getObjects() || []).filter(
+            (obj) => obj && !obj.criasysGuide && !obj.criasysCropGuide
+        );
+    }
+
+    selectAllObjects() {
+        if (!this.canvas) {
+            return null;
+        }
+        const list = this.getEditableObjects().filter((obj) => obj.selectable !== false);
+        if (!list.length) {
+            this.canvas.discardActiveObject();
+            this.canvas.requestRenderAll();
+            return null;
+        }
+        if (list.length === 1) {
+            this.canvas.setActiveObject(list[0]);
+        } else {
+            const selection = new ActiveSelection(list, { canvas: this.canvas });
+            this.canvas.setActiveObject(selection);
+        }
+        this.canvas.requestRenderAll();
+        this.notifyChange();
+
+        return this.canvas.getActiveObject();
+    }
+
+    discardSelection() {
+        if (!this.canvas) {
+            return;
+        }
+        this.canvas.discardActiveObject();
+        this.canvas.requestRenderAll();
+        this.notifyChange();
+    }
+
+    nudgeActiveObjects(dx, dy) {
+        if (!this.canvas) {
+            return false;
+        }
+        const active = this.canvas.getActiveObject();
+        if (!active || active.criasysGuide || active.criasysCropGuide) {
+            return false;
+        }
+        active.set({
+            left: (active.left || 0) + dx,
+            top: (active.top || 0) + dy,
+        });
+        active.setCoords?.();
+        this.canvas.requestRenderAll();
+        this.emitChange();
+
+        return true;
+    }
+
+    /**
+     * Modo de ferramenta do canvas (estilo Photoshop).
+     * select | marquee | hand | text
+     */
+    applyInteractionTool(tool = 'select') {
+        if (!this.canvas) {
+            return;
+        }
+        const mode = ['select', 'marquee', 'hand', 'text'].includes(tool) ? tool : 'select';
+        this._interactionTool = mode;
+
+        if (mode === 'hand') {
+            this.canvas.selection = false;
+            this.canvas.skipTargetFind = true;
+            this.canvas.defaultCursor = 'grab';
+            this.canvas.hoverCursor = 'grab';
+            this.canvas.getObjects().forEach((obj) => {
+                if (obj.criasysGuide || obj.criasysCropGuide) {
+                    return;
+                }
+                obj.evented = false;
+            });
+        } else {
+            this.canvas.selection = true;
+            this.canvas.skipTargetFind = false;
+            this.canvas.defaultCursor = mode === 'marquee' ? 'crosshair' : 'default';
+            this.canvas.hoverCursor = 'move';
+            this.canvas.getObjects().forEach((obj) => {
+                if (obj.criasysGuide || obj.criasysCropGuide) {
+                    return;
+                }
+                obj.evented = true;
+            });
+            // Marquee: só objetos totalmente dentro do retângulo
+            if ('selectionFullyContained' in this.canvas) {
+                this.canvas.selectionFullyContained = mode === 'marquee';
+            }
+        }
+        this.canvas.requestRenderAll();
+    }
+
+    async serializeActiveObjectsForClipboard() {
+        if (!this.canvas) {
+            return [];
+        }
+        const active = this.canvas.getActiveObject();
+        if (!active) {
+            return [];
+        }
+        let targets = [];
+        if (isFabricActiveSelection(active)) {
+            targets = active.getObjects?.() || [];
+        } else {
+            targets = [active];
+        }
+        const out = [];
+        for (const obj of targets) {
+            if (!obj || obj.criasysGuide || obj.criasysCropGuide) {
+                continue;
+            }
+            const json = obj.toObject?.(FABRIC_JSON_PROPS);
+            if (json) {
+                out.push(json);
+            }
+        }
+
+        return out;
+    }
+
+    async pasteObjectsFromClipboard(items = [], offset = 24) {
+        if (!this.canvas || !Array.isArray(items) || !items.length) {
+            return [];
+        }
+        const created = [];
+        for (const raw of items) {
+            try {
+                const cloneJson = {
+                    ...raw,
+                    left: (Number(raw.left) || 0) + offset,
+                    top: (Number(raw.top) || 0) + offset,
+                    criasysId: `${raw.type || 'obj'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                    name: raw.name ? `${raw.name} cópia` : undefined,
+                };
+                const enlivened = await util.enlivenObjects([cloneJson]);
+                const list = Array.isArray(enlivened) ? enlivened : [enlivened];
+                const obj = list[0];
+                if (!obj || typeof obj.set !== 'function') {
+                    continue;
+                }
+                this.configureSelectableObject(obj);
+                this.canvas.add(obj);
+                created.push(obj);
+            } catch (_) {
+                // ignora item inválido
+            }
+        }
+        if (created.length === 1) {
+            this.canvas.setActiveObject(created[0]);
+        } else if (created.length > 1) {
+            const selection = new ActiveSelection(created, { canvas: this.canvas });
+            this.canvas.setActiveObject(selection);
+        }
+        this.canvas.requestRenderAll();
+        this.emitChange();
+
+        return created;
     }
 
     /**
@@ -3746,6 +3930,9 @@ export function imageStudioMethods() {
         imageStudioElementsModalOpen: false,
         _imageStudioElementsModalShown: false,
         imageStudioExpanded: false,
+        imageStudioMobileSheetOpen: false,
+        imageStudioMobileMenuOpen: false,
+        _imageStudioClipboard: [],
         imageStudioLocalWatch: null,
         imageStudioFileDragOver: false,
         imageStudioDeckPages: [{ id: 'slide-1', name: 'Slide 1', canvas: null }],
@@ -5029,6 +5216,10 @@ export function imageStudioMethods() {
             if (!wrap || !this.imageStudioEngine?.canvas) {
                 return;
             }
+            if (wrap.clientWidth < 8 || wrap.clientHeight < 8) {
+                requestAnimationFrame(() => this.fitImageStudioCanvas());
+                return;
+            }
             const z = this.imageStudioEngine.zoomToFit(wrap.clientWidth, wrap.clientHeight);
             this.imageStudioZoom = Math.round(z * 100);
             this.$nextTick(() => {
@@ -5066,7 +5257,7 @@ export function imageStudioMethods() {
             }
             wrap._criasysWheelZoom = true;
             wrap.addEventListener('wheel', (e) => {
-                if (this.activeTab !== 'image_studio') {
+                if (!this.isImageStudioViewportActive()) {
                     return;
                 }
                 e.preventDefault();
@@ -5077,7 +5268,7 @@ export function imageStudioMethods() {
             if (!wrap._criasysResizeFit) {
                 wrap._criasysResizeFit = true;
                 const ro = new ResizeObserver(() => {
-                    if (this.activeTab === 'image_studio' && this.imageStudioReady) {
+                    if (this.isImageStudioViewportActive()) {
                         this.fitImageStudioCanvas();
                     }
                 });
@@ -5441,51 +5632,235 @@ export function imageStudioMethods() {
                 if (!this.isImageStudioKeyboardActive()) {
                     return;
                 }
+                // No shell mobile puro, teclado físico ainda funciona; mas não força tool UI.
                 const tag = (e.target?.tagName || '').toLowerCase();
-                if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) {
+                if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable) {
                     return;
                 }
                 const active = this.imageStudioEngine?.getActiveObject();
                 if (active?.isEditing) {
                     return;
                 }
+
                 const mod = e.ctrlKey || e.metaKey;
-                if (e.key === 'Escape') {
+                const shift = e.shiftKey;
+                const key = e.key;
+                const lower = String(key || '').toLowerCase();
+
+                if (key === 'Escape') {
                     if (this.imageStudioContextMenu?.open) {
                         e.preventDefault();
                         this.closeImageStudioContextMenu();
                         return;
                     }
+                    if (this.imageStudioMobileSheetOpen) {
+                        e.preventDefault();
+                        this.closeImageStudioMobileSheet();
+                        return;
+                    }
                     if (this.imageStudioExpanded && !this.imageStudioElementsModalOpen && !this.imageStudioDimensionsModalOpen && !this.imageStudioTemplatesModalOpen && !this.imageStudioPacksModalOpen) {
                         e.preventDefault();
                         this.closeImageStudioExpanded();
+                        return;
                     }
-                } else if (mod && e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.imageStudioDeselectAll();
+                    return;
+                }
+
+                // Undo / Redo
+                if (mod && lower === 'z' && !shift) {
                     e.preventDefault();
                     this.imageStudioUndo();
-                } else if (mod && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                    return;
+                }
+                if (mod && (lower === 'y' || (lower === 'z' && shift))) {
                     e.preventDefault();
                     this.imageStudioRedo();
-                } else if (mod && (e.key === 'g' || e.key === 'G') && e.shiftKey) {
+                    return;
+                }
+
+                // Seleção
+                if (mod && lower === 'a') {
+                    e.preventDefault();
+                    this.imageStudioSelectAll();
+                    return;
+                }
+                if (mod && lower === 'd') {
+                    e.preventDefault();
+                    this.imageStudioDeselectAll();
+                    return;
+                }
+
+                // Clipboard + duplicar (Ctrl+J = Photoshop)
+                if (mod && lower === 'c') {
+                    e.preventDefault();
+                    this.imageStudioClipboardCopy();
+                    return;
+                }
+                if (mod && lower === 'x') {
+                    e.preventDefault();
+                    this.imageStudioClipboardCut();
+                    return;
+                }
+                if (mod && lower === 'v' && !shift) {
+                    e.preventDefault();
+                    this.imageStudioClipboardPaste();
+                    return;
+                }
+                if (mod && lower === 'j') {
+                    e.preventDefault();
+                    this.imageStudioDuplicateSelection();
+                    return;
+                }
+
+                // Agrupar
+                if (mod && lower === 'g' && shift) {
                     e.preventDefault();
                     this.imageStudioUngroupSelection();
-                } else if (mod && (e.key === 'g' || e.key === 'G')) {
+                    return;
+                }
+                if (mod && lower === 'g') {
                     e.preventDefault();
                     this.imageStudioGroupSelection();
-                } else if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
+                    return;
+                }
+
+                // Empilhar camadas Ctrl+[ ] / Ctrl+Shift+[ ]
+                if (mod && key === '[') {
+                    e.preventDefault();
+                    this.imageStudioArrangeSelection(shift ? 'bottom' : 'down');
+                    return;
+                }
+                if (mod && key === ']') {
+                    e.preventDefault();
+                    this.imageStudioArrangeSelection(shift ? 'top' : 'up');
+                    return;
+                }
+
+                // Zoom
+                if (mod && (key === '0' || key === ')')) {
+                    e.preventDefault();
+                    this.fitImageStudioCanvas();
+                    return;
+                }
+                if (mod && (key === '1' || key === '!')) {
+                    e.preventDefault();
+                    this.imageStudioZoomReset();
+                    return;
+                }
+                if (mod && (key === '=' || key === '+' || key === 'Add')) {
+                    e.preventDefault();
+                    this.imageStudioZoomIn();
+                    return;
+                }
+                if (mod && (key === '-' || key === '_' || key === 'Subtract')) {
+                    e.preventDefault();
+                    this.imageStudioZoomOut();
+                    return;
+                }
+
+                // Excluir
+                if (!mod && (key === 'Delete' || key === 'Backspace')) {
                     if (this.resolveImageStudioActiveObject()) {
                         e.preventDefault();
                         this.imageStudioDeleteSelection();
                     }
-                } else if (!mod && this.imageStudioSelectedObject && e.key === '[') {
+                    return;
+                }
+
+                // Setas = mover (Shift = 10px)
+                if (!mod && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+                    if (!this.imageStudioEngine?.canvas?.getActiveObject()) {
+                        return;
+                    }
                     e.preventDefault();
-                    this.imageStudioNudgeObjectAngle(e.shiftKey ? -15 : -5);
-                } else if (!mod && this.imageStudioSelectedObject && e.key === ']') {
+                    const step = shift ? 10 : 1;
+                    const dx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
+                    const dy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
+                    this.imageStudioNudgeSelection(dx, dy);
+                    return;
+                }
+
+                // Rotação sem Ctrl: [ ]
+                if (!mod && this.imageStudioSelectedObject && key === '[') {
                     e.preventDefault();
-                    this.imageStudioNudgeObjectAngle(e.shiftKey ? 15 : 5);
+                    this.imageStudioNudgeObjectAngle(shift ? -15 : -5);
+                    return;
+                }
+                if (!mod && this.imageStudioSelectedObject && key === ']') {
+                    e.preventDefault();
+                    this.imageStudioNudgeObjectAngle(shift ? 15 : 5);
                 }
             };
+
             window.addEventListener('keydown', this._imageStudioKeyHandler);
+        },
+
+        imageStudioSelectAll() {
+            this.imageStudioEngine?.selectAllObjects?.();
+            this.refreshImageStudioLayers();
+            this.message = 'Tudo selecionado (Ctrl+A)';
+        },
+
+        imageStudioDeselectAll() {
+            this.imageStudioEngine?.discardSelection?.();
+            this.refreshImageStudioLayers();
+            this.message = 'Seleção limpa (Ctrl+D)';
+        },
+
+        imageStudioNudgeSelection(dx, dy) {
+            if (this.imageStudioEngine?.nudgeActiveObjects?.(dx, dy)) {
+                this.refreshImageStudioLayers();
+                this.scheduleImageStudioSave?.();
+            }
+        },
+
+        imageStudioArrangeSelection(direction) {
+            const obj = this.resolveImageStudioActiveObject();
+            if (!obj) {
+                this.error = 'Selecione um objeto';
+                return;
+            }
+            // ActiveSelection: aplica em cada membro
+            const targets = (typeof obj.getObjects === 'function' && String(obj.type || '').toLowerCase().includes('activeselection'))
+                ? (obj.getObjects() || [])
+                : [obj];
+            targets.forEach((item) => this.imageStudioEngine?.moveLayer?.(item, direction));
+            this.refreshImageStudioLayers();
+            this.scheduleImageStudioSave?.();
+            const labels = { up: 'Frente', down: 'Trás', top: 'Topo', bottom: 'Fundo' };
+            this.message = `Camada: ${labels[direction] || direction}`;
+        },
+
+        async imageStudioClipboardCopy() {
+            const items = await this.imageStudioEngine?.serializeActiveObjectsForClipboard?.();
+            if (!items?.length) {
+                this.error = 'Nada selecionado para copiar';
+                return;
+            }
+            this._imageStudioClipboard = items;
+            this.message = items.length > 1 ? `${items.length} objetos copiados (Ctrl+C)` : 'Copiado (Ctrl+C)';
+        },
+
+        async imageStudioClipboardCut() {
+            await this.imageStudioClipboardCopy();
+            if (this._imageStudioClipboard?.length) {
+                this.imageStudioDeleteSelection();
+                this.message = 'Recortado (Ctrl+X)';
+            }
+        },
+
+        async imageStudioClipboardPaste() {
+            const items = this._imageStudioClipboard || [];
+            if (!items.length) {
+                this.error = 'Área de transferência vazia';
+                return;
+            }
+            await this.imageStudioEngine?.pasteObjectsFromClipboard?.(items, 28);
+            this.refreshImageStudioLayers();
+            this.scheduleImageStudioSave?.();
+            this.message = 'Colado (Ctrl+V)';
         },
 
         isImageStudioKeyboardActive() {
@@ -5498,6 +5873,17 @@ export function imageStudioMethods() {
             }
 
             return this.activeTab === 'image_studio';
+        },
+
+        isImageStudioViewportActive() {
+            if (!this.imageStudioReady) {
+                return false;
+            }
+            if (typeof this.isImageStudioMobileShell === 'function' && this.isImageStudioMobileShell()) {
+                return true;
+            }
+
+            return this.isImageStudioKeyboardActive();
         },
 
         /**
@@ -5846,6 +6232,33 @@ export function imageStudioMethods() {
             if (allowed.includes(tab)) {
                 this.imageStudioSidebarTab = tab;
             }
+        },
+
+        isImageStudioMobileShell() {
+            return isImageStudioMobileShell();
+        },
+
+        openImageStudioMobileSheet(tab) {
+            this.setImageStudioSidebarTab(tab);
+            this.imageStudioMobileSheetOpen = true;
+        },
+
+        closeImageStudioMobileSheet() {
+            this.imageStudioMobileSheetOpen = false;
+        },
+
+        imageStudioMobileSheetTitle() {
+            const labels = {
+                tools: 'Ferramentas',
+                text: 'Texto',
+                media: 'Mídia',
+                bg: 'Fundo',
+                layers: 'Camadas',
+                slides: 'Sequência',
+                export: 'Exportar',
+            };
+
+            return labels[this.imageStudioSidebarTab] || 'Studio';
         },
 
         async imageStudioOnTextControlChange() {

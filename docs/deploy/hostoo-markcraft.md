@@ -142,4 +142,4 @@ Ver **`docs/deploy/rembg-hostoo.md`**. Hostoo costuma ter só Python 3.6 no sist
 
 ---
 
-Documento irmão: `docs/deploy/rembg-hostoo.md`
+Documento irmão: `docs/deploy/rembg-hostoo.md` · Git/SSH: `docs/deploy/hostoo-git-ssh.md` · Git/SSH: `docs/deploy/hostoo-git-ssh.md`

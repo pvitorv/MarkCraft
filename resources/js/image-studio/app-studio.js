@@ -796,6 +796,16 @@ document.addEventListener('alpine:init', () => {
             if (startPreset && typeof this.switchImageStudioPreset === 'function') {
                 await this.switchImageStudioPreset(startPreset);
             }
+
+            if (document.querySelector('meta[name="studio-layout"]')?.getAttribute('content') === 'mobile') {
+                const refitMobileCanvas = () => {
+                    this.fitImageStudioCanvas?.();
+                };
+                await this.$nextTick();
+                refitMobileCanvas();
+                requestAnimationFrame(refitMobileCanvas);
+                setTimeout(refitMobileCanvas, 120);
+            }
         },
     }));
 });

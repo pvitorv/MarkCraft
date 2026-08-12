@@ -7,6 +7,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/css/studio.css',
+                'resources/css/studio-mobile.css',
                 'resources/js/app.js',
                 'resources/js/image-studio/app-studio.js',
             ],

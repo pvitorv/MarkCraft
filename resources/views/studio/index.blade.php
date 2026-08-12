@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="studio-layout" content="desktop">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="studio-catalog-url" content="{{ route('api.image-studio.catalog') }}">
     <meta name="studio-remove-bg-url" content="{{ route('api.image-studio.remove-background') }}">

@@ -96,25 +96,13 @@
                 @dragleave="imageStudioOnFileDragLeave($event)"
                 @drop.prevent="imageStudioOnFileDrop($event)"
             >
-                <div
-                    x-show="imageStudioFileDragOver"
-                    x-cloak
-                    class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-emerald-950/55"
-                    aria-hidden="true"
-                >
+                <div x-show="imageStudioFileDragOver" x-cloak class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-emerald-950/55" aria-hidden="true">
                     <div class="rounded-xl border border-emerald-400/70 bg-zinc-950/90 px-5 py-4 text-center shadow-xl">
                         <p class="text-sm font-semibold text-emerald-200">Solte a imagem ou PSD aqui</p>
                         <p class="mt-1 text-[11px] text-zinc-400">PNG · JPG · WebP · GIF · SVG · PSD (Photoshop)</p>
                     </div>
                 </div>
-                <div
-                    x-show="imageStudioBgRemoving"
-                    x-cloak
-                    class="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-zinc-950/85 backdrop-blur-[2px]"
-                    role="status"
-                    aria-live="polite"
-                    aria-busy="true"
-                >
+                <div x-show="imageStudioBgRemoving" x-cloak class="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-zinc-950/85 backdrop-blur-[2px]" role="status" aria-live="polite" aria-busy="true">
                     <div class="flex flex-col items-center gap-3 px-6 py-5 rounded-xl border border-emerald-700/50 bg-zinc-900/95 shadow-xl max-w-xs text-center">
                         <svg class="h-11 w-11 animate-spin text-emerald-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
@@ -127,41 +115,13 @@
                     </div>
                 </div>
                 <div class="inline-block shrink-0" :style="imageStudioCanvasViewportStyle()">
-                    <div
-                        x-ref="imageStudioCanvasScaler"
-                        class="relative shadow-2xl shadow-black/40 ring-2 ring-violet-500/40 inline-block"
-                        :style="imageStudioCanvasScalerStyle()"
-                    >
-                        <img
-                            x-show="imageStudioUnderlayEnabled && getImageStudioUnderlayImageUrl()"
-                            x-cloak
-                            :src="getImageStudioUnderlayImageUrl()"
-                            alt=""
-                            class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-                        >
-                        <video
-                            x-show="imageStudioUnderlayEnabled && getImageStudioUnderlayVideoUrl()"
-                            x-cloak
-                            :src="getImageStudioUnderlayVideoUrl()"
-                            muted
-                            playsinline
-                            preload="metadata"
-                            class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-                            @loadeddata="$event.target.currentTime = Math.min(0.5, ($event.target.duration || 1) * 0.05)"
-                        ></video>
+                    <div x-ref="imageStudioCanvasScaler" class="relative shadow-2xl shadow-black/40 ring-2 ring-violet-500/40 inline-block" :style="imageStudioCanvasScalerStyle()">
+                        <img x-show="imageStudioUnderlayEnabled && getImageStudioUnderlayImageUrl()" x-cloak :src="getImageStudioUnderlayImageUrl()" alt="" class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none">
+                        <video x-show="imageStudioUnderlayEnabled && getImageStudioUnderlayVideoUrl()" x-cloak :src="getImageStudioUnderlayVideoUrl()" muted playsinline preload="metadata" class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" @loadeddata="$event.target.currentTime = Math.min(0.5, ($event.target.duration || 1) * 0.05)"></video>
                         <canvas x-ref="imageStudioCanvas" class="relative block"></canvas>
                     </div>
                 </div>
-
-                {{-- Menu de contexto (botão direito no canvas) --}}
-                <div
-                    x-show="imageStudioContextMenu.open"
-                    x-cloak
-                    class="studio-context-menu"
-                    :style="`left:${imageStudioContextMenu.x}px;top:${imageStudioContextMenu.y}px`"
-                    @click.stop
-                    role="menu"
-                >
+                <div x-show="imageStudioContextMenu.open" x-cloak class="studio-context-menu" :style="`left:${imageStudioContextMenu.x}px;top:${imageStudioContextMenu.y}px`" @click.stop role="menu">
                     <button type="button" role="menuitem" @click="imageStudioUndo(); closeImageStudioContextMenu()" :disabled="!imageStudioCanUndo">↶ Desfazer</button>
                     <button type="button" role="menuitem" @click="imageStudioRedo(); closeImageStudioContextMenu()" :disabled="!imageStudioCanRedo">↷ Refazer</button>
                     <hr>
