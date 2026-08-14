@@ -31,6 +31,7 @@ class PortalLandingTest extends TestCase
             ->assertSee('Parceiro oficial de infraestrutura', false)
             ->assertSee('from-blue-600', false)
             ->assertSee('https://hostoo.io/?ref=8pLhQonM', false)
+            ->assertSee('https://hostoo.io/images/logo.png', false)
             ->assertSee('rel="sponsored nofollow"', false)
             ->assertDontSee('images/hostoo-logo.png', false)
             ->assertDontSee('Logo Hostoo', false)
