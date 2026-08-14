@@ -164,11 +164,11 @@ class Cms
                 'to_email' => env('NEWSLETTER_TO', 'markcraft@markcraft.criasysweb.com.br'),
             ],
             'hosting_partner' => [
-                'enabled' => false,
-                'title' => 'Hospedagem Recomendada',
-                'blurb' => 'Precisa de uma hospedagem rápida e escalável para seus sites e aplicações? Conheça a Hostoo.',
-                'cta' => 'Conhecer a Hostoo',
-                'url' => env('HOSTOO_AFFILIATE_URL', ''),
+                'enabled' => true,
+                'title' => 'Precisa de Hospedagem para Seus Projetos?',
+                'blurb' => 'Hospede seus sites, sistemas e aplicações com alta velocidade, servidores no Brasil e suporte rápido.',
+                'cta' => 'Conhecer Planos Hostoo →',
+                'url' => env('HOSTOO_AFFILIATE_URL', 'https://hostoo.io/?ref=8pLhQonM'),
             ],
             'studio' => [
                 'show_blog_bridge_btn' => true,

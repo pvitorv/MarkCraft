@@ -27,6 +27,9 @@ class PortalLandingTest extends TestCase
             ->assertSee('Domine o Design: Dicas Rápidas para Criadores', false)
             ->assertSee('Inscreva-se para Receber Novidades e Packs Gratuitos', false)
             ->assertSee('Quero Receber', false)
+            ->assertSee('Precisa de Hospedagem para Seus Projetos?', false)
+            ->assertSee('https://hostoo.io/?ref=8pLhQonM', false)
+            ->assertSee('rel="sponsored nofollow"', false)
             ->assertDontSee('Página de vendas em breve', false)
             ->assertDontSee('TODO: #prova-social', false)
             ->assertDontSee('Blog CriaSys', false)
@@ -45,7 +48,7 @@ class PortalLandingTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertDontSee('Hospedagem Recomendada', false);
+            ->assertDontSee('Precisa de Hospedagem para Seus Projetos?', false);
     }
 
     public function test_hosting_card_shows_with_sponsored_link(): void
@@ -55,14 +58,17 @@ class PortalLandingTest extends TestCase
         ]));
         Cms::put('hosting_partner', array_merge(Cms::defaults()['hosting_partner'], [
             'enabled' => true,
-            'url' => 'https://hostoo.io/?ref=markcraft',
+            'url' => 'https://hostoo.io/?ref=8pLhQonM',
         ]));
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Hospedagem Recomendada', false)
-            ->assertSee('rel="sponsored nofollow noopener"', false)
-            ->assertSee('https://hostoo.io/?ref=markcraft', false);
+            ->assertSee('Precisa de Hospedagem para Seus Projetos?', false)
+            ->assertSee('Hospede seus sites, sistemas e aplicações', false)
+            ->assertSee('Conhecer Planos Hostoo →', false)
+            ->assertSee('rel="sponsored nofollow"', false)
+            ->assertDontSee('rel="sponsored nofollow noopener"', false)
+            ->assertSee('https://hostoo.io/?ref=8pLhQonM', false);
     }
 
     public function test_newsletter_stores_email_and_returns_thanks(): void
