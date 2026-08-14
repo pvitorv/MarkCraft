@@ -165,8 +165,8 @@ class Cms
             ],
             'hosting_partner' => [
                 'enabled' => true,
-                'title' => 'Precisa de Hospedagem para Seus Projetos?',
-                'blurb' => 'Hospede seus sites, sistemas e aplicações com alta velocidade, servidores no Brasil e suporte rápido.',
+                'title' => 'Precisa de Hospedagem Rápida para Seus Projetos?',
+                'blurb' => 'Hospede seus sites, sistemas e aplicações com alta velocidade, servidores SSD no Brasil e suporte 24/7.',
                 'cta' => 'Conhecer Planos Hostoo →',
                 'url' => env('HOSTOO_AFFILIATE_URL', 'https://hostoo.io/?ref=8pLhQonM'),
             ],

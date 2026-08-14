@@ -27,7 +27,9 @@ class PortalLandingTest extends TestCase
             ->assertSee('Domine o Design: Dicas Rápidas para Criadores', false)
             ->assertSee('Inscreva-se para Receber Novidades e Packs Gratuitos', false)
             ->assertSee('Quero Receber', false)
-            ->assertSee('Precisa de Hospedagem para Seus Projetos?', false)
+            ->assertSee('Precisa de Hospedagem Rápida para Seus Projetos?', false)
+            ->assertSee('Parceiro oficial de infraestrutura', false)
+            ->assertSee('from-blue-600', false)
             ->assertSee('https://hostoo.io/?ref=8pLhQonM', false)
             ->assertSee('rel="sponsored nofollow"', false)
             ->assertDontSee('images/hostoo-logo.png', false)
@@ -50,7 +52,7 @@ class PortalLandingTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertDontSee('Precisa de Hospedagem para Seus Projetos?', false);
+            ->assertDontSee('Precisa de Hospedagem Rápida para Seus Projetos?', false);
     }
 
     public function test_hosting_card_shows_with_sponsored_link(): void
@@ -65,8 +67,8 @@ class PortalLandingTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Precisa de Hospedagem para Seus Projetos?', false)
-            ->assertSee('Hospede seus sites, sistemas e aplicações', false)
+            ->assertSee('Precisa de Hospedagem Rápida para Seus Projetos?', false)
+            ->assertSee('servidores SSD no Brasil', false)
             ->assertSee('Conhecer Planos Hostoo →', false)
             ->assertSee('rel="sponsored nofollow"', false)
             ->assertDontSee('rel="sponsored nofollow noopener"', false)
