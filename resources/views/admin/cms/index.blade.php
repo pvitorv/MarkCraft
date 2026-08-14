@@ -102,11 +102,7 @@
                 <div class="cms-card space-y-4">
                     <div>
                         <h1 class="mc-brand text-lg font-bold text-white">Home</h1>
-                        <p class="cms-help">Atalhos de formato, hub e o que aparece na página.</p>
-                        <p class="cms-help mt-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-teal-100">
-                            <strong>Botões e links do Blog</strong> (hero, ponte, funil) → aba
-                            <a href="{{ route('admin.cms.index', ['tab' => 'landing']) }}#cms-blog-links" class="underline font-semibold">Landing Blog</a>
-                        </p>
+                        <p class="cms-help">Atalhos de formato, hub, garantias e os cards Inspire-se / Domine o Design. Blog não é anúncio da home.</p>
                     </div>
                     <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-4" enctype="multipart/form-data">
                         @csrf
@@ -141,8 +137,8 @@
                             @foreach([
                                 'show_format_shortcuts' => 'Atalhos de formato',
                                 'show_hub' => 'Hub de ferramentas',
-                                'show_blog_bridge' => 'Ponte conteúdo / Blog',
-                                'show_landing_promo' => 'Promo no meio da home',
+                                'show_hero_showcase' => 'Cards Inspire-se / Domine o Design',
+                                'show_landing_promo' => 'Promo no meio da home (arte se não houver link)',
                                 'show_newsletter' => 'Captura de e-mail',
                                 'show_hosting_partner' => 'Card afiliado Hostoo',
                                 'show_landing_ads' => 'Slots de anúncio na home',
@@ -151,6 +147,21 @@
                                     <input type="checkbox" name="{{ $field }}" value="1" @checked(!empty($home[$field]))>
                                     {{ $label }}
                                 </label>
+                            @endforeach
+                        </div>
+                        <div class="rounded-xl border border-amber-400/25 bg-amber-500/5 p-4 space-y-4">
+                            <p class="font-semibold text-white">Inspire-se · Domine o Design</p>
+                            <p class="cms-help">Sem imagem: a home usa mosaico decorativo. Com imagem: sua arte preenche o card.</p>
+                            @foreach(['inspire' => 'Inspire-se', 'design' => 'Domine o Design'] as $sk => $slabel)
+                                @php $sc = $home['showcase'][$sk] ?? []; @endphp
+                                <div class="space-y-2 rounded-lg border border-white/10 p-3">
+                                    <p class="text-xs font-semibold text-zinc-300">{{ $slabel }}</p>
+                                    <input class="cms-input" name="showcase_{{ $sk }}_eyebrow" value="{{ $sc['eyebrow'] ?? '' }}" placeholder="Eyebrow">
+                                    <input class="cms-input" name="showcase_{{ $sk }}_title" value="{{ $sc['title'] ?? '' }}" placeholder="Título">
+                                    <textarea class="cms-input" name="showcase_{{ $sk }}_text" rows="2" placeholder="Texto">{{ $sc['text'] ?? '' }}</textarea>
+                                    <label class="cms-label">Imagem (opcional)</label>
+                                    <input class="cms-input" type="file" name="showcase_{{ $sk }}_image" accept="image/*">
+                                </div>
                             @endforeach
                         </div>
                         <div class="rounded-xl border border-white/10 p-4 space-y-3">
@@ -270,9 +281,9 @@
                 <div class="cms-card space-y-6">
                     <div>
                         <h1 class="mc-brand text-lg font-bold text-white">Promos</h1>
-                        <p class="cms-help">Cards promocionais na home e no Studio. Packs afiliados → aba <a href="{{ route('admin.cms.index', ['tab' => 'packs']) }}#cms-packs" class="text-amber-300 underline">Packs CriaSys</a>. Doações → aba <a href="{{ route('admin.cms.index', ['tab' => 'donations']) }}#cms-donations" class="text-rose-300 underline">Doações</a>.</p>
+                        <p class="cms-help">Sem URL de afiliado o card vira arte (mosaico ou imagem). Não use este espaço para empurrar o Blog.</p>
                     </div>
-                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-6">
+                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-6" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="section" value="promos">
                         @foreach(['landing_mid' => 'Home · meio', 'studio_top' => 'Studio · topo', 'studio_sidebar' => 'Studio · lateral'] as $slot => $label)
@@ -288,9 +299,10 @@
                                 <input class="cms-input" name="promo_{{ $slot }}_title" value="{{ $p['title'] ?? '' }}" placeholder="Título">
                                 <textarea class="cms-input" name="promo_{{ $slot }}_blurb" rows="2" placeholder="Texto">{{ $p['blurb'] ?? '' }}</textarea>
                                 <div class="grid sm:grid-cols-2 gap-2">
-                                    <input class="cms-input" name="promo_{{ $slot }}_cta" value="{{ $p['cta'] ?? '' }}" placeholder="Botão">
-                                    <input class="cms-input" name="promo_{{ $slot }}_url" value="{{ $p['url'] ?? '' }}" placeholder="Link">
+                                    <input class="cms-input" name="promo_{{ $slot }}_cta" value="{{ $p['cta'] ?? '' }}" placeholder="Botão (só aparece com URL)">
+                                    <input class="cms-input" name="promo_{{ $slot }}_url" value="{{ $p['url'] ?? '' }}" placeholder="Link afiliado (vazio = só arte)">
                                 </div>
+                                <input class="cms-input" type="file" name="promo_{{ $slot }}_image_file" accept="image/*">
                             </div>
                         @endforeach
                         <button type="submit" class="cms-btn">Salvar promos</button>
@@ -303,9 +315,9 @@
                 <div class="cms-card space-y-4">
                     <div>
                         <h1 class="mc-brand text-lg font-bold text-white">Ads do Studio</h1>
-                        <p class="cms-help">Três banners retangulares (30% cada · 9% da altura da tela) entre o menu e “Monte seu post”. Use placeholder até ter AdSense.</p>
+                        <p class="cms-help">Home: modo Reservado mostra arte (não “espaço vazio”). AdSense/HTML só com IDs preenchidos. Studio: faixas no topo do editor.</p>
                     </div>
-                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-5">
+                    <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-5" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="section" value="ads">
                         @foreach(['studio_header_a' => 'Studio A', 'studio_header_b' => 'Studio B', 'studio_header_c' => 'Studio C', 'landing_mid' => 'Home · meio', 'landing_footer' => 'Home · rodapé'] as $key => $label)
@@ -319,10 +331,13 @@
                                 </div>
                                 <input class="cms-input" name="{{ $key }}_label" value="{{ $ad['label'] ?? '' }}" placeholder="Nome interno">
                                 <select class="cms-input" name="{{ $key }}_mode">
-                                    @foreach(['placeholder' => 'Reservado (placeholder)', 'adsense' => 'Google AdSense', 'html' => 'HTML custom'] as $mode => $modeLabel)
+                                    @foreach(['placeholder' => 'Arte (sem anúncio ainda)', 'adsense' => 'Google AdSense', 'html' => 'HTML custom'] as $mode => $modeLabel)
                                         <option value="{{ $mode }}" @selected(($ad['mode'] ?? '') === $mode)>{{ $modeLabel }}</option>
                                     @endforeach
                                 </select>
+                                <input class="cms-input" name="{{ $key }}_art_heading" value="{{ $ad['art_heading'] ?? '' }}" placeholder="Título da arte (modo Reservado)">
+                                <textarea class="cms-input" name="{{ $key }}_art_blurb" rows="2" placeholder="Texto da arte">{{ $ad['art_blurb'] ?? '' }}</textarea>
+                                <input class="cms-input" type="file" name="{{ $key }}_art_image" accept="image/*">
                                 <input class="cms-input" name="{{ $key }}_adsense_client" value="{{ $ad['adsense_client'] ?? '' }}" placeholder="ca-pub-…">
                                 <input class="cms-input" name="{{ $key }}_adsense_slot" value="{{ $ad['adsense_slot'] ?? '' }}" placeholder="data-ad-slot">
                                 <textarea class="cms-input" name="{{ $key }}_html" rows="2" placeholder="HTML (modo html)">{{ $ad['html'] ?? '' }}</textarea>

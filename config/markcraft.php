@@ -130,12 +130,13 @@ return [
 
     'promos' => [
         'landing_mid' => [
-            'enabled' => false,
-            'eyebrow' => 'Parceiro',
-            'title' => 'Do studio gratuito ao próximo passo',
-            'blurb' => 'Use o MarkCraft para editar e exportar. No Blog CriaSys Web há tutoriais e conteúdo da linha — sem obrigação de assinatura para usar as ferramentas daqui.',
-            'cta' => 'Ver o Blog CriaSys Web',
-            'url' => env('BLOG_CRIASYS_URL', 'https://blog.criasysweb.com.br'),
+            'enabled' => true,
+            'eyebrow' => 'Portal',
+            'title' => 'Packs e parceiros',
+            'blurb' => 'Quando houver oferta com link, ela aparece aqui. Enquanto isso, o espaço fica com arte do portal.',
+            'cta' => 'Em breve',
+            'url' => '',
+            'image' => '',
         ],
         'studio_top' => [
             'enabled' => true,

@@ -359,7 +359,7 @@ class CmsAdminTest extends TestCase
             ->assertSee('Recursos &amp; Garantias', false);
     }
 
-    public function test_hero_blog_card_shows_pending_cta_until_link_is_activated(): void
+    public function test_home_does_not_advertise_blog_in_hero(): void
     {
         Cms::put('blog', array_merge(Cms::defaults()['blog'], [
             'url' => 'https://blog.example.com',
@@ -367,14 +367,14 @@ class CmsAdminTest extends TestCase
             'cta_pending' => 'Conteúdo e tutoriais no Blog',
         ]));
 
-        $this->assertFalse(Cms::blogCtaReady(Cms::get('blog')));
-
         $this->get('/')
             ->assertOk()
-            ->assertSee('Conteúdo e tutoriais no Blog', false);
+            ->assertSee('Inspire-se', false)
+            ->assertDontSee('Conteúdo da família CriaSys', false)
+            ->assertDontSee('Conteúdo e tutoriais no Blog', false);
     }
 
-    public function test_admin_can_activate_blog_link_and_home_shows_live_cta(): void
+    public function test_admin_can_activate_blog_link_without_pushing_it_on_home_hero(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
@@ -402,8 +402,8 @@ class CmsAdminTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('href="https://blog.criasysweb.com.br"', false)
-            ->assertSee('Ir para o Blog', false);
+            ->assertDontSee('Ir para o Blog', false)
+            ->assertSee('Inspire-se', false);
     }
 
     public function test_admin_cms_home_tab_has_blog_link_configuration(): void
@@ -453,11 +453,10 @@ class CmsAdminTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Headline CMS de teste', false)
-            ->assertSee('href="https://vendas.example.com"', false)
-            ->assertSee('href="https://vendas.example.com/cadastro"', false)
-            ->assertSee('Ir para vendas CMS', false)
-            ->assertSee('Cadastro CMS', false);
+            ->assertSee('Módulos CMS headline', false)
+            ->assertSee('Editor CMS headline', false)
+            ->assertDontSee('Headline CMS de teste', false)
+            ->assertDontSee('Ir para vendas CMS', false);
     }
 
     public function test_admin_cms_has_landing_blog_tab(): void
@@ -467,7 +466,6 @@ class CmsAdminTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/cms?tab=landing')
             ->assertOk()
-            ->assertSee('Landing Blog', false)
             ->assertSee('Ponte — Do MarkCraft para o Blog', false)
             ->assertSee('Salvar landing + links dos botões', false);
     }

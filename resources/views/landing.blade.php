@@ -97,8 +97,8 @@
         }
         @media (min-width: 768px) {
             .mc-hero-inner {
-                grid-template-columns: 1.05fr 0.95fr;
-                gap: 2rem;
+                grid-template-columns: 1fr;
+                max-width: 42rem;
             }
         }
         .mc-hero-visual {
@@ -515,6 +515,48 @@
         @media (prefers-reduced-motion: reduce) {
             .mc-rise, .mc-rise-2, .mc-rise-3, .mc-float { animation: none; }
         }
+        .mc-showcase-mosaic {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 1fr;
+            grid-template-rows: 1fr 0.85fr;
+            gap: 0.4rem;
+            padding: 0.85rem;
+            height: 100%;
+            min-height: 10.5rem;
+            background:
+                radial-gradient(280px 120px at 80% 0%, rgba(250, 204, 21, 0.22), transparent 55%),
+                #0a0a0c;
+        }
+        .mc-showcase-mosaic span {
+            border-radius: 0.35rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: linear-gradient(145deg, rgba(251,113,133,0.35), rgba(88,28,135,0.25));
+        }
+        .mc-showcase-mosaic span:nth-child(1) { grid-column: 1; grid-row: 1 / span 2; }
+        .mc-showcase-mosaic span:nth-child(2) { background: linear-gradient(160deg, rgba(56,189,248,0.3), rgba(15,23,42,0.5)); }
+        .mc-showcase-tips {
+            display: grid;
+            grid-template-columns: 4.5rem 1fr 1fr;
+            gap: 0.45rem;
+            padding: 0.85rem;
+            min-height: 10.5rem;
+            background:
+                radial-gradient(240px 100px at 10% 100%, rgba(244, 63, 94, 0.2), transparent 50%),
+                #0a0a0c;
+        }
+        .mc-showcase-tips span {
+            border-radius: 0.4rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+        }
+        .mc-showcase-tips span:first-child {
+            grid-row: 1 / span 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font: 700 1.25rem/1 'Sora', sans-serif;
+            color: #fde68a;
+        }
     </style>
 </head>
 <body class="mc-landing antialiased min-h-screen overflow-x-hidden" x-data="markCraftHub">
@@ -530,7 +572,7 @@
 
     @include('partials.dark_site_navbar', ['context' => 'landing'])
 
-    {{-- Hero: MarkCraft (studio gratuito) + Blog CriaSys Web (plataforma) --}}
+    {{-- Hero: portal gratuito (sem card de Blog) --}}
     <section class="mc-hero-stage relative">
         <div class="mc-hero-grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
         <div class="mc-hero-inner relative mx-auto max-w-6xl px-4 py-6 md:py-8">
@@ -562,12 +604,12 @@
                     {{ $cmsHome['hero_badges'] ?? 'Sem cartão · 100% grátis · Artes privadas (processadas no navegador)' }}
                 </p>
             </div>
-
-            @if(!empty($cmsHome['show_blog_bridge'] ?? true))
-                @include('partials.hero_blog_panel')
-            @endif
         </div>
     </section>
+
+    @if(!empty($cmsHome['show_hero_showcase'] ?? true))
+        @include('partials.hero_showcase')
+    @endif
 
     @if(!empty($cmsHome['show_format_shortcuts'] ?? true))
     {{-- Atalhos (inspiração Canva: “o que você quer criar”) --}}
@@ -661,10 +703,6 @@
 
     @include('partials.social_proof_placeholder')
 
-    @if(!empty($cmsHome['show_blog_bridge'] ?? true))
-        @include('partials.bridge_blog_section')
-    @endif
-
     @php
         $editorSection = $cmsLanding['editor'] ?? \App\Support\Cms::landing('editor', []);
         $editorToneClass = static function (string $tone): string {
@@ -674,10 +712,6 @@
                 default => 'text-teal-300/90',
             };
         };
-        $blogName = $cmsBlog['name'] ?? 'Blog CriaSys Web';
-        $blogLinkUrl = \App\Support\Cms::blogCtaReady($cmsBlog ?? [])
-            ? \App\Support\Cms::blogCtaUrl($cmsBlog ?? [])
-            : ($cmsBlog['url'] ?? '#');
     @endphp
     <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
         <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">{{ $editorSection['headline'] ?? 'Editor de verdade — feito para quem publica' }}</h2>
@@ -688,71 +722,10 @@
             @foreach($editorSection['columns'] ?? [] as $col)
                 <li>
                     <p class="text-sm font-semibold tracking-wide uppercase {{ $editorToneClass($col['tone'] ?? 'teal') }}">{{ $col['label'] ?? '' }}</p>
-                    <p class="mt-2 text-zinc-300 leading-relaxed">
-                        @if(str_contains($col['text'] ?? '', '{blog}'))
-                            @php
-                                [$beforeBlog, $afterBlog] = array_pad(explode('{blog}', $col['text'], 2), 2, '');
-                            @endphp
-                            {{ $beforeBlog }}<a href="{{ $blogLinkUrl }}" @if($blogLinkUrl !== '#' && !str_starts_with($blogLinkUrl, '#')) target="_blank" rel="noopener" @endif class="text-teal-300 hover:underline">{{ $blogName }}</a>{{ $afterBlog }}
-                        @else
-                            {{ $col['text'] ?? '' }}
-                        @endif
-                    </p>
+                    <p class="mt-2 text-zinc-300 leading-relaxed">{{ $col['text'] ?? '' }}</p>
                 </li>
             @endforeach
         </ul>
-    </section>
-
-    {{-- Conversão MarkCraft → Blog --}}
-    @php
-        $funnel = $cmsLanding['funnel'] ?? \App\Support\Cms::landing('funnel', []);
-    @endphp
-    <section class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
-        <div class="relative overflow-hidden rounded-xl border border-white/10 px-5 py-10 sm:px-6 sm:py-12 md:px-12 md:py-14"
-             style="background: radial-gradient(800px 280px at 20% 0%, rgba(20,184,166,0.18), transparent 55%), #0c1118;">
-            <p class="text-[10px] uppercase tracking-[0.16em] text-amber-300/90">{{ $funnel['eyebrow'] ?? 'Família CriaSys' }}</p>
-            <p class="mc-brand mt-2 text-2xl sm:text-3xl md:text-4xl font-bold text-white max-w-xl leading-tight">
-                {{ $funnel['headline'] ?? 'Criou a arte. E o resto do funil?' }}
-            </p>
-            <p class="mt-3 max-w-md text-zinc-400">
-                {{ $cmsBlog['blurb'] ?? '' }}
-            </p>
-            <div class="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
-                @php
-                    $blogReady = \App\Support\Cms::blogCtaReady($cmsBlog ?? []);
-                    $blogUrl = \App\Support\Cms::blogCtaUrl($cmsBlog ?? []);
-                    $blogRegister = \App\Support\Cms::blogRegisterUrl($cmsBlog ?? []);
-                    $blogCtaLabel = \App\Support\Cms::blogCtaLabel($cmsBlog ?? []);
-                    $registerLabel = \App\Support\Cms::blogRegisterLabel($cmsBlog ?? []);
-                @endphp
-                @if($blogReady)
-                    <a
-                        href="{{ $blogUrl }}"
-                        class="mc-cta mc-cta-blog inline-flex justify-center items-center rounded-md px-6 py-3.5 text-base font-semibold"
-                        target="_blank"
-                        rel="noopener"
-                    >
-                        {{ $blogCtaLabel }} →
-                    </a>
-                    <a
-                        href="{{ $blogRegister }}"
-                        class="inline-flex justify-center rounded-md border border-violet-400/40 bg-violet-500/10 px-5 py-3.5 font-medium text-violet-100 hover:bg-violet-500/20 transition"
-                        @if(!str_starts_with($blogRegister, '#')) target="_blank" rel="noopener" @endif
-                    >
-                        {{ $registerLabel }}
-                    </a>
-                @else
-                    <span class="inline-flex justify-center rounded-md border border-dashed border-violet-400/35 bg-violet-500/5 px-6 py-3.5 text-base font-semibold text-violet-200/90">
-                        {{ $blogCtaLabel }}
-                    </span>
-                @endif
-                @auth
-                    <a href="{{ \App\Support\Cms::blogStudioButtonUrl() }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">{{ \App\Support\Cms::blogContinueStudioLabel($cmsBlog ?? []) }}</a>
-                @else
-                    <a href="{{ \App\Support\Cms::blogMarkcraftRegisterUrl() }}" class="inline-flex justify-center rounded-md border border-white/15 px-5 py-3.5 font-medium text-zinc-100 hover:bg-white/5 transition">{{ \App\Support\Cms::blogCreateAccountLabel($cmsBlog ?? []) }}</a>
-                @endauth
-            </div>
-        </div>
     </section>
 
     @if(!empty($cmsHome['show_landing_promo'] ?? true))

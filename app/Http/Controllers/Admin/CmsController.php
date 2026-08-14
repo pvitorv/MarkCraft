@@ -15,8 +15,8 @@ class CmsController extends Controller
     {
         $tab = (string) $request->query('tab', 'home');
         $tabs = [
-            'home' => ['label' => 'Home', 'hint' => 'Hero, garantias e seções'],
-            'landing' => ['label' => 'Landing Blog', 'hint' => 'Ponte, hub, editor e funil'],
+            'home' => ['label' => 'Home', 'hint' => 'Hero, showcase e garantias'],
+            'landing' => ['label' => 'Landing', 'hint' => 'Hub e editor'],
             'blog' => ['label' => 'Blog CriaSys', 'hint' => 'Link do hero e blurb do funil'],
             'testimonials' => ['label' => 'Depoimentos', 'hint' => 'Prova social da home'],
             'footer' => ['label' => 'Rodapé', 'hint' => 'Redes, portfólio e CriaSys Web'],
@@ -203,12 +203,36 @@ class CmsController extends Controller
             'guarantees' => $guarantees !== [] ? $guarantees : ($existing['guarantees'] ?? []),
             'show_format_shortcuts' => $request->boolean('show_format_shortcuts'),
             'show_hub' => $request->boolean('show_hub'),
-            'show_blog_bridge' => $request->boolean('show_blog_bridge'),
+            'show_blog_bridge' => false,
+            'show_hero_showcase' => $request->boolean('show_hero_showcase'),
             'show_landing_promo' => $request->boolean('show_landing_promo'),
             'show_newsletter' => $request->boolean('show_newsletter'),
             'show_hosting_partner' => $request->boolean('show_hosting_partner'),
             'show_landing_ads' => $request->boolean('show_landing_ads'),
+            'showcase' => $this->showcasePayload($request, $existing['showcase'] ?? []),
         ];
+    }
+
+    private function showcasePayload(Request $request, array $existing): array
+    {
+        $out = [];
+        foreach (['inspire', 'design'] as $key) {
+            $prev = is_array($existing[$key] ?? null) ? $existing[$key] : [];
+            $image = Cms::normalizeStoragePath((string) ($prev['image'] ?? ''));
+            $file = $request->file("showcase_{$key}_image");
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('cms/showcase', 'public');
+                $image = Cms::publicStoragePath($stored);
+            }
+            $out[$key] = [
+                'eyebrow' => trim((string) $request->input("showcase_{$key}_eyebrow", $prev['eyebrow'] ?? '')),
+                'title' => trim((string) $request->input("showcase_{$key}_title", $prev['title'] ?? '')),
+                'text' => trim((string) $request->input("showcase_{$key}_text", $prev['text'] ?? '')),
+                'image' => $image,
+            ];
+        }
+
+        return $out;
     }
 
     private function newsletterPayload(Request $request): array
@@ -265,6 +289,13 @@ class CmsController extends Controller
         $slots = ['landing_mid', 'studio_top', 'studio_sidebar'];
         $promos = [];
         foreach ($slots as $slot) {
+            $prev = (array) data_get(Cms::get('promos', []), $slot, []);
+            $image = Cms::normalizeStoragePath((string) ($prev['image'] ?? ''));
+            $file = $request->file("promo_{$slot}_image_file");
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('cms/promos', 'public');
+                $image = Cms::publicStoragePath($stored);
+            }
             $promos[$slot] = [
                 'enabled' => $request->boolean("promo_{$slot}_enabled"),
                 'eyebrow' => trim((string) $request->input("promo_{$slot}_eyebrow", '')),
@@ -272,6 +303,7 @@ class CmsController extends Controller
                 'blurb' => trim((string) $request->input("promo_{$slot}_blurb", '')),
                 'cta' => trim((string) $request->input("promo_{$slot}_cta", '')),
                 'url' => trim((string) $request->input("promo_{$slot}_url", '')),
+                'image' => $image,
             ];
         }
 
@@ -327,6 +359,13 @@ class CmsController extends Controller
         $existing = array_merge(Cms::defaults()['ads'], (array) Cms::get('ads', []));
         $out = [];
         foreach (['studio_header_a', 'studio_header_b', 'studio_header_c', 'landing_mid', 'landing_footer'] as $key) {
+            $prev = is_array($existing[$key] ?? null) ? $existing[$key] : [];
+            $artImage = Cms::normalizeStoragePath((string) ($prev['art_image'] ?? ''));
+            $file = $request->file("{$key}_art_image");
+            if ($file !== null && $file->isValid()) {
+                $stored = $file->store('cms/ads', 'public');
+                $artImage = Cms::publicStoragePath($stored);
+            }
             $out[$key] = [
                 'enabled' => $request->boolean("{$key}_enabled"),
                 'label' => trim((string) $request->input("{$key}_label", '')),
@@ -336,6 +375,9 @@ class CmsController extends Controller
                 'adsense_client' => trim((string) $request->input("{$key}_adsense_client", '')),
                 'adsense_slot' => trim((string) $request->input("{$key}_adsense_slot", '')),
                 'html' => (string) $request->input("{$key}_html", ''),
+                'art_heading' => trim((string) $request->input("{$key}_art_heading", $prev['art_heading'] ?? '')),
+                'art_blurb' => trim((string) $request->input("{$key}_art_blurb", $prev['art_blurb'] ?? '')),
+                'art_image' => $artImage,
             ];
         }
 

@@ -20,10 +20,13 @@ class PortalLandingTest extends TestCase
             ->assertSee('processadas no navegador', false)
             ->assertSee('Recursos &amp; Garantias', false)
             ->assertSee('Nossa Linha de Ferramentas Gratuitas', false)
-            ->assertSee('Aprenda e evolua com conteúdo gratuito', false)
+            ->assertSee('Inspire-se', false)
+            ->assertSee('Domine o Design', false)
             ->assertSee('Quero Receber', false)
             ->assertDontSee('Página de vendas em breve', false)
-            ->assertDontSee('TODO: #prova-social', false);
+            ->assertDontSee('TODO: #prova-social', false)
+            ->assertDontSee('Conteúdo da família CriaSys', false)
+            ->assertDontSee('Aprenda e evolua com conteúdo gratuito', false);
     }
 
     public function test_hosting_card_hidden_without_affiliate_url(): void
