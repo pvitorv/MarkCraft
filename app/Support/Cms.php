@@ -433,7 +433,7 @@ class Cms
         return asset($relative);
     }
 
-    /** Arte do CMS se o arquivo existir; senão fallback em public/ (artes originais do portal). */
+    /** Arte do CMS se o arquivo existir; senão sempre o fallback público (Hostoo: public_html ≠ pasta git). */
     public static function publicArt(?string $configured, string $fallbackRelative): string
     {
         $url = self::existingPublicUrl($configured);
@@ -441,7 +441,12 @@ class Cms
             return $url;
         }
 
-        return self::existingPublicUrl($fallbackRelative);
+        $fallback = self::normalizeStoragePath($fallbackRelative);
+        if ($fallback === '' || str_contains($fallback, '..')) {
+            return '';
+        }
+
+        return asset(ltrim($fallback, '/'));
     }
 
     /** URL absoluta correta para o host atual (Laragon, produção, etc.). */

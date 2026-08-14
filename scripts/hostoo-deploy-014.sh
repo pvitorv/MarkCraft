@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Deploy da branch 014 na Hostoo. Rodar no Git Bash na pasta do projeto:
-#   bash scripts/hostoo-deploy-014.sh
-# Se o git já estiver na 014 e só o composer falhou:
-#   HOSTOO_SKIP_GIT=1 bash scripts/hostoo-deploy-014.sh
-#   HOSTOO_SCP_ONLY=1 bash scripts/hostoo-deploy-014.sh
-# Vai pedir a senha SSH (código + build, ou só build no SCP_ONLY). Não altera MAIL_*.
+# Deploy Hostoo. Git Bash na pasta do projeto:
+#   bash scripts/hostoo-deploy-014.sh 015
+# Envia public/build E public/images para public_html.
+# O git em ~/markcraft NÃO publica imagens no document root sozinho.
+# HOSTOO_SKIP_GIT=1  HOSTOO_SCP_ONLY=1
+# Não altera MAIL_*.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,7 +18,8 @@ fi
 HOSTOO_SSH="${HOSTOO_SSH:-}"
 HOSTOO_SSH_PORT="${HOSTOO_SSH_PORT:-}"
 HOSTOO_REMOTE_BUILD="${HOSTOO_REMOTE_BUILD:-public_html/build}"
-BRANCH="${1:-014}"
+HOSTOO_REMOTE_IMAGES="${HOSTOO_REMOTE_IMAGES:-public_html/images}"
+BRANCH="${1:-015}"
 
 # Git Bash no Windows expande ~ para C:/Users/... — isso não é a Hostoo.
 case "$HOSTOO_REMOTE_BUILD" in
@@ -27,6 +28,12 @@ case "$HOSTOO_REMOTE_BUILD" in
     ;;
 esac
 HOSTOO_REMOTE_BUILD="${HOSTOO_REMOTE_BUILD#\~/}"
+case "$HOSTOO_REMOTE_IMAGES" in
+  /c/*|~/public_html*|\$HOME/*)
+    HOSTOO_REMOTE_IMAGES=public_html/images
+    ;;
+esac
+HOSTOO_REMOTE_IMAGES="${HOSTOO_REMOTE_IMAGES#\~/}"
 
 if [[ -z "$HOSTOO_SSH" || -z "$HOSTOO_SSH_PORT" ]]; then
   echo "ERRO: preencha scripts/hostoo.env (HOSTOO_SSH e HOSTOO_SSH_PORT)."
@@ -37,7 +44,7 @@ SSH=(ssh -m hmac-sha2-512 -o IdentitiesOnly=no -p "$HOSTOO_SSH_PORT" "$HOSTOO_SS
 SCP=(scp -o MACs=hmac-sha2-512 -P "$HOSTOO_SSH_PORT")
 
 if [[ "${HOSTOO_SCP_ONLY:-0}" != "1" ]]; then
-echo "==> 1/3 git + PHP 8.3 no servidor"
+echo "==> 1/4 git + PHP 8.3 no servidor"
 "${SSH[@]}" bash -s "$BRANCH" "${HOSTOO_SKIP_GIT:-0}" <<'REMOTE'
 set -euo pipefail
 BRANCH="$1"
@@ -94,16 +101,28 @@ fi
 "$PHP" artisan config:clear
 "$PHP" artisan config:cache
 "$PHP" artisan route:cache
+
+echo "==> copiar public/images → ~/public_html/images"
+mkdir -p "$HOME/public_html/images"
+if [[ -d "$HOME/markcraft/public/images" ]]; then
+  cp -a "$HOME/markcraft/public/images/." "$HOME/public_html/images/"
+fi
 echo "SERVIDOR: $(git rev-parse --abbrev-ref HEAD) $(git log -1 --oneline)"
 REMOTE
 fi
 
-echo "==> 2/3 npm run build (já pode estar feito; roda de novo se faltar manifest)"
+echo "==> 2/4 npm run build (já pode estar feito; roda de novo se faltar manifest)"
 if [[ ! -f public/build/manifest.json ]]; then
   npm run build
 fi
 
-echo "==> 3/3 scp public/build → servidor"
+echo "==> 3/4 scp public/build → $HOSTOO_REMOTE_BUILD"
 "${SCP[@]}" -r public/build/. "$HOSTOO_SSH:$HOSTOO_REMOTE_BUILD/"
 
-echo "OK — teste https://markcraft.criasysweb.com.br/  e o Studio (remover fundo no navegador)."
+echo "==> 4/4 scp public/images → $HOSTOO_REMOTE_IMAGES"
+if [[ -d public/images ]]; then
+  "${SSH[@]}" mkdir -p "$HOSTOO_REMOTE_IMAGES"
+  "${SCP[@]}" -r public/images/. "$HOSTOO_SSH:$HOSTOO_REMOTE_IMAGES/"
+fi
+
+echo "OK — teste https://markcraft.criasysweb.com.br/  (artes em /images/portal/)."

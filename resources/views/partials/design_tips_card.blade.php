@@ -1,7 +1,7 @@
 @php
     $home = $cmsHome ?? \App\Support\Cms::defaults()['home'];
     $design = $home['showcase']['design'] ?? [];
-    $designImg = \App\Support\Cms::existingPublicUrl((string) ($design['image'] ?? ''));
+    $designImg = \App\Support\Cms::publicArt((string) ($design['image'] ?? ''), '/images/portal/inspire-studio.png');
     $show = !empty($home['show_hero_showcase'] ?? true);
 @endphp
 @if($show)

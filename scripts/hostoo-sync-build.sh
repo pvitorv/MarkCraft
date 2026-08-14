@@ -23,7 +23,8 @@ fi
 echo "==> npm run build"
 npm run build
 
-echo "==> scp → $HOSTOO_SSH:$HOSTOO_REMOTE_BUILD"
-scp -P "$HOSTOO_SSH_PORT" -r public/build/. "$HOSTOO_SSH:$HOSTOO_REMOTE_BUILD/"
+echo "==> scp build + images → $HOSTOO_SSH"
+scp -P "$HOSTOO_SSH_PORT" -r public/build/. "$HOSTOO_SSH:${HOSTOO_REMOTE_BUILD:-public_html/build}/"
+scp -P "$HOSTOO_SSH_PORT" -r public/images/. "$HOSTOO_SSH:${HOSTOO_REMOTE_IMAGES:-public_html/images}/"
 
 echo "OK"
