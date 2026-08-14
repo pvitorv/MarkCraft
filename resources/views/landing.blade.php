@@ -731,7 +731,7 @@
     @endif
 
     @include('partials.landing_ad_slot', ['key' => 'landing_mid'])
-    @include('partials.design_tips_card')
+    @include('partials.hosting_partner_card')
     @include('partials.newsletter_signup')
     @include('partials.landing_ad_slot', ['key' => 'landing_footer'])
 
