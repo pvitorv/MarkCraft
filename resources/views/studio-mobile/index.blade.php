@@ -63,6 +63,6 @@
     <script type="application/json" id="criasys-image-studio-templates">@json($c['templates'] ?? [])</script>
     <script type="application/json" id="criasys-image-studio-packs">@json($c['packs'] ?? [])</script>
 
-    @include('partials.hub_glass_modals')
+    @include('partials.hub_glass_modals', ['showPacks' => true])
 </body>
 </html>

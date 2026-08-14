@@ -1,9 +1,8 @@
 @php
     $footer = $cmsFooter ?? [];
-    $blog = $cmsBlog ?? config('markcraft.blog');
     $socials = collect($footer['socials'] ?? [])->filter(fn ($s) => filled($s['url'] ?? null));
     $portfolioUrl = trim((string) ($footer['portfolio_url'] ?? ''));
-    $criasysUrl = trim((string) ($footer['criasysweb_url'] ?? ($blog['url'] ?? '')));
+    $criasysUrl = trim((string) ($footer['criasysweb_url'] ?? ''));
 @endphp
 
 <footer class="border-t border-white/5 bg-[#05070a] text-zinc-400">
@@ -11,7 +10,7 @@
         <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div class="max-w-md">
                 <p class="mc-brand text-lg text-white">MarkCraft</p>
-                <p class="mt-2">{{ $footer['tagline'] ?? 'Studio gratuito da família CriaSys' }}</p>
+                <p class="mt-2">{{ $footer['tagline'] ?? 'Studio de imagem gratuito e hub de ferramentas da família CriaSys' }}</p>
                 @if($criasysUrl !== '')
                     <p class="mt-2">
                         Site pai:
@@ -26,15 +25,15 @@
                 <div>
                     <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Navegar</p>
                     <div class="mt-2 flex flex-col gap-2">
-                        <a href="{{ $blog['url'] ?? '#' }}" target="_blank" rel="noopener" class="hover:text-teal-300 transition">{{ $blog['name'] ?? 'Blog CriaSys Web' }}</a>
-                        <button type="button" @click="openHub('packs')" class="text-left hover:text-teal-300 transition">Packs CriaSys</button>
-                        <a href="#ferramentas" class="hover:text-teal-300 transition">Ferramentas</a>
+                        <a href="{{ route('studio') }}" class="hover:text-teal-300 transition">Studio</a>
+                        <a href="{{ url('/#ferramentas') }}" class="hover:text-teal-300 transition">Ferramentas</a>
+                        <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
+                        <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos de Uso</a>
                         <button type="button" @click="openHub('apoiar')" class="text-left hover:text-teal-300 transition">Apoiar</button>
                         <button type="button" @click="openCredits()" class="text-left hover:text-teal-300 transition">Créditos</button>
                         @guest
                             <a href="{{ route('register') }}" class="hover:text-teal-300 transition">Criar conta</a>
                         @else
-                            <a href="{{ route('studio') }}" class="hover:text-teal-300 transition">Studio</a>
                             @if(auth()->user()->is_admin)
                                 <a href="{{ route('admin.cms.index') }}" class="text-amber-300/90 hover:text-amber-200 transition">CMS</a>
                             @endif

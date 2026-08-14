@@ -86,8 +86,8 @@
     <li><strong>Autoridades</strong>, quando houver obrigação legal ou ordem válida.</li>
 </ul>
 <p>
-    Não vendemos seus dados pessoais. Links de afiliados (Packs CriaSys e similares) podem levar a sites de terceiros
-    com políticas próprias — leia-as antes de comprar.
+    Não vendemos seus dados pessoais. Links externos (afiliados ou parceiros, quando houver) podem levar a sites de terceiros
+    com políticas próprias — leia-as antes de continuar.
 </p>
 
 <h2>6. Transferências internacionais</h2>
@@ -136,7 +136,7 @@
 
 <h2>11. Relação com outros produtos {{ $brand }}</h2>
 <p>
-    O Blog CriaSys Web e outros sites da família podem ter políticas próprias. Esta política cobre o
+    Outros sites da família {{ $brand }} podem ter políticas próprias. Esta política cobre o
     {{ $product }} e as páginas sob o domínio deste produto.
 </p>
 

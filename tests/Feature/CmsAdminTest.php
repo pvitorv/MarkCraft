@@ -508,6 +508,11 @@ class CmsAdminTest extends TestCase
 
         $this->get('/')
             ->assertOk()
+            ->assertDontSee('Pack CMS Teste', false);
+
+        $this->actingAs($admin)
+            ->get('/studio')
+            ->assertOk()
             ->assertSee('Pack CMS Teste', false)
             ->assertSee('href="https://packs.example.com/oferta"', false);
     }

@@ -1,9 +1,11 @@
 @props([
     'variant' => 'grid', // grid | nav | chip
+    'showPacks' => true,
 ])
 
 @if($variant === 'grid')
-    <div {{ $attributes->merge(['class' => 'grid grid-cols-2 gap-3']) }}>
+    <div {{ $attributes->merge(['class' => ($showPacks ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 sm:grid-cols-2 gap-3')]) }}>
+        @if($showPacks)
         <button
             type="button"
             @click="openHub('packs')"
@@ -14,9 +16,10 @@
             </span>
             <span>
                 <span class="mc-shortcut-label block text-sm font-semibold">Packs</span>
-                <span class="mc-shortcut-hint mt-1 block text-xs leading-snug">Vitrine CriaSys: Blog, packs e planos da linha.</span>
+                <span class="mc-shortcut-hint mt-1 block text-xs leading-snug">Ofertas e recursos extras da linha CriaSys.</span>
             </span>
         </button>
+        @endif
         <button
             type="button"
             @click="openHub('apoiar')"
@@ -34,6 +37,7 @@
 @else
     {{-- nav + chip: mesma caixa do botão Studio (mc-nav-action) --}}
     <div {{ $attributes->merge(['class' => 'flex flex-wrap items-center gap-1.5']) }}>
+        @if($showPacks)
         <button
             type="button"
             @click="openHub('packs')"
@@ -45,6 +49,7 @@
             </span>
             Packs
         </button>
+        @endif
         <button
             type="button"
             @click="openHub('apoiar')"

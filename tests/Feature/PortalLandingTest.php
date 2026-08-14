@@ -22,9 +22,16 @@ class PortalLandingTest extends TestCase
             ->assertSee('Nossa Linha de Ferramentas Gratuitas', false)
             ->assertSee('Inspire-se', false)
             ->assertSee('Domine o Design', false)
+            ->assertSee('qualidade profissional', false)
+            ->assertSee('Inspire-se: Exemplos de Criação Profissional', false)
+            ->assertSee('Domine o Design: Dicas Rápidas para Criadores', false)
+            ->assertSee('Inscreva-se para Receber Novidades e Packs Gratuitos', false)
             ->assertSee('Quero Receber', false)
             ->assertDontSee('Página de vendas em breve', false)
             ->assertDontSee('TODO: #prova-social', false)
+            ->assertDontSee('Blog CriaSys', false)
+            ->assertDontSee('Packs CriaSys', false)
+            ->assertDontSee('Vitrine CriaSys', false)
             ->assertDontSee('Conteúdo da família CriaSys', false)
             ->assertDontSee('Aprenda e evolua com conteúdo gratuito', false);
     }
@@ -64,8 +71,10 @@ class PortalLandingTest extends TestCase
 
         $this->postJson('/newsletter', ['email' => 'lead@example.com'])
             ->assertOk()
-            ->assertJsonFragment(['ok' => true])
-            ->assertSee('Obrigado!', false);
+            ->assertJsonFragment([
+                'ok' => true,
+                'message' => 'Obrigado! Seu e-mail foi cadastrado para os próximos lançamentos.',
+            ]);
 
         $this->assertDatabaseHas('newsletter_subscribers', [
             'email' => 'lead@example.com',

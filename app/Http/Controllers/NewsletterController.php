@@ -20,7 +20,7 @@ class NewsletterController extends Controller
 
         $email = strtolower(trim($validated['email']));
         $cms = array_merge(Cms::defaults()['newsletter'] ?? [], (array) Cms::get('newsletter', []));
-        $thanks = (string) ($cms['success'] ?? 'Obrigado! Em breve enviaremos as novidades para o seu e-mail.');
+        $thanks = (string) ($cms['success'] ?? 'Obrigado! Seu e-mail foi cadastrado para os próximos lançamentos.');
 
         try {
             NewsletterSubscriber::query()->firstOrCreate(

@@ -246,7 +246,8 @@
     </div>
 </div>
 
-{{-- Packs --}}
+{{-- Packs (só quando o hub de ofertas está visível — não na landing pública) --}}
+@if(!empty($showPacks))
 <div
     x-show="isOpen('packs')"
     x-cloak
@@ -288,6 +289,7 @@
         </div>
     </div>
 </div>
+@endif
 
 {{-- Apoiar --}}
 <div
@@ -319,7 +321,7 @@
             @if(!empty($cmsDonations['modal_body']))
                 <p>{{ $cmsDonations['modal_body'] }}</p>
             @endif
-            <p>O MarkCraft é o studio gratuito da família CriaSys. Para blog, cobrança e o editor no fluxo de conteúdo, use o <a href="{{ \App\Support\Cms::blogCtaUrl($cmsBlog ?? []) }}" @if(\App\Support\Cms::blogCtaReady($cmsBlog ?? [])) target="_blank" rel="noopener" @endif class="text-teal-300 hover:underline">{{ $cmsBlog['name'] ?? 'Blog CriaSys Web' }}</a>.</p>
+            <p>O MarkCraft é um studio de imagem 100% gratuito: artes no navegador, utilitários no mesmo hub e contribuição opcional se quiser apoiar o projeto.</p>
             @if(!empty($cmsDonations['modal_note']))
                 <p class="text-xs text-zinc-500">{{ $cmsDonations['modal_note'] }}</p>
             @endif

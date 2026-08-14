@@ -17,7 +17,7 @@ class Cms
     {
         return [
             'footer' => [
-                'tagline' => 'Studio gratuito da família CriaSys',
+                'tagline' => 'Studio de imagem gratuito e hub de ferramentas da família CriaSys',
                 'portfolio_label' => 'Portfólio',
                 'portfolio_url' => '',
                 'criasysweb_label' => 'CriaSys Web',
@@ -108,7 +108,7 @@ class Cms
             'home' => [
                 'hero_eyebrow' => 'Studio de imagem gratuito',
                 'hero_title' => 'MarkCraft — Studio de Imagem 100% Gratuito & Privado',
-                'hero_blurb' => 'Crie artes para redes sociais, capas e banners sem cadastro, sem marca d\'água e sem complicações.',
+                'hero_blurb' => 'Crie artes para redes sociais, capas e banners com qualidade profissional, sem cadastro, sem marca d\'água e sem complicações.',
                 'hero_badges' => 'Sem cartão · 100% grátis · Artes privadas (processadas no navegador)',
                 'formats_heading' => 'Comece por um formato',
                 'formats_blurb' => 'Escolha um formato e abra direto no Studio.',
@@ -142,25 +142,25 @@ class Cms
                 'showcase' => [
                     'inspire' => [
                         'eyebrow' => 'Inspire-se',
-                        'title' => 'Exemplos de criação profissional',
-                        'text' => 'Capas, stories, thumbs e posts — o tipo de arte que você monta no Studio, sem marca d\'água.',
+                        'title' => 'Inspire-se: Exemplos de Criação Profissional',
+                        'text' => 'De capas de YouTube impactantes a stories de Instagram elegantes, veja o que é possível criar no Studio.',
                         'image' => '',
                     ],
                     'design' => [
                         'eyebrow' => 'Domine o Design',
-                        'title' => 'Dicas rápidas para criadores',
-                        'text' => 'Hierarquia visual, paleta coesa, contraste e recorte. Use as ferramentas grátis do hub no mesmo fluxo.',
+                        'title' => 'Domine o Design: Dicas Rápidas para Criadores',
+                        'text' => 'Hierarquia visual simples, paletas de cores coesas e contraste perfeito para destacar suas publicações.',
                         'image' => '',
                     ],
                 ],
             ],
             'newsletter' => [
                 'enabled' => true,
-                'title' => 'Inscreva-se para receber atualizações, pacotes de artes e dicas de design',
-                'description' => 'Fique por dentro das novas ferramentas e receba conteúdos exclusivos sobre criação e monetização.',
+                'title' => 'Inscreva-se para Receber Novidades e Packs Gratuitos',
+                'description' => 'Fique por dentro das novas ferramentas e receba conteúdos exclusivos de design direto na sua caixa de entrada.',
                 'cta' => 'Quero Receber',
                 'placeholder' => 'seu.email@exemplo.com',
-                'success' => 'Obrigado! Em breve enviaremos as novidades para o seu e-mail.',
+                'success' => 'Obrigado! Seu e-mail foi cadastrado para os próximos lançamentos.',
                 'to_email' => env('NEWSLETTER_TO', 'markcraft@markcraft.criasysweb.com.br'),
             ],
             'hosting_partner' => [
@@ -220,7 +220,7 @@ class Cms
                 'extras' => [
                     ['title' => 'Sem marca d\'água', 'text' => 'exporte PNG/JPG/PDF no plano gratuito.'],
                     ['title' => 'Privado por padrão', 'text' => 'a arte fica no seu navegador.'],
-                    ['title' => 'Família CriaSys', 'text' => 'conteúdo extra no Blog, quando quiser aprender mais.'],
+                    ['title' => 'Hub no mesmo site', 'text' => 'converter, encurtar e comprimir sem sair do MarkCraft.'],
                 ],
             ],
             'editor' => [

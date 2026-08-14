@@ -23,6 +23,9 @@
                 <p class="text-[10px] uppercase tracking-[0.16em] text-amber-300/90">{{ $inspire['eyebrow'] ?? 'Inspire-se' }}</p>
                 <h2 class="mc-brand mt-1 text-lg font-bold text-white">{{ $inspire['title'] ?? '' }}</h2>
                 <p class="mt-2 text-sm text-zinc-400 leading-relaxed">{{ $inspire['text'] ?? '' }}</p>
+                <a href="#formatos" class="mt-4 inline-flex text-sm font-semibold text-amber-200 hover:text-amber-100 transition">
+                    Abrir formatos no Studio →
+                </a>
             </div>
         </article>
         <article class="mc-showcase-card overflow-hidden rounded-xl border border-white/10 bg-zinc-950/40">

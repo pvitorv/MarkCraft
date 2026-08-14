@@ -30,6 +30,15 @@
 
         <div class="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 text-sm text-zinc-300 sm:px-5">
             <section>
+                <h3 class="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-300/90">Produto</h3>
+                <p class="mt-2 text-xs leading-relaxed text-zinc-400">
+                    MarkCraft é um <strong class="text-zinc-200">portal de ferramentas web gratuitas</strong>
+                    (Image Studio, conversor, encurtador, PDF). Código aberto sob
+                    <strong class="text-zinc-200">AGPL-3.0</strong>. Não é um SaaS pago nem um funil de blog.
+                </p>
+            </section>
+
+            <section>
                 <h3 class="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-300/90">Ícones e elementos</h3>
                 <ul class="mt-2 space-y-2 text-xs leading-relaxed text-zinc-400">
                     <li>

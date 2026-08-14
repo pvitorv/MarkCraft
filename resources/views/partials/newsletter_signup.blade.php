@@ -2,7 +2,7 @@
     $nl = $cmsNewsletter ?? \App\Support\Cms::defaults()['newsletter'];
     $home = $cmsHome ?? [];
     $show = !empty($home['show_newsletter']) && !empty($nl['enabled']);
-    $thanks = $nl['success'] ?? 'Obrigado! Em breve enviaremos as novidades para o seu e-mail.';
+    $thanks = $nl['success'] ?? 'Obrigado! Seu e-mail foi cadastrado para os próximos lançamentos.';
 @endphp
 @if($show)
 <section class="mx-auto max-w-6xl px-4 pb-10" id="newsletter" aria-labelledby="mc-nl-title">

@@ -584,7 +584,7 @@
                     {{ $cmsHome['hero_title'] ?? 'MarkCraft — Studio de Imagem 100% Gratuito & Privado' }}
                 </p>
                 <p class="mc-rise-2 mt-3 sm:mt-4 max-w-md text-base sm:text-lg md:text-xl text-zinc-200 leading-relaxed">
-                    {{ $cmsHome['hero_blurb'] ?? 'Crie artes para redes sociais, capas e banners sem cadastro, sem marca d\'água e sem complicações.' }}
+                    {{ $cmsHome['hero_blurb'] ?? 'Crie artes para redes sociais, capas e banners com qualidade profissional, sem cadastro, sem marca d\'água e sem complicações.' }}
                 </p>
                 <div class="mc-rise-3 mt-5 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                     @auth
@@ -613,7 +613,7 @@
 
     @if(!empty($cmsHome['show_format_shortcuts'] ?? true))
     {{-- Atalhos (inspiração Canva: “o que você quer criar”) --}}
-    <section class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-12 sm:pb-14">
+    <section id="formatos" class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-12 sm:pb-14">
         <h2 class="mc-brand text-xl sm:text-2xl md:text-3xl font-bold text-white">{{ $cmsHome['formats_heading'] ?? 'O que você quer criar agora?' }}</h2>
         <p class="mt-2 max-w-xl text-zinc-400">
             {{ $cmsHome['formats_blurb'] ?? 'Escolha um formato e abra direto no Studio' }}
@@ -679,10 +679,6 @@
                     Azul · ferramentas grátis
                 </span>
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2 w-2 rounded-sm bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.7)]" aria-hidden="true"></span>
-                    Amarelo · Packs / produtos
-                </span>
-                <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.7)]" aria-hidden="true"></span>
                     Rosa · Apoiar / comunidade
                 </span>
@@ -696,7 +692,7 @@
             @include('partials.tool_shortcut_buttons', ['variant' => 'grid'])
         </div>
         <div class="mt-3">
-            @include('partials.hub_shortcut_buttons', ['variant' => 'grid'])
+            @include('partials.hub_shortcut_buttons', ['variant' => 'grid', 'showPacks' => false])
         </div>
     </section>
     @endif
@@ -741,6 +737,6 @@
 
     @include('partials.site_footer')
 
-    @include('partials.hub_glass_modals')
+    @include('partials.hub_glass_modals', ['showPacks' => false])
 </body>
 </html>

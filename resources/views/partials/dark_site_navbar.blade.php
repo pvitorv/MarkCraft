@@ -26,15 +26,10 @@
         @if($isStudio && ! $desktop)
             <div class="hidden xl:flex min-w-0 max-w-[14rem] items-center">
                 <a
-                    href="{{ $cmsBlog['url'] ?? config('markcraft.blog.url') }}"
-                    target="_blank"
-                    rel="noopener"
-                    class="truncate text-xs text-zinc-400 hover:text-amber-200 transition"
-                    title="{{ $cmsBlog['headline'] ?? config('markcraft.blog.headline') }}"
+                    href="{{ route('home') }}"
+                    class="truncate text-xs text-zinc-400 hover:text-teal-200 transition"
                 >
-                    <span class="text-amber-300/90">Blog CriaSys</span>
-                    <span class="text-zinc-600"> · </span>
-                    blog + painel →
+                    Portal de ferramentas gratuitas
                 </a>
             </div>
         @endif
@@ -44,9 +39,15 @@
             @if($isStudio && ! $desktop)
                 <a href="{{ route('home') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Início</a>
             @endif
+            @unless($isStudio)
+                <a href="{{ route('studio') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Studio</a>
+                <a href="#ferramentas" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Ferramentas</a>
+                <a href="{{ route('legal.show', 'privacidade') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Privacidade</a>
+                <a href="{{ route('legal.show', 'termos') }}" class="px-2.5 py-1.5 rounded-md hover:bg-white/5 hover:text-white transition">Termos de Uso</a>
+            @endunless
             @include('partials.account_menu')
             @unless($desktop)
-                @include('partials.hub_shortcut_buttons', ['variant' => 'nav'])
+                @include('partials.hub_shortcut_buttons', ['variant' => 'nav', 'showPacks' => $isStudio])
                 @include('partials.studio_nav_button')
             @endunless
         </nav>
@@ -136,6 +137,11 @@
                         Studio (entrar)
                     </a>
                 @endauth
+                @unless($isStudio)
+                    <a href="#ferramentas" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">Ferramentas</a>
+                    <a href="{{ route('legal.show', 'privacidade') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">Privacidade</a>
+                    <a href="{{ route('legal.show', 'termos') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-100 hover:bg-white/5" @click="closeNav()">Termos de Uso</a>
+                @endunless
             </div>
 
             @unless($desktop)
@@ -161,7 +167,8 @@
                 @endif
 
                 <p class="mb-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Hub</p>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid {{ $isStudio ? 'grid-cols-2' : 'grid-cols-1' }} gap-2">
+                    @if($isStudio)
                     <button
                         type="button"
                         class="flex items-center gap-2.5 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-3 text-left"
@@ -172,6 +179,7 @@
                         </span>
                         <span class="text-sm font-semibold text-amber-100">Packs</span>
                     </button>
+                    @endif
                     <button
                         type="button"
                         class="mc-shortcut-neon-shock flex items-center gap-2.5 rounded-xl px-3 py-3 text-left"

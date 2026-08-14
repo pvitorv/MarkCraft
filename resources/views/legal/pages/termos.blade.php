@@ -25,7 +25,7 @@
     sem garantia de disponibilidade contínua, e pode evoluir, mudar ou ser descontinuado a qualquer momento.
 </p>
 <p>
-    Recursos avançados, packs afiliados, doações e o Blog CriaSys Web são ofertas relacionadas da família
+    Recursos avançados opcionais (doações, afiliados quando configurados) são ofertas relacionadas da família
     {{ $brand }}, com condições próprias quando aplicáveis.
 </p>
 
