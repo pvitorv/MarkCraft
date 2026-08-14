@@ -23,9 +23,9 @@ return [
         'url' => env('BLOG_CRIASYS_URL', 'https://blog.criasysweb.com.br'),
         'register_url' => env('BLOG_CRIASYS_REGISTER_URL', env('BLOG_CRIASYS_URL', 'https://blog.criasysweb.com.br')),
         'cta_ready' => (bool) env('BLOG_CRIASYS_CTA_READY', false),
-        'cta_pending' => 'Página de vendas em breve',
-        'early_access_note' => 'Acesso antecipado em teste fechado · depoimentos entram só com feedback real',
-        'register_cta' => 'Começar teste grátis',
+        'cta_pending' => 'Conteúdo e tutoriais no Blog',
+        'early_access_note' => 'Tutoriais e dicas da família CriaSys — quando o link estiver ativo, este card aponta para o Blog.',
+        'register_cta' => 'Ler no Blog',
         'continue_studio_cta' => 'Continuar no Studio',
         'create_account_cta' => 'Criar conta no MarkCraft',
         'studio_url' => '',
@@ -130,10 +130,10 @@ return [
 
     'promos' => [
         'landing_mid' => [
-            'enabled' => true,
-            'eyebrow' => 'Família CriaSys',
-            'title' => 'Do studio gratuito à plataforma completa',
-            'blurb' => 'No MarkCraft você edita e exporta artes. No Blog CriaSys Web você publica, monetiza e mantém o Image Studio no fluxo do conteúdo.',
+            'enabled' => false,
+            'eyebrow' => 'Parceiro',
+            'title' => 'Do studio gratuito ao próximo passo',
+            'blurb' => 'Use o MarkCraft para editar e exportar. No Blog CriaSys Web há tutoriais e conteúdo da linha — sem obrigação de assinatura para usar as ferramentas daqui.',
             'cta' => 'Ver o Blog CriaSys Web',
             'url' => env('BLOG_CRIASYS_URL', 'https://blog.criasysweb.com.br'),
         ],

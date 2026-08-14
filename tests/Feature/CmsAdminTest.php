@@ -63,7 +63,10 @@ class CmsAdminTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Espaço reservado · prova social', false);
+            ->assertSee('Recursos &amp; Garantias', false)
+            ->assertSee('Privacidade em Primeiro Lugar', false)
+            ->assertDontSee('TODO: #prova-social', false)
+            ->assertDontSee('Espaço reservado · prova social', false);
     }
 
     public function test_admin_can_publish_testimonial_and_home_shows_it(): void
@@ -353,7 +356,7 @@ class CmsAdminTest extends TestCase
 
         $this->get('/')
             ->assertDontSee('Fica no ar por enquanto.', false)
-            ->assertSee('Espaço reservado · prova social', false);
+            ->assertSee('Recursos &amp; Garantias', false);
     }
 
     public function test_hero_blog_card_shows_pending_cta_until_link_is_activated(): void
@@ -361,14 +364,14 @@ class CmsAdminTest extends TestCase
         Cms::put('blog', array_merge(Cms::defaults()['blog'], [
             'url' => 'https://blog.example.com',
             'cta_ready' => false,
-            'cta_pending' => 'Página de vendas em breve',
+            'cta_pending' => 'Conteúdo e tutoriais no Blog',
         ]));
 
         $this->assertFalse(Cms::blogCtaReady(Cms::get('blog')));
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Página de vendas em breve', false);
+            ->assertSee('Conteúdo e tutoriais no Blog', false);
     }
 
     public function test_admin_can_activate_blog_link_and_home_shows_live_cta(): void
@@ -411,7 +414,6 @@ class CmsAdminTest extends TestCase
             ->get('/admin/cms?tab=landing')
             ->assertOk()
             ->assertSee('Botões e links do Blog', false)
-            ->assertSee('URL (página de vendas)', false)
             ->assertSee('URL de cadastro', false);
     }
 

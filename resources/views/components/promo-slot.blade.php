@@ -26,7 +26,7 @@
         <a
             href="{{ $url }}"
             target="_blank"
-            rel="noopener sponsored"
+            rel="noopener sponsored nofollow"
             class="mc-cta mt-3 inline-flex rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-teal-400"
         >
             {{ $promo['cta'] ?? 'Saiba mais' }} →

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 | Dois produtos no mesmo código:
-| - web     → página de vendas (landing) no navegador
+| - web     → landing (portal de ferramentas) no navegador
 | - desktop → SEM landing; só login → Studio
 */
 if (MarkCraftShell::isDesktop()) {
@@ -22,6 +22,10 @@ if (MarkCraftShell::isDesktop()) {
 } else {
     Route::get('/', [LandingController::class, 'index'])->name('home');
 }
+
+Route::post('/newsletter', [\App\Http\Controllers\NewsletterController::class, 'store'])
+    ->middleware('throttle:12,1')
+    ->name('newsletter.store');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');

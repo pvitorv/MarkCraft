@@ -61,6 +61,22 @@ class Cms
                     'adsense_slot' => env('ADSENSE_SLOT_STUDIO_C', ''),
                     'html' => '',
                 ],
+                'landing_mid' => [
+                    'enabled' => false,
+                    'label' => 'Ad home · meio',
+                    'mode' => 'placeholder',
+                    'adsense_client' => env('ADSENSE_CLIENT', ''),
+                    'adsense_slot' => env('ADSENSE_SLOT_LANDING_MID', ''),
+                    'html' => '',
+                ],
+                'landing_footer' => [
+                    'enabled' => false,
+                    'label' => 'Ad home · rodapé',
+                    'mode' => 'placeholder',
+                    'adsense_client' => env('ADSENSE_CLIENT', ''),
+                    'adsense_slot' => env('ADSENSE_SLOT_LANDING_FOOTER', ''),
+                    'html' => '',
+                ],
             ],
             /*
             | Métricas / analytics — IDs e snippets configurados no CMS (sem código).
@@ -84,14 +100,54 @@ class Cms
                 'admin_notes' => '',
             ],
             'home' => [
-                'hero_title' => 'Crie artes para redes — rápido e grátis',
-                'hero_blurb' => 'Image Studio da família CriaSys. Formatos prontos, exportação limpa, sem travar seu fluxo.',
+                'hero_eyebrow' => 'Studio de imagem gratuito',
+                'hero_title' => 'MarkCraft — Studio de Imagem 100% Gratuito & Privado',
+                'hero_blurb' => 'Crie artes para redes sociais, capas e banners sem cadastro, sem marca d\'água e sem complicações.',
+                'hero_badges' => 'Sem cartão · 100% grátis · Artes privadas (processadas no navegador)',
                 'formats_heading' => 'Comece por um formato',
                 'formats_blurb' => 'Escolha um formato e abra direto no Studio.',
+                'guarantees_heading' => 'Recursos & Garantias',
+                'guarantees_intro' => 'Ferramentas grátis, no navegador, sem truque de assinatura.',
+                'guarantees' => [
+                    [
+                        'icon' => 'lock',
+                        'title' => 'Privacidade em Primeiro Lugar',
+                        'text' => 'Suas imagens são processadas localmente e não ficam salvas em nossos servidores.',
+                    ],
+                    [
+                        'icon' => 'bolt',
+                        'title' => 'Sem Restrições',
+                        'text' => 'Exporte quantas imagens, capas ou PDFs precisar em alta resolução sem pagar nada.',
+                    ],
+                    [
+                        'icon' => 'tools',
+                        'title' => 'Hub de Utilitários',
+                        'text' => 'Converta formatos (PNG/JPG/WebP) e comprima arquivos no mesmo ambiente.',
+                    ],
+                ],
                 'show_format_shortcuts' => true,
                 'show_hub' => true,
                 'show_blog_bridge' => true,
                 'show_landing_promo' => true,
+                'show_newsletter' => true,
+                'show_hosting_partner' => true,
+                'show_landing_ads' => true,
+            ],
+            'newsletter' => [
+                'enabled' => true,
+                'title' => 'Inscreva-se para receber atualizações, pacotes de artes e dicas de design',
+                'description' => 'Fique por dentro das novas ferramentas e receba conteúdos exclusivos sobre criação e monetização.',
+                'cta' => 'Quero Receber',
+                'placeholder' => 'seu.email@exemplo.com',
+                'success' => 'Obrigado! Em breve enviaremos as novidades para o seu e-mail.',
+                'to_email' => env('NEWSLETTER_TO', 'markcraft@markcraft.criasysweb.com.br'),
+            ],
+            'hosting_partner' => [
+                'enabled' => false,
+                'title' => 'Hospedagem Recomendada',
+                'blurb' => 'Precisa de uma hospedagem rápida e escalável para seus sites e aplicações? Conheça a Hostoo.',
+                'cta' => 'Conhecer a Hostoo',
+                'url' => env('HOSTOO_AFFILIATE_URL', ''),
             ],
             'studio' => [
                 'show_blog_bridge_btn' => true,
@@ -117,47 +173,47 @@ class Cms
     {
         return [
             'bridge' => [
-                'eyebrow' => 'Do MarkCraft para o {blog}',
-                'headline' => 'Você já tem o editor. No Blog, ele vira operação completa.',
-                'paragraph_1' => 'No MarkCraft o caminho é direto: abrir o studio, montar a arte, exportar e limpar. É a porta de entrada da família CriaSys — o mesmo DNA visual que o Image Studio do Blog usa por dentro.',
-                'paragraph_2' => 'No <strong>{blog}</strong> você não fica só no arquivo baixado. Cria a conta, ganha <span class="text-zinc-300">/@seu-nome</span>, escreve em blocos, publica, ranqueia com SEO e monetiza com AdSense na lateral e afiliado dentro do post — <strong class="text-zinc-200">100% seus</strong>, sem split de anúncios. A plataforma cobra só pela assinatura do sistema.',
-                'paragraph_3' => 'O diferencial está no hub <strong class="text-zinc-200">Ferramentas</strong> do painel: abuse do nosso Image Studio, do encurtador de links, do conversor de imagens, do PDF/HTML e do construtor de Landing Pages — tudo no mesmo lugar, sem WordPress, sem plugin e sem sair da plataforma. Cada módulo alimenta o próximo passo do crescimento.',
-                'footnote' => 'Trial Pro Studio sem cartão no cadastro · depois Essencial, Pro Studio ou passe · cartão ou Pix. Depoimentos entram só com feedback real do acesso antecipado.',
+                'eyebrow' => 'Aprenda e evolua · {blog}',
+                'headline' => 'Aprenda e evolua com conteúdo gratuito',
+                'paragraph_1' => 'O MarkCraft é o studio e o hub de utilitários grátis: edite, converta, encurte links e exporte — no navegador, sem marca d\'água.',
+                'paragraph_2' => 'No <strong>{blog}</strong> você encontra tutoriais, dicas de criação e conteúdo da família CriaSys para ir além da arte do dia a dia — sem pressão de “acesso antecipado”.',
+                'paragraph_3' => 'Abaixo está a nossa linha de ferramentas gratuitas: Image Studio, encurtador, conversor PNG/JPG/WebP, PDF e compressor. Tudo no mesmo ambiente.',
+                'footnote' => 'Conteúdo e ferramentas grátis. Conta no MarkCraft só se você quiser guardar preferências — as artes continuam no seu dispositivo.',
                 'steps' => [
-                    ['label' => '1. Editar', 'text' => 'artes no studio', 'tone' => 'green'],
-                    ['label' => '2. Publicar', 'text' => 'blog + capa', 'tone' => 'violet'],
-                    ['label' => '3. Monetizar', 'text' => 'LP · ads · afiliado', 'tone' => 'cyan'],
+                    ['label' => '1. Criar', 'text' => 'artes no studio', 'tone' => 'green'],
+                    ['label' => '2. Utilitários', 'text' => 'converter · encurtar', 'tone' => 'violet'],
+                    ['label' => '3. Aprender', 'text' => 'conteúdo no Blog', 'tone' => 'cyan'],
                 ],
             ],
             'hub' => [
-                'eyebrow' => 'Hub Ferramentas · painel do Blog',
-                'headline' => 'Cinco módulos. Um painel. Sem sair da plataforma.',
-                'intro' => 'No plano Pro Studio (ou trial/cortesia) o hub reúne Image Studio, Encurtador, Conversor, PDF/HTML e Landing Pages. Fora das abas, o arsenal ainda inclui assistente de texto (IA), AdSense na lateral e bloco de produto/afiliado no post.',
+                'eyebrow' => 'Nossa linha',
+                'headline' => 'Nossa Linha de Ferramentas Gratuitas',
+                'intro' => 'Os mesmos utilitários do hub: Studio, encurtador, conversor e PDF — sem assinatura para usar o básico.',
                 'modules' => [
-                    ['icon' => 'image', 'title' => 'Image Studio', 'text' => 'Canvas no painel: capas, stories, feed, YouTube, TikTok. Layouts, pacotes, tipografia, formas, crop, filtros, export e remoção de fundo (rembg). A ferramenta-estrela — sem Canva externo.', 'wide' => false],
-                    ['icon' => 'link', 'title' => 'Encurtador', 'text' => 'URLs curtas no próprio blog (<span class="text-zinc-300">/@seu-blog/l/código</span>), com título, liga/desliga e contador de cliques. Ideal para afiliados, bio e campanhas.', 'wide' => false],
-                    ['icon' => 'convert', 'title' => 'Conversor de imagens', 'text' => 'PNG ↔ JPG ↔ WebP (qualidade e largura), favicon 32×32 e gravação direta nas mídias do blog. Sobe, ajusta e usa no post — sem site externo.', 'wide' => false],
-                    ['icon' => 'pdf', 'title' => 'PDF / HTML', 'text' => 'HTML → PDF (A4/Carta), PDF → HTML (texto) e exportar artigo do blog em PDF a partir dos blocos. Material de apoio, e-book leve ou backup legível.', 'wide' => false],
-                    ['icon' => 'landing', 'title' => 'Landing Pages', 'text' => 'Páginas de captura no tema do blog, com views, cliques no CTA, leads e biblioteca de imagens. Integra com o Image Studio — e no fluxo afiliado gera LP de divulgação do CriaSys.', 'wide' => true],
+                    ['icon' => 'image', 'title' => 'Image Studio', 'text' => 'Canvas no navegador: capas, stories, feed, YouTube, TikTok. Layouts, tipografia, formas, crop, filtros, export e remoção de fundo.', 'wide' => false],
+                    ['icon' => 'link', 'title' => 'Encurtador', 'text' => 'URLs curtas para bio, campanhas e materiais. Sem sair do MarkCraft.', 'wide' => false],
+                    ['icon' => 'convert', 'title' => 'Conversor de imagens', 'text' => 'PNG ↔ JPG ↔ WebP com qualidade e largura — no mesmo ambiente do editor.', 'wide' => false],
+                    ['icon' => 'pdf', 'title' => 'PDF / HTML', 'text' => 'HTML → PDF e imagens ↔ PDF para material de apoio e backup leve.', 'wide' => false],
+                    ['icon' => 'landing', 'title' => 'Compressor', 'text' => 'Reduza peso de imagens e PDFs para publicar mais rápido em redes e sites.', 'wide' => true],
                 ],
                 'extras' => [
-                    ['title' => 'Assistente de texto (IA)', 'text' => 'melhora títulos, bios e SEO no fluxo (sua chave).'],
-                    ['title' => 'AdSense na lateral', 'text' => 'cola o ca-pub; receita 100% do blogueiro.'],
-                    ['title' => 'Bloco produto/afiliado', 'text' => 'vitrine dentro do artigo, também 100% sua.'],
+                    ['title' => 'Sem marca d\'água', 'text' => 'exporte PNG/JPG/PDF no plano gratuito.'],
+                    ['title' => 'Privado por padrão', 'text' => 'a arte fica no seu navegador.'],
+                    ['title' => 'Família CriaSys', 'text' => 'conteúdo extra no Blog, quando quiser aprender mais.'],
                 ],
             ],
             'editor' => [
-                'headline' => 'Editor de verdade — feito para quem publica',
-                'intro' => 'O mesmo tipo de Image Studio que roda no Blog CriaSys Web, disponível grátis aqui para criar, exportar e seguir no ecossistema.',
+                'headline' => 'Editor de verdade — feito para quem cria',
+                'intro' => 'Image Studio gratuito: crie, exporte e use os utilitários no mesmo hub — no navegador, sem marca d\'água.',
                 'columns' => [
-                    ['label' => 'Studio completo', 'text' => 'Layouts de redes, pacotes, tipografia, shapes, export e remoção de fundo no servidor.', 'tone' => 'teal'],
+                    ['label' => 'Studio completo', 'text' => 'Layouts de redes, tipografia, shapes, export e remoção de fundo.', 'tone' => 'teal'],
                     ['label' => 'Baixe e limpe', 'text' => 'Edite → baixe PNG/JPG → limpe o workspace. Privacidade por padrão — artes não ficam no site.', 'tone' => 'amber'],
-                    ['label' => 'Próximo nível', 'text' => 'Para blog, afiliados e cobrança no mesmo fluxo: {blog}.', 'tone' => 'sky'],
+                    ['label' => 'Aprenda mais', 'text' => 'Tutoriais e conteúdo gratuito no {blog}.', 'tone' => 'sky'],
                 ],
             ],
             'funnel' => [
                 'eyebrow' => 'Família CriaSys',
-                'headline' => 'Criou a arte. E o resto do funil?',
+                'headline' => 'Criou a arte. Quer aprender o próximo passo?',
             ],
         ];
     }
@@ -199,7 +255,7 @@ class Cms
             return trim((string) ($blog['cta'] ?? 'Conhecer o Blog CriaSys Web'));
         }
 
-        return trim((string) ($blog['cta_pending'] ?? 'Página de vendas em breve'));
+        return trim((string) ($blog['cta_pending'] ?? 'Conteúdo e tutoriais no Blog'));
     }
 
     public static function blogCtaUrl(?array $blog = null): string

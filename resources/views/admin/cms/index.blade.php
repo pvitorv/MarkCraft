@@ -34,6 +34,8 @@
     $analytics = $cms['analytics'] ?? [];
     $studio = $cms['studio'] ?? [];
     $blog = $cms['blog'] ?? [];
+    $newsletter = $cms['newsletter'] ?? [];
+    $hosting = $cms['hosting_partner'] ?? [];
 @endphp
 <body class="antialiased min-h-screen">
     <header class="border-b border-white/5 bg-[#07090c]/95 sticky top-0 z-40 backdrop-blur">
@@ -110,10 +112,21 @@
                         @csrf
                         <input type="hidden" name="section" value="home">
                         <div>
-                            <label class="cms-label">Texto do hero</label>
+                            <label class="cms-label">Eyebrow do hero</label>
+                            <input class="cms-input" name="hero_eyebrow" value="{{ $home['hero_eyebrow'] ?? '' }}">
+                        </div>
+                        <div>
+                            <label class="cms-label">Título do hero</label>
+                            <input class="cms-input" name="hero_title" value="{{ $home['hero_title'] ?? '' }}">
+                        </div>
+                        <div>
+                            <label class="cms-label">Subtítulo do hero</label>
                             <textarea class="cms-input" name="hero_blurb" rows="3">{{ $home['hero_blurb'] ?? '' }}</textarea>
                         </div>
-                        <input type="hidden" name="hero_title" value="{{ $home['hero_title'] ?? '' }}">
+                        <div>
+                            <label class="cms-label">Badges (uma linha)</label>
+                            <input class="cms-input" name="hero_badges" value="{{ $home['hero_badges'] ?? '' }}">
+                        </div>
                         <div class="grid sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="cms-label">Título dos formatos</label>
@@ -128,8 +141,11 @@
                             @foreach([
                                 'show_format_shortcuts' => 'Atalhos de formato',
                                 'show_hub' => 'Hub de ferramentas',
-                                'show_blog_bridge' => 'Ponte Blog CriaSys',
+                                'show_blog_bridge' => 'Ponte conteúdo / Blog',
                                 'show_landing_promo' => 'Promo no meio da home',
+                                'show_newsletter' => 'Captura de e-mail',
+                                'show_hosting_partner' => 'Card afiliado Hostoo',
+                                'show_landing_ads' => 'Slots de anúncio na home',
                             ] as $field => $label)
                                 <label class="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2.5 text-zinc-300">
                                     <input type="checkbox" name="{{ $field }}" value="1" @checked(!empty($home[$field]))>
@@ -137,7 +153,53 @@
                                 </label>
                             @endforeach
                         </div>
+                        <div class="rounded-xl border border-white/10 p-4 space-y-3">
+                            <p class="font-semibold text-white">Recursos &amp; Garantias</p>
+                            <input class="cms-input" name="guarantees_heading" value="{{ $home['guarantees_heading'] ?? '' }}" placeholder="Título da seção">
+                            <input class="cms-input" name="guarantees_intro" value="{{ $home['guarantees_intro'] ?? '' }}" placeholder="Intro">
+                            @foreach(($home['guarantees'] ?? []) as $i => $g)
+                                <div class="grid sm:grid-cols-3 gap-2">
+                                    <input class="cms-input" name="guarantees[{{ $i }}][icon]" value="{{ $g['icon'] ?? '' }}" placeholder="lock|bolt|tools">
+                                    <input class="cms-input" name="guarantees[{{ $i }}][title]" value="{{ $g['title'] ?? '' }}" placeholder="Título">
+                                    <input class="cms-input sm:col-span-3" name="guarantees[{{ $i }}][text]" value="{{ $g['text'] ?? '' }}" placeholder="Texto">
+                                </div>
+                            @endforeach
+                        </div>
                         <button type="submit" class="cms-btn">Salvar home</button>
+                    </form>
+
+                    <form method="POST" action="{{ route('admin.cms.update') }}" class="mt-6 space-y-3 rounded-xl border border-white/10 p-4">
+                        @csrf
+                        <input type="hidden" name="section" value="newsletter">
+                        <input type="hidden" name="return_tab" value="home">
+                        <p class="font-semibold text-white">Newsletter / leads</p>
+                        <p class="cms-help">Se o e-mail do servidor não estiver configurado, o visitante ainda vê a mensagem de obrigado. Destino interno (não mexe no MAIL_HOST).</p>
+                        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="newsletter_enabled" value="1" @checked(!empty($newsletter['enabled']))> Ativo</label>
+                        <input class="cms-input" name="newsletter_title" value="{{ $newsletter['title'] ?? '' }}">
+                        <textarea class="cms-input" name="newsletter_description" rows="2">{{ $newsletter['description'] ?? '' }}</textarea>
+                        <div class="grid sm:grid-cols-2 gap-2">
+                            <input class="cms-input" name="newsletter_cta" value="{{ $newsletter['cta'] ?? '' }}" placeholder="Botão">
+                            <input class="cms-input" name="newsletter_placeholder" value="{{ $newsletter['placeholder'] ?? '' }}" placeholder="placeholder e-mail">
+                        </div>
+                        <input class="cms-input" name="newsletter_success" value="{{ $newsletter['success'] ?? '' }}">
+                        <input class="cms-input" name="newsletter_to_email" value="{{ $newsletter['to_email'] ?? '' }}" placeholder="markcraft@markcraft.criasysweb.com.br">
+                        <button type="submit" class="cms-btn">Salvar newsletter</button>
+                    </form>
+
+                    <form method="POST" action="{{ route('admin.cms.update') }}" class="mt-4 space-y-3 rounded-xl border border-white/10 p-4">
+                        @csrf
+                        <input type="hidden" name="section" value="hosting_partner">
+                        <input type="hidden" name="return_tab" value="home">
+                        <p class="font-semibold text-white">Afiliado Hostoo</p>
+                        <p class="cms-help">Sem URL o card some da home, mesmo com “ativo”.</p>
+                        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="hosting_enabled" value="1" @checked(!empty($hosting['enabled']))> Ativo</label>
+                        <input class="cms-input" name="hosting_title" value="{{ $hosting['title'] ?? '' }}">
+                        <textarea class="cms-input" name="hosting_blurb" rows="2">{{ $hosting['blurb'] ?? '' }}</textarea>
+                        <div class="grid sm:grid-cols-2 gap-2">
+                            <input class="cms-input" name="hosting_cta" value="{{ $hosting['cta'] ?? '' }}" placeholder="Botão">
+                            <input class="cms-input" name="hosting_url" value="{{ $hosting['url'] ?? '' }}" placeholder="https://… (afiliado)">
+                        </div>
+                        <button type="submit" class="cms-btn">Salvar Hostoo</button>
                     </form>
                 </div>
                 @endif
@@ -246,7 +308,7 @@
                     <form method="POST" action="{{ route('admin.cms.update') }}" class="space-y-5">
                         @csrf
                         <input type="hidden" name="section" value="ads">
-                        @foreach(['studio_header_a' => 'Banner A', 'studio_header_b' => 'Banner B', 'studio_header_c' => 'Banner C'] as $key => $label)
+                        @foreach(['studio_header_a' => 'Studio A', 'studio_header_b' => 'Studio B', 'studio_header_c' => 'Studio C', 'landing_mid' => 'Home · meio', 'landing_footer' => 'Home · rodapé'] as $key => $label)
                             @php $ad = $ads[$key] ?? []; @endphp
                             <div class="rounded-xl border border-white/10 p-4 space-y-2">
                                 <div class="flex items-center justify-between">

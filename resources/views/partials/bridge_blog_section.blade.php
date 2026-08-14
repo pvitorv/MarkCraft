@@ -130,6 +130,10 @@
         @endif
 
         @if(!empty($hub['modules']))
+            <p class="mt-8 text-[10px] uppercase tracking-[0.16em] text-zinc-500">Atalhos do hub</p>
+            <div class="mt-3">
+                @include('partials.tool_shortcut_buttons', ['variant' => 'chip'])
+            </div>
             <ul class="mc-bridge-tools mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach($hub['modules'] as $mod)
                     <li @class(['mc-bridge-tool', 'sm:col-span-2 lg:col-span-1' => !empty($mod['wide'])])>

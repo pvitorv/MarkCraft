@@ -1,40 +1,54 @@
-{{-- Prova social: mesmo bloco sempre; sem depoimentos publicados = marcador reservado; com itens = cards com print. --}}
+{{-- Recursos & Garantias (#prova-social). Depoimentos reais, se houver, vêm abaixo. --}}
 @php
+    $home = $cmsHome ?? [];
+    $guarantees = $home['guarantees'] ?? [];
+    if ($guarantees === []) {
+        $guarantees = \App\Support\Cms::defaults()['home']['guarantees'] ?? [];
+    }
     $section = $cms['testimonials'] ?? [];
     $items = \App\Support\Cms::publishedTestimonials();
     $hasLive = count($items) > 0;
-    $heading = $section['heading'] ?? 'Depoimentos e prova social';
+    $heading = $section['heading'] ?? 'Depoimentos';
     $intro = $section['intro'] ?? '';
 @endphp
 
 <section
     class="mc-social-proof-slot mx-auto max-w-6xl px-4 py-10"
     id="prova-social"
-    aria-labelledby="mc-social-proof-title"
-    data-status="{{ $hasLive ? 'live' : 'reserved' }}"
+    aria-labelledby="mc-guarantees-title"
 >
-    <div class="mc-social-proof-frame rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-5 py-8 sm:px-8 sm:py-10 text-center">
-        @unless($hasLive)
-            <p class="inline-flex items-center gap-2 rounded-md border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-200">
-                <span aria-hidden="true">▣</span> Espaço reservado · prova social
-            </p>
-        @endunless
-
-        <h2 id="mc-social-proof-title" class="mc-brand mt-4 text-lg sm:text-xl font-bold {{ $hasLive ? 'text-white' : 'text-zinc-300' }}">
-            {{ $heading }}
+    <div class="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-8 sm:px-8 sm:py-10">
+        <p class="text-[10px] uppercase tracking-[0.16em] text-teal-300/85 text-center">Portal gratuito</p>
+        <h2 id="mc-guarantees-title" class="mc-brand mt-2 text-center text-lg sm:text-xl font-bold text-white">
+            {{ $home['guarantees_heading'] ?? 'Recursos & Garantias' }}
         </h2>
-
-        @if($hasLive && filled($intro))
-            <p class="mx-auto mt-2 max-w-lg text-sm text-zinc-400 leading-relaxed">{{ $intro }}</p>
-        @elseif(! $hasLive)
-            <p class="mx-auto mt-2 max-w-lg text-sm text-zinc-500 leading-relaxed">
-                Este bloco fica marcado de propósito. Depois do teste com 10–20 usuários e feedback real,
-                entram aqui os primeiros depoimentos — sem inventar números nem quotes.
-            </p>
+        @if(!empty($home['guarantees_intro']))
+            <p class="mx-auto mt-2 max-w-lg text-center text-sm text-zinc-400 leading-relaxed">{{ $home['guarantees_intro'] }}</p>
         @endif
 
-        <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 {{ $hasLive ? '' : 'opacity-40 pointer-events-none select-none' }}" @unless($hasLive) aria-hidden="true" @endunless>
-            @if($hasLive)
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+            @foreach($guarantees as $card)
+                <article class="rounded-lg border border-white/10 bg-zinc-900/50 px-4 py-5 text-left">
+                    <p class="text-lg" aria-hidden="true">
+                        @if(($card['icon'] ?? '') === 'bolt') ⚡
+                        @elseif(($card['icon'] ?? '') === 'tools') 🛠️
+                        @else 🔒
+                        @endif
+                    </p>
+                    <h3 class="mt-2 text-sm font-semibold text-white">{{ $card['title'] ?? '' }}</h3>
+                    <p class="mt-2 text-sm text-zinc-400 leading-relaxed">{{ $card['text'] ?? '' }}</p>
+                </article>
+            @endforeach
+        </div>
+    </div>
+
+    @if($hasLive)
+        <div class="mt-8 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-8 sm:px-8 text-center">
+            <h3 class="mc-brand text-lg font-bold text-white">{{ $heading }}</h3>
+            @if(filled($intro))
+                <p class="mx-auto mt-2 max-w-lg text-sm text-zinc-400 leading-relaxed">{{ $intro }}</p>
+            @endif
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach($items as $item)
                     <article class="rounded-lg border border-white/10 bg-zinc-900/40 overflow-hidden text-left flex flex-col h-full">
                         @if(!empty($item['image']))
@@ -62,15 +76,7 @@
                         </div>
                     </article>
                 @endforeach
-            @else
-                <div class="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-4 h-24"></div>
-                <div class="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-4 h-24"></div>
-                <div class="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-4 h-24"></div>
-            @endif
+            </div>
         </div>
-
-        @unless($hasLive)
-            <p class="mt-4 text-[11px] text-zinc-600 font-mono">TODO: #prova-social · preencher no CMS com depoimentos reais</p>
-        @endunless
-    </div>
+    @endif
 </section>

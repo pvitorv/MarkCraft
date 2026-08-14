@@ -15,6 +15,19 @@
     ])
     @include('partials.head_favicon')
     @include('partials.analytics_head', ['analyticsSurface' => 'landing'])
+    @php
+        $adsenseClient = null;
+        foreach (['landing_mid', 'landing_footer'] as $adKey) {
+            $row = ($cmsAds ?? [])[$adKey] ?? [];
+            if (($row['mode'] ?? '') === 'adsense' && filled($row['adsense_client'] ?? null) && !empty($row['enabled'])) {
+                $adsenseClient = $row['adsense_client'];
+                break;
+            }
+        }
+    @endphp
+    @if($adsenseClient)
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $adsenseClient }}" crossorigin="anonymous"></script>
+    @endif
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=sora:500,700,800|dm-sans:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -522,12 +535,14 @@
         <div class="mc-hero-grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
         <div class="mc-hero-inner relative mx-auto max-w-6xl px-4 py-6 md:py-8">
             <div class="relative z-10 min-w-0">
-                <p class="mc-rise text-[10px] uppercase tracking-[0.16em] text-[#39ff14]/80 mb-2">Editor de imagem gratuito</p>
-                <p class="mc-rise mc-brand text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[0.92]">
-                    MarkCraft
+                <p class="mc-rise text-[10px] uppercase tracking-[0.16em] text-[#39ff14]/80 mb-2">
+                    {{ $cmsHome['hero_eyebrow'] ?? 'Studio de imagem gratuito' }}
+                </p>
+                <p class="mc-rise mc-brand text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[0.98]">
+                    {{ $cmsHome['hero_title'] ?? 'MarkCraft — Studio de Imagem 100% Gratuito & Privado' }}
                 </p>
                 <p class="mc-rise-2 mt-3 sm:mt-4 max-w-md text-base sm:text-lg md:text-xl text-zinc-200 leading-relaxed">
-                    {{ $cmsHome['hero_blurb'] ?? 'Crie posts, stories e thumbnails no navegador — escolha o formato, edite e exporte. Sem instalar nada.' }}
+                    {{ $cmsHome['hero_blurb'] ?? 'Crie artes para redes sociais, capas e banners sem cadastro, sem marca d\'água e sem complicações.' }}
                 </p>
                 <div class="mc-rise-3 mt-5 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                     @auth
@@ -544,7 +559,7 @@
                     @endauth
                 </div>
                 <p class="mc-rise-3 mt-3 text-sm text-zinc-400">
-                    Sem cartão · 100% grátis · Artes privadas (não ficam no servidor)
+                    {{ $cmsHome['hero_badges'] ?? 'Sem cartão · 100% grátis · Artes privadas (processadas no navegador)' }}
                 </p>
             </div>
 
@@ -609,12 +624,13 @@
     @endif
 
     @if(!empty($cmsHome['show_hub'] ?? true))
+    @php $hubCopy = $cmsLanding['hub'] ?? \App\Support\Cms::landing('hub', []); @endphp
     {{-- Ferramentas + produtos CriaSys --}}
     <section class="mx-auto max-w-6xl px-4 pt-4 sm:pt-6 pb-10" id="ferramentas">
         <div>
-            <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">Hub CriaSys</p>
-            <h2 class="mc-brand mt-1 text-2xl font-bold text-white">Ferramentas e produtos da linha</h2>
-            <p class="mt-1 max-w-xl text-sm text-zinc-400">Utilitários grátis no MarkCraft. Packs e o Blog CriaSys Web para quem precisa publicar e monetizar.</p>
+            <p class="text-xs uppercase tracking-[0.16em] text-zinc-500">{{ $hubCopy['eyebrow'] ?? 'Hub de utilitários' }}</p>
+            <h2 class="mc-brand mt-1 text-2xl font-bold text-white">{{ $hubCopy['headline'] ?? 'Nossa linha de ferramentas gratuitas' }}</h2>
+            <p class="mt-1 max-w-xl text-sm text-zinc-400">{{ $hubCopy['intro'] ?? 'Editor, conversor, encurtador e PDF — no mesmo ambiente, sem assinatura para o básico.' }}</p>
             <p class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400" aria-label="Legenda de cores do hub">
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-sky-400 shadow-[0_0_6px_rgba(56,189,248,0.7)]" aria-hidden="true"></span>
@@ -744,6 +760,11 @@
         <x-promo-slot slot="landing_mid" />
     </div>
     @endif
+
+    @include('partials.landing_ad_slot', ['key' => 'landing_mid'])
+    @include('partials.hosting_partner_card')
+    @include('partials.newsletter_signup')
+    @include('partials.landing_ad_slot', ['key' => 'landing_footer'])
 
     @include('partials.site_footer')
 

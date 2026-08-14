@@ -39,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('cmsDonations', array_merge(config('markcraft.donations', []), $cms['donations'] ?? []));
             $view->with('cmsTestimonials', $cms['testimonials'] ?? []);
             $view->with('cmsLanding', Cms::landing());
+            $view->with('cmsNewsletter', array_merge(Cms::defaults()['newsletter'] ?? [], $cms['newsletter'] ?? []));
+            $view->with('cmsHostingPartner', array_merge(Cms::defaults()['hosting_partner'] ?? [], $cms['hosting_partner'] ?? []));
         });
     }
 }

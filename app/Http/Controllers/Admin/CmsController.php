@@ -15,7 +15,7 @@ class CmsController extends Controller
     {
         $tab = (string) $request->query('tab', 'home');
         $tabs = [
-            'home' => ['label' => 'Home', 'hint' => 'Hero, link do Blog e seções'],
+            'home' => ['label' => 'Home', 'hint' => 'Hero, garantias e seções'],
             'landing' => ['label' => 'Landing Blog', 'hint' => 'Ponte, hub, editor e funil'],
             'blog' => ['label' => 'Blog CriaSys', 'hint' => 'Link do hero e blurb do funil'],
             'testimonials' => ['label' => 'Depoimentos', 'hint' => 'Prova social da home'],
@@ -23,7 +23,7 @@ class CmsController extends Controller
             'packs' => ['label' => 'Packs CriaSys', 'hint' => 'Modal hub · links afiliados'],
             'donations' => ['label' => 'Doações', 'hint' => 'Apoiar · Pix e gateway'],
             'promos' => ['label' => 'Promos', 'hint' => 'Cards na home e Studio'],
-            'ads' => ['label' => 'Ads do Studio', 'hint' => 'Faixa retangular abaixo do menu'],
+            'ads' => ['label' => 'Ads', 'hint' => 'Studio e banners da home'],
             'analytics' => ['label' => 'Métricas', 'hint' => 'GA4, GTM, Clarity, Pixel…'],
             'studio' => ['label' => 'Studio', 'hint' => 'Botões e textos do editor'],
         ];
@@ -92,7 +92,7 @@ class CmsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $section = (string) $request->input('section', '');
-        $allowed = ['home', 'footer', 'promos', 'packs', 'donations', 'ads', 'analytics', 'studio', 'blog', 'landing', 'testimonials'];
+        $allowed = ['home', 'footer', 'promos', 'packs', 'donations', 'ads', 'analytics', 'studio', 'blog', 'landing', 'testimonials', 'newsletter', 'hosting_partner'];
         abort_unless(in_array($section, $allowed, true), 422);
 
         $payload = match ($section) {
@@ -107,6 +107,8 @@ class CmsController extends Controller
             'blog' => $this->blogPayload($request),
             'landing' => $this->landingPayload($request),
             'testimonials' => $this->testimonialsPayload($request),
+            'newsletter' => $this->newsletterPayload($request),
+            'hosting_partner' => $this->hostingPartnerPayload($request),
             default => [],
         };
 
@@ -176,16 +178,65 @@ class CmsController extends Controller
 
     private function homePayload(Request $request): array
     {
+        $existing = array_merge(Cms::defaults()['home'], (array) Cms::get('home', []));
+        $guarantees = [];
+        foreach ((array) $request->input('guarantees', []) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $guarantees[] = [
+                'icon' => trim((string) ($row['icon'] ?? 'lock')),
+                'title' => trim((string) ($row['title'] ?? '')),
+                'text' => trim((string) ($row['text'] ?? '')),
+            ];
+        }
+
         return [
+            'hero_eyebrow' => trim((string) $request->input('hero_eyebrow', $existing['hero_eyebrow'] ?? '')),
             'hero_title' => trim((string) $request->input('hero_title', '')),
             'hero_blurb' => trim((string) $request->input('hero_blurb', '')),
+            'hero_badges' => trim((string) $request->input('hero_badges', $existing['hero_badges'] ?? '')),
             'formats_heading' => trim((string) $request->input('formats_heading', '')),
             'formats_blurb' => trim((string) $request->input('formats_blurb', '')),
+            'guarantees_heading' => trim((string) $request->input('guarantees_heading', $existing['guarantees_heading'] ?? '')),
+            'guarantees_intro' => trim((string) $request->input('guarantees_intro', $existing['guarantees_intro'] ?? '')),
+            'guarantees' => $guarantees !== [] ? $guarantees : ($existing['guarantees'] ?? []),
             'show_format_shortcuts' => $request->boolean('show_format_shortcuts'),
             'show_hub' => $request->boolean('show_hub'),
             'show_blog_bridge' => $request->boolean('show_blog_bridge'),
             'show_landing_promo' => $request->boolean('show_landing_promo'),
+            'show_newsletter' => $request->boolean('show_newsletter'),
+            'show_hosting_partner' => $request->boolean('show_hosting_partner'),
+            'show_landing_ads' => $request->boolean('show_landing_ads'),
         ];
+    }
+
+    private function newsletterPayload(Request $request): array
+    {
+        $existing = array_merge(Cms::defaults()['newsletter'] ?? [], (array) Cms::get('newsletter', []));
+
+        return array_merge($existing, [
+            'enabled' => $request->boolean('newsletter_enabled'),
+            'title' => trim((string) $request->input('newsletter_title', '')),
+            'description' => trim((string) $request->input('newsletter_description', '')),
+            'cta' => trim((string) $request->input('newsletter_cta', 'Quero Receber')),
+            'placeholder' => trim((string) $request->input('newsletter_placeholder', 'seu.email@exemplo.com')),
+            'success' => trim((string) $request->input('newsletter_success', '')),
+            'to_email' => trim((string) $request->input('newsletter_to_email', $existing['to_email'] ?? '')),
+        ]);
+    }
+
+    private function hostingPartnerPayload(Request $request): array
+    {
+        $existing = array_merge(Cms::defaults()['hosting_partner'] ?? [], (array) Cms::get('hosting_partner', []));
+
+        return array_merge($existing, [
+            'enabled' => $request->boolean('hosting_enabled'),
+            'title' => trim((string) $request->input('hosting_title', '')),
+            'blurb' => trim((string) $request->input('hosting_blurb', '')),
+            'cta' => trim((string) $request->input('hosting_cta', '')),
+            'url' => trim((string) $request->input('hosting_url', '')),
+        ]);
     }
 
     private function footerPayload(Request $request): array
@@ -275,7 +326,7 @@ class CmsController extends Controller
     {
         $existing = array_merge(Cms::defaults()['ads'], (array) Cms::get('ads', []));
         $out = [];
-        foreach (['studio_header_a', 'studio_header_b', 'studio_header_c'] as $key) {
+        foreach (['studio_header_a', 'studio_header_b', 'studio_header_c', 'landing_mid', 'landing_footer'] as $key) {
             $out[$key] = [
                 'enabled' => $request->boolean("{$key}_enabled"),
                 'label' => trim((string) $request->input("{$key}_label", '')),
@@ -353,7 +404,7 @@ class CmsController extends Controller
             'cta_ready' => $this->formTruthy($request->input('blog_cta_ready', $request->input('cta_ready'))),
             'url' => trim((string) $request->input('blog_url', $request->input('url', ''))),
             'cta' => trim((string) $request->input('blog_cta', $request->input('cta', ''))),
-            'cta_pending' => trim((string) $request->input('blog_cta_pending', $request->input('cta_pending', 'Página de vendas em breve'))),
+            'cta_pending' => trim((string) $request->input('blog_cta_pending', $request->input('cta_pending', 'Conteúdo e tutoriais no Blog'))),
             'early_access_note' => trim((string) $request->input('blog_early_access_note', $request->input('early_access_note', ''))),
             'register_url' => trim((string) $request->input('blog_register_url', $request->input('register_url', ''))),
             'register_cta' => trim((string) $request->input('blog_register_cta', $request->input('register_cta', 'Começar teste grátis'))),

@@ -7,7 +7,7 @@
 
 <div class="mc-hero-visual mc-rise-2">
     <div class="mc-hero-offer h-full flex flex-col justify-center rounded-xl px-4 py-4 sm:px-5 sm:py-5">
-        <p class="text-[10px] uppercase tracking-[0.16em] text-zinc-500 font-semibold">Também na família CriaSys</p>
+        <p class="text-[10px] uppercase tracking-[0.16em] text-zinc-500 font-semibold">Conteúdo da família CriaSys</p>
         <p class="mc-brand mt-1.5 text-base sm:text-lg font-bold text-zinc-100 leading-tight">
             {{ $blog['name'] ?? 'Blog CriaSys Web' }}
         </p>
