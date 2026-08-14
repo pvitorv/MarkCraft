@@ -21,9 +21,9 @@ Copie para `docs/ACESSOS-LOCAL.md` (ignorado pelo Git). Preencha com seus dados.
 | CMS Doações | https://markcraft.criasysweb.com.br/admin/cms?tab=donations#cms-donations |
 | CMS Promos | https://markcraft.criasysweb.com.br/admin/cms?tab=promos |
 
-## Hostoo / SSH
+## Hostoo / SSH (só nesta cópia local)
 
-- **SSH:** `ssh -p PORTA usuario@host`
+- **SSH:** `ssh -p PORTA usuario@host`  *(nunca no Git; use também `scripts/hostoo.env`)*
 - **Laravel:** `/home/USUARIO/markcraft`
 - **public_html:** `/home/USUARIO/public_html`
 

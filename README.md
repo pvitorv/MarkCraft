@@ -3,7 +3,8 @@
 Ferramenta web **gratuita** da família **CriaSys** (studio de imagem + hub de utilitários). Ganho do projeto: publicidade e conteúdo — a ferramenta em si não é vendida como SaaS.
 
 **Produção:** [https://markcraft.criasysweb.com.br/](https://markcraft.criasysweb.com.br/) · Deploy Hostoo: `docs/deploy/hostoo-markcraft.md`  
-**Código-fonte (AGPL-3.0):** [https://github.com/pvitorv/MarkCraft](https://github.com/pvitorv/MarkCraft)
+**Código-fonte (AGPL-3.0):** [https://github.com/pvitorv/MarkCraft](https://github.com/pvitorv/MarkCraft)  
+**Licença / IMG.LY:** `docs/FONTE-E-LICENCA.md` · **Segurança:** `SECURITY.md`
 
 ## O que é
 

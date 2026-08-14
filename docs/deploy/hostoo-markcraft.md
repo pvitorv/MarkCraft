@@ -141,7 +141,8 @@ Motor **rembg** no servidor é legado/opcional — só se precisar: **`docs/depl
 - [ ] `.env` fora do `public_html`
 - [ ] Admin via artisan (usuário já cadastrado)
 - [ ] `info.php` de teste removido do `public_html`
+- [ ] SSH / senhas **não** estão em arquivos versionados (só `docs/ACESSOS-LOCAL.md` e `scripts/hostoo.env`)
 
 ---
 
-Documento irmão: `docs/deploy/rembg-hostoo.md` · Git/SSH: `docs/deploy/hostoo-git-ssh.md` · Git/SSH: `docs/deploy/hostoo-git-ssh.md`
+Documento irmão: `docs/deploy/rembg-hostoo.md` · Git/SSH: `docs/deploy/hostoo-git-ssh.md` · Licença/fonte: `docs/FONTE-E-LICENCA.md` · Segurança: `SECURITY.md`

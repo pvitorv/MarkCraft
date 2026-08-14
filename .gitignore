@@ -157,6 +157,7 @@ markcraft-deploy-*.zip
 # Histórico de progresso particular (só máquina local)
 /docs/HISTORICO_PROGRESSO.md
 /docs/ACESSOS-LOCAL.md
+/scripts/hostoo.env
 
 # Electron desktop shell (cópia pessoal — não versionar no remoto)
 /desktop/

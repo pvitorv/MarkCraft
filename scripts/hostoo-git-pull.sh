@@ -4,7 +4,13 @@
 set -euo pipefail
 
 MARKCRAFT_DIR="${MARKCRAFT_DIR:-$HOME/markcraft}"
-BRANCH="${1:-010}"
+BRANCH="${1:-}"
+
+if [[ -z "$BRANCH" ]]; then
+  echo "Uso: bash scripts/hostoo-git-pull.sh <branch>"
+  echo "Ex.: bash scripts/hostoo-git-pull.sh 014"
+  exit 1
+fi
 
 cd "$MARKCRAFT_DIR"
 
