@@ -557,6 +557,46 @@
             font: 700 1.25rem/1 'Sora', sans-serif;
             color: #fde68a;
         }
+        .mc-editor-grid {
+            display: grid;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .mc-editor-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+        }
+        .mc-editor-card {
+            border-radius: 1rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)),
+                #0c1016;
+            padding: 1.35rem 1.4rem 1.5rem;
+            min-height: 100%;
+        }
+        .mc-editor-card--teal { border-color: rgba(45, 212, 191, 0.28); box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.08), 0 16px 36px rgba(0,0,0,0.25); }
+        .mc-editor-card--amber { border-color: rgba(251, 191, 36, 0.28); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.08), 0 16px 36px rgba(0,0,0,0.25); }
+        .mc-editor-card--sky { border-color: rgba(56, 189, 248, 0.28); box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.08), 0 16px 36px rgba(0,0,0,0.25); }
+        .mc-editor-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.9rem;
+        }
+        .mc-editor-card--teal .mc-editor-icon { background: rgba(20, 184, 166, 0.15); color: #5eead4; }
+        .mc-editor-card--amber .mc-editor-icon { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+        .mc-editor-card--sky .mc-editor-icon { background: rgba(14, 165, 233, 0.15); color: #7dd3fc; }
+        .mc-editor-kicker {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .mc-editor-card--teal .mc-editor-kicker { color: #5eead4; }
+        .mc-editor-card--amber .mc-editor-kicker { color: #fcd34d; }
+        .mc-editor-card--sky .mc-editor-kicker { color: #7dd3fc; }
     </style>
 </head>
 <body class="mc-landing antialiased min-h-screen overflow-x-hidden" x-data="markCraftHub">
@@ -701,24 +741,35 @@
 
     @php
         $editorSection = $cmsLanding['editor'] ?? \App\Support\Cms::landing('editor', []);
-        $editorToneClass = static function (string $tone): string {
+        $editorCardClass = static function (string $tone): string {
             return match ($tone) {
-                'amber' => 'text-amber-300/90',
-                'sky' => 'text-sky-300/90',
-                default => 'text-teal-300/90',
+                'amber' => 'mc-editor-card--amber',
+                'sky' => 'mc-editor-card--sky',
+                default => 'mc-editor-card--teal',
             };
         };
     @endphp
     <section class="mx-auto max-w-6xl px-4 py-10 sm:py-14 border-t border-white/5">
-        <h2 class="mc-brand text-xl sm:text-2xl font-bold text-white">{{ $editorSection['headline'] ?? 'Editor de verdade — feito para quem publica' }}</h2>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-300/90">Image Studio</p>
+        <h2 class="mc-brand mt-1 text-2xl sm:text-3xl font-bold text-white">{{ $editorSection['headline'] ?? 'Editor de verdade — feito para quem cria' }}</h2>
         @if(!empty($editorSection['intro']))
-            <p class="mt-2 max-w-2xl text-sm sm:text-base text-zinc-400">{{ $editorSection['intro'] }}</p>
+            <p class="mt-3 max-w-2xl text-sm sm:text-base text-zinc-400 leading-relaxed">{{ $editorSection['intro'] }}</p>
         @endif
-        <ul class="mt-8 sm:mt-10 grid gap-8 sm:gap-10 md:grid-cols-3">
+        <ul class="mc-editor-grid mt-8 sm:mt-10">
             @foreach($editorSection['columns'] ?? [] as $col)
-                <li>
-                    <p class="text-sm font-semibold tracking-wide uppercase {{ $editorToneClass($col['tone'] ?? 'teal') }}">{{ $col['label'] ?? '' }}</p>
-                    <p class="mt-2 text-zinc-300 leading-relaxed">{{ $col['text'] ?? '' }}</p>
+                @php $tone = $col['tone'] ?? 'teal'; @endphp
+                <li class="mc-editor-card {{ $editorCardClass($tone) }}">
+                    <span class="mc-editor-icon" aria-hidden="true">
+                        @if($tone === 'amber')
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        @elseif($tone === 'sky')
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        @else
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        @endif
+                    </span>
+                    <p class="mc-editor-kicker">{{ $col['label'] ?? '' }}</p>
+                    <p class="mt-2 text-sm text-zinc-300 leading-relaxed">{{ $col['text'] ?? '' }}</p>
                 </li>
             @endforeach
         </ul>

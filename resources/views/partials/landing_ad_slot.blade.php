@@ -8,7 +8,10 @@
     $enabled = (bool) ($ad['enabled'] ?? false);
     $allow = ! empty($home['show_landing_ads']);
     $mode = $ad['mode'] ?? 'placeholder';
-    $artImg = \App\Support\Cms::existingPublicUrl((string) ($ad['art_image'] ?? ''));
+    $artImg = \App\Support\Cms::publicArt(
+        (string) ($ad['art_image'] ?? ''),
+        $key === 'landing_footer' ? '/images/portal/novidades-markcraft.png' : '/images/portal/packs-ofertas.png'
+    );
 @endphp
 @if($allow && $enabled)
     <div class="mx-auto max-w-6xl px-4 pb-8" data-ad-slot="{{ $key }}" aria-label="{{ $ad['label'] ?? 'Destaque' }}">

@@ -2,7 +2,7 @@
     $home = $cmsHome ?? \App\Support\Cms::defaults()['home'];
     $showcase = $home['showcase'] ?? [];
     $inspire = $showcase['inspire'] ?? [];
-    $inspireImg = \App\Support\Cms::existingPublicUrl((string) ($inspire['image'] ?? ''));
+    $inspireImg = \App\Support\Cms::publicArt((string) ($inspire['image'] ?? ''), '/images/portal/inspire-studio.png');
 @endphp
 
 <section class="mx-auto max-w-6xl px-4 pt-4 pb-6 sm:pt-6 sm:pb-8" aria-label="Inspiração e parceiro">

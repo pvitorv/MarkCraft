@@ -41,6 +41,10 @@ class PortalLandingTest extends TestCase
             ->assertDontSee('Packs CriaSys', false)
             ->assertDontSee('Vitrine CriaSys', false)
             ->assertDontSee('Conteúdo da família CriaSys', false)
+            ->assertSee('images/portal/inspire-studio.png', false)
+            ->assertSee('images/portal/packs-ofertas.png', false)
+            ->assertSee('images/portal/novidades-markcraft.png', false)
+            ->assertSee('mc-editor-card', false)
             ->assertDontSee('Aprenda e evolua com conteúdo gratuito', false);
     }
 

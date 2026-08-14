@@ -17,7 +17,7 @@ class Cms
     {
         return [
             'footer' => [
-                'tagline' => 'Studio de imagem gratuito e hub de ferramentas da família CriaSys',
+                'tagline' => 'Crie capas, stories e banners no navegador — privado, sem marca d\'água, com conversor e PDF no mesmo hub.',
                 'portfolio_label' => 'Portfólio',
                 'portfolio_url' => '',
                 'criasysweb_label' => 'CriaSys Web',
@@ -431,6 +431,17 @@ class Cms
         }
 
         return asset($relative);
+    }
+
+    /** Arte do CMS se o arquivo existir; senão fallback em public/ (artes originais do portal). */
+    public static function publicArt(?string $configured, string $fallbackRelative): string
+    {
+        $url = self::existingPublicUrl($configured);
+        if ($url !== '') {
+            return $url;
+        }
+
+        return self::existingPublicUrl($fallbackRelative);
     }
 
     /** URL absoluta correta para o host atual (Laragon, produção, etc.). */

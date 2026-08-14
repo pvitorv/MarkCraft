@@ -3,91 +3,131 @@
     $socials = collect($footer['socials'] ?? [])->filter(fn ($s) => filled($s['url'] ?? null));
     $portfolioUrl = trim((string) ($footer['portfolio_url'] ?? ''));
     $criasysUrl = trim((string) ($footer['criasysweb_url'] ?? ''));
+    $tools = config('markcraft.tools', []);
+    $tagline = $footer['tagline'] ?? 'Studio de imagem gratuito e hub de ferramentas da família CriaSys';
 @endphp
 
-<footer class="border-t border-white/5 bg-[#05070a] text-zinc-400">
-    <div class="mx-auto max-w-6xl px-4 py-10 text-sm">
-        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <div class="max-w-md">
-                <p class="mc-brand text-lg text-white">MarkCraft</p>
-                <p class="mt-2">{{ $footer['tagline'] ?? 'Studio de imagem gratuito e hub de ferramentas da família CriaSys' }}</p>
+<style>
+    .mc-site-footer { border-top: 1px solid rgba(255,255,255,0.06); background: #05070a; color: #9aa6b2; }
+    .mc-site-footer a { text-decoration: none; }
+    .mc-site-footer a:hover { color: #5eead4; }
+    .mc-ft-kicker { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b7280; font-weight: 600; }
+    .mc-ft-link { color: #d4d4d8; }
+    .mc-ft-chip {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);
+        padding: 0.4rem 0.7rem; color: #e4e4e7; font-size: 12px;
+    }
+    .mc-ft-chip:hover { border-color: rgba(45,212,191,0.4); color: #99f6e4; }
+    .mc-ft-chip--teal { border-color: rgba(20,184,166,0.35); background: rgba(20,184,166,0.1); color: #ccfbf1; }
+</style>
+
+<footer class="mc-site-footer">
+    <div class="mx-auto max-w-6xl px-4 py-12 text-sm">
+        <div class="grid gap-10 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+                <p class="mc-brand text-xl text-white">MarkCraft</p>
+                <p class="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-300/80">Studio + hub, 100% grátis</p>
+                <p class="mt-2 leading-relaxed text-zinc-400">{{ $tagline }}</p>
+                <p class="mt-3 text-xs leading-relaxed text-zinc-500">
+                    Image Studio no navegador (sem marca d’água), conversor PNG/JPG/WebP, encurtador, PDF e compressor — artes processadas no seu dispositivo.
+                    Código aberto sob AGPL-3.0.
+                </p>
+                <p class="mt-3 text-xs leading-relaxed text-zinc-500">
+                    Mantido de forma independente com anúncios, afiliados e doações voluntárias. Obrigado por apoiar o ecossistema.
+                </p>
                 @if($criasysUrl !== '')
-                    <p class="mt-2">
-                        Site pai:
+                    <p class="mt-4 text-xs">
+                        Família
                         <a href="{{ $criasysUrl }}" target="_blank" rel="noopener" class="text-teal-300 hover:underline">
                             {{ $footer['criasysweb_label'] ?? 'CriaSys Web' }}
                         </a>
                     </p>
                 @endif
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{{ route('studio') }}" class="mc-ft-chip mc-ft-chip--teal">Abrir o Studio</a>
+                    <button type="button" @click="openHub('apoiar')" class="mc-ft-chip">Apoiar o projeto</button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+            <div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-8">
                 <div>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Navegar</p>
-                    <div class="mt-2 flex flex-col gap-2">
-                        <a href="{{ route('studio') }}" class="hover:text-teal-300 transition">Studio</a>
-                        <a href="{{ url('/#ferramentas') }}" class="hover:text-teal-300 transition">Ferramentas</a>
-                        <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
-                        <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos de Uso</a>
-                        <button type="button" @click="openHub('apoiar')" class="text-left hover:text-teal-300 transition">Apoiar</button>
-                        <button type="button" @click="openCredits()" class="text-left hover:text-teal-300 transition">Créditos</button>
+                    <p class="mc-ft-kicker">Navegar</p>
+                    <div class="mt-3 flex flex-col gap-2">
+                        <a href="{{ route('studio') }}" class="mc-ft-link">Studio</a>
+                        <a href="{{ url('/#ferramentas') }}" class="mc-ft-link">Ferramentas</a>
+                        <a href="{{ url('/#formatos') }}" class="mc-ft-link">Formatos</a>
+                        <a href="{{ url('/#newsletter') }}" class="mc-ft-link">Newsletter</a>
+                        <a href="{{ route('legal.show', 'privacidade') }}" class="mc-ft-link">Privacidade</a>
+                        <a href="{{ route('legal.show', 'termos') }}" class="mc-ft-link">Termos de Uso</a>
+                        <button type="button" @click="openHub('apoiar')" class="mc-ft-link text-left">Apoiar</button>
+                        <button type="button" @click="openCredits()" class="mc-ft-link text-left">Créditos</button>
                         @guest
-                            <a href="{{ route('register') }}" class="hover:text-teal-300 transition">Criar conta</a>
+                            <a href="{{ route('register') }}" class="mc-ft-link">Criar conta</a>
                         @else
                             @if(auth()->user()->is_admin)
-                                <a href="{{ route('admin.cms.index') }}" class="text-amber-300/90 hover:text-amber-200 transition">CMS</a>
+                                <a href="{{ route('admin.cms.index') }}" class="text-amber-300/90 hover:text-amber-200">CMS</a>
                             @endif
                         @endguest
                     </div>
                 </div>
 
                 <div>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Legal</p>
-                    <div class="mt-2 flex flex-col gap-2">
-                        @foreach(config('legal.pages', []) as $slug => $meta)
-                            <a href="{{ route('legal.show', $slug) }}" class="hover:text-teal-300 transition">{{ $meta['nav'] ?? $meta['title'] }}</a>
+                    <p class="mc-ft-kicker">Utilitários</p>
+                    <div class="mt-3 flex flex-col gap-2">
+                        @foreach($tools as $tool)
+                            <a href="{{ url('/#ferramentas') }}" class="mc-ft-link">{{ $tool['short'] ?? $tool['name'] }}</a>
                         @endforeach
+                        <p class="mt-3 text-[11px] leading-snug text-zinc-600">Roda no navegador. PSD · PNG · JPG · WebP · SVG · PDF</p>
                     </div>
                 </div>
 
                 <div>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">CriaSys</p>
-                    <div class="mt-2 flex flex-col gap-2">
+                    <p class="mc-ft-kicker">Legal</p>
+                    <div class="mt-3 flex flex-col gap-2">
+                        @foreach(config('legal.pages', []) as $slug => $meta)
+                            <a href="{{ route('legal.show', $slug) }}" class="mc-ft-link">{{ $meta['nav'] ?? $meta['title'] }}</a>
+                        @endforeach
+                        <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener" class="mc-ft-link">Código-fonte</a>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="mc-ft-kicker">CriaSys</p>
+                    <div class="mt-3 flex flex-col gap-2">
                         @if($portfolioUrl !== '')
-                            <a href="{{ $portfolioUrl }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-teal-100 hover:bg-teal-500/20 transition">
+                            <a href="{{ $portfolioUrl }}" target="_blank" rel="noopener" class="mc-ft-chip mc-ft-chip--teal">
                                 {{ $footer['portfolio_label'] ?? 'Portfólio' }}
                             </a>
-                        @else
-                            <span class="text-zinc-600 text-xs">Portfólio (configure no CMS)</span>
                         @endif
                         @if($criasysUrl !== '')
-                            <a href="{{ $criasysUrl }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-zinc-200 hover:bg-white/5 transition">
+                            <a href="{{ $criasysUrl }}" target="_blank" rel="noopener" class="mc-ft-chip">
                                 {{ $footer['criasysweb_label'] ?? 'CriaSys Web' }}
                             </a>
                         @endif
-                    </div>
-                </div>
+                        @if($portfolioUrl === '' && $criasysUrl === '')
+                            <p class="text-xs text-zinc-500 leading-relaxed">Linha CriaSys: studio gratuito, conteúdo e produtos irmãos.</p>
+                        @endif
 
-                <div>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Redes</p>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                        @forelse($socials as $social)
-                            <a
-                                href="{{ $social['url'] }}"
-                                target="_blank"
-                                rel="noopener me"
-                                class="rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-zinc-300 hover:border-teal-500/40 hover:text-teal-200 transition"
-                            >{{ $social['label'] ?: ucfirst($social['network'] ?? 'Link') }}</a>
-                        @empty
-                            <span class="text-zinc-600 text-xs">Links sociais no painel CMS</span>
-                        @endforelse
+                        <p class="mc-ft-kicker mt-5">Redes</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @forelse($socials as $social)
+                                <a
+                                    href="{{ $social['url'] }}"
+                                    target="_blank"
+                                    rel="noopener me"
+                                    class="mc-ft-chip"
+                                >{{ $social['label'] ?: ucfirst($social['network'] ?? 'Link') }}</a>
+                            @empty
+                                <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener" class="mc-ft-chip">GitHub</a>
+                            @endforelse
+                        </div>
                     </div>
-                    <p class="mt-4 text-[11px] text-zinc-600">PSD · PNG · JPG · WebP · SVG · PDF</p>
                 </div>
             </div>
         </div>
 
-        <div class="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-zinc-600">
+        <div class="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-zinc-600">
             <p>© {{ date('Y') }} CriaSys Web e MarkCraft. Todos os direitos reservados.</p>
             <p class="flex flex-wrap gap-x-3 gap-y-1">
                 <a href="{{ route('legal.show', 'privacidade') }}" class="hover:text-teal-300 transition">Privacidade</a>
