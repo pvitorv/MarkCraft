@@ -56,22 +56,25 @@
 </p>
 <ul>
     <li>Você declara ter autorização para usar o Conteúdo do Usuário e assume responsabilidade exclusiva por ele.</li>
-    <li>Ao usar o serviço, você nos concede licença limitada para processar, armazenar temporariamente e transmitir
-        o conteúdo apenas na medida necessária à prestação do {{ $product }} (ex.: upload temporário para remoção de fundo).</li>
+    <li>Ao usar o serviço, você nos concede licença limitada para processar o conteúdo apenas na medida necessária
+        à prestação do {{ $product }} (sessão, exportação, ferramentas auxiliares). A remoção de fundo padrão roda no seu dispositivo.</li>
     <li>Não reivindicamos propriedade das artes que você exportar do Studio.</li>
     <li>Conteúdo ilegal ou que viole a Política de Uso Aceitável pode ser removido e a conta sancionada.</li>
 </ul>
 
 <h2>5. Propriedade intelectual nossa</h2>
 <p>
-    Marcas, layout, código, identidade visual, textos de marketing e componentes do {{ $product }} e da família
-    {{ $brand }} são protegidos por lei. Exceto a licença de uso acima, nenhum direito é transferido a você.
+    Marcas, layout, identidade visual e textos de marketing do {{ $product }} e da família
+    {{ $brand }} são protegidos por lei. O código-fonte do MarkCraft é disponibilizado sob a
+    GNU Affero General Public License v3 (AGPL-3.0) em
+    <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener">github.com/pvitorv/MarkCraft</a>.
+    Bibliotecas de terceiros (Laravel, Fabric.js, @imgly/background-removal, etc.) permanecem nas respectivas licenças.
 </p>
 
 <h2>6. Serviços de terceiros</h2>
 <p>
     O site pode integrar ou linkar serviços de terceiros (analytics, anúncios, pagamentos, packs afiliados,
-    blog, remoção de fundo com bibliotecas/serviços externos). Não controlamos esses serviços e não nos
+    blog, biblioteca de remoção de fundo no navegador). Não controlamos esses serviços e não nos
     responsabilizamos por suas políticas, disponibilidade ou práticas. O uso deles está sujeito aos termos dos terceiros.
 </p>
 

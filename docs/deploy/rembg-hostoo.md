@@ -1,3 +1,11 @@
+# Deploy: remoção de fundo no servidor (legado / opcional)
+
+**Produção atual do MarkCraft usa `IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly`** (`@imgly/background-removal` no navegador, licença AGPL; repo público).
+
+Este documento permanece só se você quiser o motor **Python + rembg** no Hostoo. Não é necessário para o portal gratuito.
+
+---
+
 # Deploy: remoção de fundo (rembg) no servidor
 
 Guia para instalar o motor **Python + rembg** em produção (ex.: **Hostoo Cloud PHP com SSH**).  
@@ -199,15 +207,15 @@ tail -n 80 storage/logs/laravel.log
 Exemplos:
 
 ```env
-# Produção Linux (Hostoo)
-IMAGE_STUDIO_BG_REMOVAL_DRIVER=rembg
-REMBG_PYTHON=/home/SEU_USUARIO/apps/rembg-venv/bin/python
+# Produção (padrão)
+IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly
+
+# Legado: Python no servidor
+# IMAGE_STUDIO_BG_REMOVAL_DRIVER=rembg
+# REMBG_PYTHON=/home/SEU_USUARIO/apps/rembg-venv/bin/python
 
 # Desligar só a remoção (app normal funciona)
 IMAGE_STUDIO_BG_REMOVAL_DRIVER=off
-
-# NÃO use imgly em SaaS fechado sem licença (AGPL)
-# IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly
 ```
 
 Windows local (Laragon) — referência:
@@ -263,9 +271,9 @@ Faça comigo, passo a passo, comandos seguros:
 5) Testar scripts/remove-background.py na raiz do Laravel (me peça o caminho do artisan se eu não souber)
 6) Me dizer o caminho exato para REMBG_PYTHON
 7) Orientar php artisan config:clear e cache:clear
-8) Se faltar RAM/Python/proc_open, diga claramente e sugira IMAGE_STUDIO_BG_REMOVAL_DRIVER=off
+8) Se faltar RAM/Python/proc_open, diga claramente e sugira IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly (padrão) ou off
 
-Não altere código Laravel sem necessidade. Não use driver imgly (AGPL). Não faça comandos destrutivos (rm -rf /, formatar disco, etc.).
+Não altere código Laravel sem necessidade. Não faça comandos destrutivos (rm -rf /, formatar disco, etc.).
 Se um comando falhar, mostre o erro e a alternativa — não invente que deu certo.
 ```
 

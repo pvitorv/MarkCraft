@@ -1,7 +1,12 @@
 # Créditos e atribuições — MarkCraft
 
 Documento de compliance para bibliotecas e ativos usados no MarkCraft / Image Studio.  
-Atualizado em 29/07/2026.
+Atualizado em 14/08/2026.
+
+## Licença do MarkCraft
+
+O código próprio do MarkCraft é **GNU AGPL-3.0-or-later**. Fonte: [github.com/pvitorv/MarkCraft](https://github.com/pvitorv/MarkCraft).  
+Frameworks e libs de terceiros permanecem nas licenças originais (não reliceiamos Laravel, Fabric, etc.).
 
 ## Ícones e elementos
 
@@ -25,8 +30,8 @@ Atualizado em 29/07/2026.
 | [Fabric.js](https://fabricjs.com/) | MIT |
 | [Alpine.js](https://alpinejs.dev/) | MIT |
 | Laravel / Vite | MIT (framework e toolchain) |
-| **rembg** (remoção de fundo — driver padrão) | Open source (Python); ver pacote instalado no servidor |
-| `@imgly/background-removal` | **AGPL** — só carrega se `IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly` |
+| [@imgly/background-removal](https://github.com/imgly/background-removal-js) | **AGPL-3.0** — driver **padrão** (`IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly`); roda no navegador |
+| rembg (Python) | Open source; motor **legado/opcional** (`driver=rembg`) |
 
 ## Marcas de terceiros
 

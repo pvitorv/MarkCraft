@@ -9,16 +9,15 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Process\ProcessResult;
 
 /**
- * Remoção de fundo via rembg (Python) — alternativa open-source à @imgly (AGPL).
- * Pacote npm da IMG.LY permanece instalado, mas só é usado se o driver for "imgly".
+ * Remoção de fundo: padrão imgly no navegador (AGPL). rembg (Python) é fallback opcional.
  */
 class BackgroundRemovalService
 {
     public function driver(): string
     {
-        $driver = strtolower((string) config('image_studio.background_removal.driver', 'rembg'));
+        $driver = strtolower((string) config('image_studio.background_removal.driver', 'imgly'));
 
-        return in_array($driver, ['rembg', 'imgly', 'off'], true) ? $driver : 'rembg';
+        return in_array($driver, ['rembg', 'imgly', 'off'], true) ? $driver : 'imgly';
     }
 
     public function usesClientLibrary(): bool
@@ -51,7 +50,7 @@ class BackgroundRemovalService
             'available' => $available,
             'client' => $driver === 'imgly',
             'label' => match ($driver) {
-                'imgly' => 'Browser (IMG.LY — isolada; ative só se tiver licença)',
+                'imgly' => 'Navegador (IMG.LY · AGPL)',
                 'rembg' => $rembgReady
                     ? 'Servidor (rembg / open source)'
                     : ($available

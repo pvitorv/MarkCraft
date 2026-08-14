@@ -1,8 +1,9 @@
 # MarkCraft
 
-Ferramenta web gratuita da família **CriaSys** para criadores, marketing de vendas e designers aventureiros.
+Ferramenta web **gratuita** da família **CriaSys** (studio de imagem + hub de utilitários). Ganho do projeto: publicidade e conteúdo — a ferramenta em si não é vendida como SaaS.
 
-**Produção:** [https://markcraft.criasysweb.com.br/](https://markcraft.criasysweb.com.br/) · Deploy Hostoo: `docs/deploy/hostoo-markcraft.md`
+**Produção:** [https://markcraft.criasysweb.com.br/](https://markcraft.criasysweb.com.br/) · Deploy Hostoo: `docs/deploy/hostoo-markcraft.md`  
+**Código-fonte (AGPL-3.0):** [https://github.com/pvitorv/MarkCraft](https://github.com/pvitorv/MarkCraft)
 
 ## O que é
 
@@ -69,7 +70,11 @@ Laravel 12 · Breeze · Vite · Alpine · Tailwind · Fabric.js · ag-psd · `@i
 
 - Entry: `resources/js/image-studio/app-studio.js`
 - Layouts ≠ Pacotes (`config/image_studio.php` vs `config/image_studio_packs.php`)
-- Remoção de fundo: **rembg** (`IMAGE_STUDIO_BG_REMOVAL_DRIVER=rembg`) — ver `docs/deploy/rembg-hostoo.md`
-- MarkCraft mantém: baixar/limpar (sem salvar no servidor), modal Elementos com sidebar, cor padrão teal nas formas
+- Remoção de fundo: **`@imgly/background-removal` no navegador** (`IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly`). Motor Python `rembg` é opcional — `docs/deploy/rembg-hostoo.md`.
+
+## Licença
+
+MarkCraft (código próprio) é licenciado sob a **GNU Affero General Public License v3 ou posterior** — ver `LICENSE`.  
+Laravel, Fabric.js, Alpine e demais dependências mantêm as licenças dos respectivos autores. A remoção de fundo no cliente usa `@imgly/background-removal` (AGPL).
 
 Origem do kit: pasta `image-studio-kit/` (espelho atual). Arquivo antigo: `01-image-studio-kit/`.

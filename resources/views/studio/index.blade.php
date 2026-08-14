@@ -7,7 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="studio-catalog-url" content="{{ route('api.image-studio.catalog') }}">
     <meta name="studio-remove-bg-url" content="{{ route('api.image-studio.remove-background') }}">
-    <meta name="studio-bg-removal-driver" content="{{ config('image_studio.background_removal.driver', 'rembg') }}">
+    <meta name="studio-bg-removal-driver" content="{{ config('image_studio.background_removal.driver', 'imgly') }}">
+    <meta name="studio-bg-driver" content="{{ config('image_studio.background_removal.driver', 'imgly') }}">
     @if(!empty($initialPreset))
         <meta name="studio-initial-preset" content="{{ $initialPreset }}">
     @endif
@@ -174,10 +175,10 @@
                     <h1 class="mc-brand text-lg sm:text-xl font-bold text-white">{{ !empty($markcraftDesktop) ? 'Studio local' : 'Monte seu post' }}</h1>
                     <p class="text-xs text-zinc-400">
                         @if(!empty($markcraftDesktop))
-                            Cópia desktop · Layouts · Pacotes · Sequência · rembg.
+                            Cópia desktop · Layouts · Pacotes · Sequência · remover fundo no aparelho.
                             Exports vão para download ou pasta MarkCraftExports (Electron).
                         @else
-                            Studio gratuito CriaSys · Layouts · Pacotes · Elementos · rembg.
+                            Studio gratuito CriaSys · Layouts · Pacotes · Elementos · remover fundo no navegador.
                             Artes não ficam no site — baixe e limpe.
                         @endif
                         <span x-show="imageStudioBgRemovalLabel" x-cloak class="text-zinc-500" x-text="' · ' + imageStudioBgRemovalLabel"></span>

@@ -223,7 +223,7 @@
                     <p class="text-xs font-semibold text-emerald-200">Remover fundo</p>
                     <span class="is-rembg-badge">GRÁTIS</span>
                 </div>
-                <p class="text-[10px] text-emerald-100/80 leading-snug">Motor rembg no servidor — sem Canva Pro.</p>
+                <p class="text-[10px] text-emerald-100/80 leading-snug">Processa no navegador — a arte não sobe para o servidor. A primeira vez baixa o modelo (pode demorar em rede lenta).</p>
                 <div class="flex flex-col gap-1.5">
                     <label class="is-rembg-btn text-[10px] px-2 py-2 rounded cursor-pointer inline-flex items-center justify-center gap-1.5" :class="imageStudioBgRemoving ? 'opacity-70 pointer-events-none' : ''">
                         <span x-show="!imageStudioBgRemoving">Remover fundo (arquivo)</span>
@@ -249,7 +249,7 @@
                 </div>
                 <p class="text-[9px] text-zinc-500 w-full" x-show="imageStudioBgRemovalLabel" x-text="'Motor: ' + imageStudioBgRemovalLabel"></p>
                 <p class="text-[9px] text-amber-400/90 w-full" x-show="!imageStudioBgRemoval">
-                    Remoção indisponível. Com rembg: pip install rembg pillow onnxruntime
+                    Remoção indisponível neste ambiente.
                 </p>
             </div>
 

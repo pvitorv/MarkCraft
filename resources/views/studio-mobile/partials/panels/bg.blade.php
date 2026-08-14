@@ -2,7 +2,7 @@
     <div class="sm-panel__section sm-panel__section--rembg">
         <p class="sm-panel__title">Remover fundo</p>
         <label class="sm-btn sm-btn--rembg sm-btn--block" :class="imageStudioBgRemoving ? 'opacity-60 pointer-events-none' : ''">
-            <span x-show="!imageStudioBgRemoving">Enviar imagem (rembg)</span>
+            <span x-show="!imageStudioBgRemoving">Enviar imagem</span>
             <span x-show="imageStudioBgRemoving" x-cloak>Processando…</span>
             <input type="file" accept="image/*" @change="imageStudioRemoveBackground($event)" class="hidden" :disabled="imageStudioBgRemoving">
         </label>

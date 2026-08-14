@@ -460,7 +460,7 @@ function markCraftStudioMethods() {
                 } else {
                     setTimeout(warmFonts, 600);
                 }
-                this.imageStudioBgRemovalDriver = data.background_removal_driver || this.imageStudioBgRemovalDriver || 'rembg';
+                this.imageStudioBgRemovalDriver = data.background_removal_driver || this.imageStudioBgRemovalDriver || 'imgly';
                 this.imageStudioBgRemovalLabel = data.background_removal_label || this.imageStudioBgRemovalLabel || '';
                 const removeUrl = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || '';
                 this.imageStudioBgRemoval = this.imageStudioBgRemovalDriver === 'imgly'

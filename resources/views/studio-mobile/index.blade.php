@@ -7,7 +7,8 @@
     <meta name="studio-layout" content="mobile">
     <meta name="studio-catalog-url" content="{{ route('api.image-studio.catalog') }}">
     <meta name="studio-remove-bg-url" content="{{ route('api.image-studio.remove-background') }}">
-    <meta name="studio-bg-removal-driver" content="{{ config('image_studio.background_removal.driver', 'rembg') }}">
+    <meta name="studio-bg-removal-driver" content="{{ config('image_studio.background_removal.driver', 'imgly') }}">
+    <meta name="studio-bg-driver" content="{{ config('image_studio.background_removal.driver', 'imgly') }}">
     @if(!empty($initialPreset))
         <meta name="studio-initial-preset" content="{{ $initialPreset }}">
     @endif

@@ -106,7 +106,7 @@ Copie `.env.hostoo.example` → `.env` e preencha DB.
 | `APP_URL` | `https://markcraft.criasysweb.com.br` |
 | `APP_DEBUG` | `false` |
 | `BLOG_CRIASYS_CTA_READY` | `false` até Blog no ar |
-| `IMAGE_STUDIO_BG_REMOVAL_DRIVER` | `off` na 1ª subida; `rembg` após Python (ver rembg-hostoo.md) |
+| `IMAGE_STUDIO_BG_REMOVAL_DRIVER` | `imgly` (navegador). `rembg` só se for usar Python — ver rembg-hostoo.md |
 
 ---
 
@@ -126,9 +126,11 @@ php artisan markcraft:make-admin seu@email.com
 
 ---
 
-## 6. rembg (remoção de fundo)
+## 6. Remoção de fundo
 
-Ver **`docs/deploy/rembg-hostoo.md`**. Hostoo costuma ter só Python 3.6 no sistema — use **Miniconda** na home. Requer **≥ 2 GB RAM**; remoção típica ~30–40 s/imagem.
+**Padrão de produção:** `IMAGE_STUDIO_BG_REMOVAL_DRIVER=imgly` (WASM no navegador, AGPL). Não exige Python.
+
+Motor **rembg** no servidor é legado/opcional — só se precisar: **`docs/deploy/rembg-hostoo.md`**.
 
 ---
 

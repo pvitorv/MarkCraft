@@ -3065,13 +3065,14 @@ export class ImageStudioEngine {
     async removeBackgroundFromBlob(blob) {
         const driver = this.bgRemovalDriver
             || document.querySelector('meta[name="studio-bg-driver"]')?.getAttribute('content')
-            || 'rembg';
+            || document.querySelector('meta[name="studio-bg-removal-driver"]')?.getAttribute('content')
+            || 'imgly';
 
         if (driver === 'off') {
             throw new Error('Remoção de fundo está desligada (IMAGE_STUDIO_BG_REMOVAL_DRIVER=off).');
         }
 
-        // Driver padrão de teste: rembg no servidor (open source).
+        // Driver padrão: imgly no navegador (AGPL). rembg só se configurado.
         if (driver === 'rembg') {
             return this.removeBackgroundViaRembg(blob);
         }
@@ -3917,7 +3918,7 @@ export function imageStudioMethods() {
         _syncingTextUi: false,
         imageStudioSidebarTab: 'tools',
         imageStudioBgRemoval: false,
-        imageStudioBgRemovalDriver: 'rembg',
+        imageStudioBgRemovalDriver: 'imgly',
         imageStudioBgRemovalLabel: '',
         imageStudioPreset: 'custom',
         imageStudioCustomWidth: 1920,
@@ -4610,8 +4611,9 @@ export function imageStudioMethods() {
             const url = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || '';
             const driver = embedded.driver
                 || document.querySelector('meta[name="studio-bg-driver"]')?.getAttribute('content')
+            || document.querySelector('meta[name="studio-bg-removal-driver"]')?.getAttribute('content')
                 || this.imageStudioBgRemovalDriver
-                || 'rembg';
+                || 'imgly';
 
             this.imageStudioBgRemovalDriver = driver;
             this.imageStudioBgRemovalLabel = embedded.label || this.imageStudioBgRemovalLabel || '';
@@ -4760,7 +4762,7 @@ export function imageStudioMethods() {
                 this.buildImageStudioFontMap();
                 preloadIconFontCdns(data.icon_fonts || []);
                 preloadStarterGoogleFonts(this.imageStudioFonts);
-                this.imageStudioBgRemovalDriver = data.background_removal_driver || this.imageStudioBgRemovalDriver || 'rembg';
+                this.imageStudioBgRemovalDriver = data.background_removal_driver || this.imageStudioBgRemovalDriver || 'imgly';
                 this.imageStudioBgRemovalLabel = data.background_removal_label || this.imageStudioBgRemovalLabel || '';
                 const removeUrl = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || '';
                 this.imageStudioBgRemoval = this.imageStudioBgRemovalDriver === 'imgly'
@@ -4845,7 +4847,8 @@ export function imageStudioMethods() {
             this.imageStudioEngine.setFormatGuidesVisible(this.imageStudioShowFormatGuides);
             this.imageStudioEngine.bgRemovalDriver = this.imageStudioBgRemovalDriver
                 || document.querySelector('meta[name="studio-bg-driver"]')?.getAttribute('content')
-                || 'rembg';
+            || document.querySelector('meta[name="studio-bg-removal-driver"]')?.getAttribute('content')
+                || 'imgly';
             this.imageStudioEngine.bgRemovalUrl = document.querySelector('meta[name="studio-remove-bg-url"]')?.getAttribute('content') || null;
             this.bindImageStudioEngineOnChange();
 
@@ -6961,7 +6964,8 @@ export function imageStudioMethods() {
                 if (!this.imageStudioEngine.bgRemovalDriver) {
                     this.imageStudioEngine.bgRemovalDriver = this.imageStudioBgRemovalDriver
                         || document.querySelector('meta[name="studio-bg-driver"]')?.getAttribute('content')
-                        || 'rembg';
+            || document.querySelector('meta[name="studio-bg-removal-driver"]')?.getAttribute('content')
+                        || 'imgly';
                 }
 
                 const blob = await this.fabricImageToPngBlob(obj);

@@ -30,7 +30,9 @@ class LegalPagesTest extends TestCase
             ->assertSee(route('legal.show', 'cookies'), false)
             ->assertSee(route('legal.show', 'uso-aceitavel'), false)
             ->assertSee('>Privacidade</a>', false)
-            ->assertSee('>Termos de uso</a>', false);
+            ->assertSee('>Termos de uso</a>', false)
+            ->assertSee('github.com/pvitorv/MarkCraft', false)
+            ->assertSee('Código-fonte', false);
     }
 
     public function test_sitemap_includes_legal_pages(): void
@@ -47,6 +49,18 @@ class LegalPagesTest extends TestCase
         $this->get(route('legal.show', 'privacidade'))
             ->assertOk()
             ->assertSee('LGPD', false)
-            ->assertSee(config('legal.contact_email'), false);
+            ->assertSee(config('legal.contact_email'), false)
+            ->assertSee('no seu navegador', false)
+            ->assertDontSee('remoção de fundo em servidor', false);
+    }
+
+    public function test_home_credits_point_to_public_agpl_source(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('github.com/pvitorv/MarkCraft', false)
+            ->assertSee('AGPL-3.0', false)
+            ->assertSee('driver atual:', false)
+            ->assertSee('imgly', false);
     }
 }

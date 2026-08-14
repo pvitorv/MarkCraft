@@ -95,6 +95,7 @@
                 <a href="{{ route('legal.show', 'termos') }}" class="hover:text-teal-300 transition">Termos</a>
                 <a href="{{ route('legal.show', 'cookies') }}" class="hover:text-teal-300 transition">Cookies</a>
                 <a href="{{ route('legal.show', 'uso-aceitavel') }}" class="hover:text-teal-300 transition">Uso aceitável</a>
+                <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener" class="hover:text-teal-300 transition">Código-fonte</a>
             </p>
         </div>
     </div>

@@ -1,6 +1,6 @@
 {{-- Modal Créditos / licenças — Studio + Home (exige markCraftHub no ancestral) --}}
 @php
-    $bgDriver = config('image_studio.background_removal.driver', 'rembg');
+    $bgDriver = config('image_studio.background_removal.driver', 'imgly');
 @endphp
 
 <div
@@ -70,12 +70,14 @@
                     <li>
                         <strong class="text-zinc-200">Remoção de fundo</strong> —
                         @if($bgDriver === 'imgly')
-                            driver atual: <span class="text-amber-200">imgly</span> (@imgly/background-removal, licença AGPL — uso sujeito aos termos do pacote).
+                            driver atual: <span class="text-amber-200">imgly</span> (@imgly/background-removal, AGPL-3.0).
+                            Código-fonte do MarkCraft:
+                            <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener" class="text-teal-300 hover:underline">github.com/pvitorv/MarkCraft</a>.
                         @elseif($bgDriver === 'off')
                             recurso desligado neste ambiente.
                         @else
-                            driver padrão: <span class="text-emerald-300">rembg</span> (open source no servidor).
-                            O pacote IMG.LY só carrega se o driver for explicitamente <code class="text-zinc-500">imgly</code>.
+                            driver: <span class="text-emerald-300">rembg</span> (Python no servidor, legado).
+                            O pacote IMG.LY carrega se o driver for <code class="text-zinc-500">imgly</code>.
                         @endif
                     </li>
                 </ul>
@@ -98,7 +100,9 @@
             </section>
 
             <p class="text-[11px] text-zinc-600 border-t border-zinc-800 pt-3">
-                Lista completa: <code class="text-zinc-500">docs/CREDITS.md</code> no repositório · MarkCraft · família CriaSys
+                Lista completa: <code class="text-zinc-500">docs/CREDITS.md</code> ·
+                <a href="https://github.com/pvitorv/MarkCraft" target="_blank" rel="noopener" class="text-teal-300 hover:underline">código-fonte (AGPL-3.0)</a>
+                · MarkCraft · família CriaSys
             </p>
         </div>
     </div>

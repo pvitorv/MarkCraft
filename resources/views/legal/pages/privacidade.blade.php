@@ -41,9 +41,9 @@
     <li><strong>Sessão e autenticação:</strong> cookies e tokens necessários para manter login e proteger o painel.</li>
     <li><strong>Logs técnicos:</strong> endereço IP, data/hora, user-agent, páginas acessadas e códigos de erro,
         para segurança, diagnóstico e prevenção de abuso.</li>
-    <li><strong>Uso do Studio:</strong> o processamento de imagens ocorre predominantemente no seu navegador.
-        Uploads temporários (ex.: remoção de fundo em servidor) podem gerar arquivos transitórios, apagados após o processamento
-        ou conforme política de limpeza do ambiente.</li>
+        <li><strong>Uso do Studio:</strong> o processamento de imagens (incluindo remoção de fundo) ocorre no seu navegador
+        ou dispositivo. Não enviamos a arte ao servidor para esse recurso no modo padrão.
+        Se um ambiente específico usar motor legado no servidor, arquivos transitórios são apagados após o processamento.</li>
     <li><strong>Ferramentas auxiliares:</strong> se você usar encurtador de links ou recursos similares, podemos guardar
         o URL original, o código curto e metadados de criação associados à conta (quando autenticado).</li>
 </ul>

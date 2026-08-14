@@ -8,15 +8,14 @@ return [
     | Remoção de fundo
     |--------------------------------------------------------------------------
     | driver:
-    |   rembg  — Python local (open source; padrão para teste comercial)
-    |   imgly  — @imgly/background-removal no browser (AGPL; isolada por padrão)
+    |   imgly  — @imgly/background-removal no navegador (AGPL; padrão do portal público)
+    |   rembg  — Python no servidor (legado / opcional)
     |   off    — desliga o recurso
     |
-    | O pacote npm @imgly/background-removal permanece instalado, mas só é
-    | importado no JS quando driver=imgly.
+    | O pacote npm só é importado no JS quando driver=imgly.
     */
     'background_removal' => [
-        'driver' => env('IMAGE_STUDIO_BG_REMOVAL_DRIVER', 'rembg'),
+        'driver' => env('IMAGE_STUDIO_BG_REMOVAL_DRIVER', 'imgly'),
         'python' => env('REMBG_PYTHON'),
     ],
 
