@@ -7,17 +7,8 @@
 @if($show)
 <section class="mx-auto max-w-6xl px-4 pb-8" aria-label="Dicas de design">
     <article class="mc-showcase-card overflow-hidden rounded-xl border border-white/10 bg-zinc-950/40 sm:flex sm:items-stretch">
-        <div class="mc-showcase-art relative min-h-[10.5rem] sm:w-64 sm:shrink-0 border-b sm:border-b-0 sm:border-r border-white/5">
-            @if($designImg !== '')
-                <img src="{{ $designImg }}" alt="{{ $design['title'] ?? 'Domine o Design' }}" class="absolute inset-0 h-full w-full object-cover">
-            @else
-                <div class="mc-showcase-tips" aria-hidden="true">
-                    <span>Aa</span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            @endif
+        <div class="mc-showcase-art sm:w-64 sm:shrink-0 border-b sm:border-b-0 sm:border-r border-white/5">
+            <img src="{{ $designImg }}" alt="{{ $design['title'] ?? 'Domine o Design' }}">
         </div>
         <div class="flex flex-1 flex-col justify-center px-5 py-6 sm:px-8">
             <p class="text-[10px] uppercase tracking-[0.16em] text-rose-300/90">{{ $design['eyebrow'] ?? 'Domine o Design' }}</p>

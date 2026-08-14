@@ -433,20 +433,16 @@ class Cms
         return asset($relative);
     }
 
-    /** Arte do CMS se o arquivo existir; senão sempre o fallback público (Hostoo: public_html ≠ pasta git). */
+    /** Caminho público /images/... (relativo ao host). Ignora upload /storage/ — na Hostoo isso não está no public_html. */
     public static function publicArt(?string $configured, string $fallbackRelative): string
     {
-        $url = self::existingPublicUrl($configured);
-        if ($url !== '') {
-            return $url;
-        }
-
         $fallback = self::normalizeStoragePath($fallbackRelative);
-        if ($fallback === '' || str_contains($fallback, '..')) {
-            return '';
+        $configured = self::normalizeStoragePath($configured);
+        if ($configured !== '' && str_starts_with($configured, '/images/')) {
+            return $configured;
         }
 
-        return asset(ltrim($fallback, '/'));
+        return $fallback;
     }
 
     /** URL absoluta correta para o host atual (Laragon, produção, etc.). */

@@ -515,7 +515,26 @@
         @media (prefers-reduced-motion: reduce) {
             .mc-rise, .mc-rise-2, .mc-rise-3, .mc-float { animation: none; }
         }
-        .mc-showcase-mosaic {
+        .mc-showcase-art {
+            position: relative;
+            min-height: 10.5rem;
+            overflow: hidden;
+            background: #0a0a0c;
+        }
+        .mc-showcase-art > img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .mc-ad-art {
+            display: block;
+            width: 100%;
+            height: 10rem;
+            object-fit: cover;
+        }
             display: grid;
             grid-template-columns: 1.2fr 0.8fr 1fr;
             grid-template-rows: 1fr 0.85fr;

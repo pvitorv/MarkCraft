@@ -30,7 +30,7 @@
                 <div class="w-full">{!! $ad['html'] !!}</div>
             @else
                 @if($artImg !== '')
-                    <img src="{{ $artImg }}" alt="{{ $ad['art_heading'] ?? 'Destaque' }}" class="h-36 w-full object-cover sm:h-40">
+                    <img src="{{ $artImg }}" alt="{{ $ad['art_heading'] ?? 'Destaque' }}" class="mc-ad-art">
                 @else
                     <div class="h-24 mc-showcase-mosaic" aria-hidden="true">
                         <span></span><span></span><span></span><span></span><span></span><span></span>
