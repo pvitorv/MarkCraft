@@ -8,7 +8,7 @@
     $enabled = (bool) ($ad['enabled'] ?? false);
     $allow = ! empty($home['show_landing_ads']);
     $mode = $ad['mode'] ?? 'placeholder';
-    $artImg = \App\Support\Cms::normalizeStoragePath((string) ($ad['art_image'] ?? ''));
+    $artImg = \App\Support\Cms::existingPublicUrl((string) ($ad['art_image'] ?? ''));
 @endphp
 @if($allow && $enabled)
     <div class="mx-auto max-w-6xl px-4 pb-8" data-ad-slot="{{ $key }}" aria-label="{{ $ad['label'] ?? 'Destaque' }}">
@@ -27,7 +27,7 @@
                 <div class="w-full">{!! $ad['html'] !!}</div>
             @else
                 @if($artImg !== '')
-                    <img src="{{ $artImg }}" alt="" class="h-36 w-full object-cover sm:h-40">
+                    <img src="{{ $artImg }}" alt="{{ $ad['art_heading'] ?? 'Destaque' }}" class="h-36 w-full object-cover sm:h-40">
                 @else
                     <div class="h-24 mc-showcase-mosaic" aria-hidden="true">
                         <span></span><span></span><span></span><span></span><span></span><span></span>

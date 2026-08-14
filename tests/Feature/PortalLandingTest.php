@@ -29,6 +29,7 @@ class PortalLandingTest extends TestCase
             ->assertSee('Quero Receber', false)
             ->assertSee('Precisa de Hospedagem para Seus Projetos?', false)
             ->assertSee('https://hostoo.io/?ref=8pLhQonM', false)
+            ->assertSee('images/hostoo-logo.png', false)
             ->assertSee('rel="sponsored nofollow"', false)
             ->assertDontSee('Página de vendas em breve', false)
             ->assertDontSee('TODO: #prova-social', false)

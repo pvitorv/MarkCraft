@@ -7,7 +7,7 @@
     $enabled = (bool) ($promo['enabled'] ?? false);
     $url = trim((string) ($promo['url'] ?? ''));
     $hasLink = $url !== '' && $url !== '#' && ! str_starts_with($url, '#');
-    $image = \App\Support\Cms::normalizeStoragePath((string) ($promo['image'] ?? ''));
+    $image = \App\Support\Cms::existingPublicUrl((string) ($promo['image'] ?? ''));
 @endphp
 
 @if($enabled)
@@ -19,7 +19,7 @@
         aria-label="{{ $promo['title'] ?? 'Destaque' }}"
     >
         @if($image !== '')
-            <img src="{{ $image }}" alt="" class="h-36 w-full object-cover sm:h-44">
+            <img src="{{ $image }}" alt="{{ $promo['title'] ?? 'Destaque' }}" class="h-36 w-full object-cover sm:h-44">
         @else
             <div class="h-28 w-full mc-showcase-mosaic" aria-hidden="true">
                 <span></span><span></span><span></span><span></span><span></span><span></span>

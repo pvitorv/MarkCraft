@@ -415,6 +415,24 @@ class Cms
         return str_starts_with($path, '/') ? $path : '/'.$path;
     }
 
+    /**
+     * URL de mídia só se o arquivo existir em public/. Caminho quebrado → string vazia (usa CSS).
+     */
+    public static function existingPublicUrl(?string $path): string
+    {
+        $path = self::normalizeStoragePath($path);
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        $relative = ltrim($path, '/');
+        if (! is_file(public_path($relative))) {
+            return '';
+        }
+
+        return asset($relative);
+    }
+
     /** URL absoluta correta para o host atual (Laragon, produção, etc.). */
     public static function mediaUrl(?string $path): string
     {
