@@ -10,8 +10,81 @@
     $logo = 'https://hostoo.io/images/logo.png';
 @endphp
 @if($show)
-<article class="h-auto" aria-label="Parceiro Hostoo">
-    <div class="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-5 sm:p-6 shadow-xl shadow-indigo-900/20">
+<style>
+    .mc-hostoo-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-radius: 1rem;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(90deg, #2563eb 0%, #4f46e5 42%, #635bff 72%, #7c3aed 100%);
+        box-shadow: 0 20px 40px rgba(49, 46, 129, 0.35);
+        font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    }
+    .mc-hostoo-card__logo {
+        height: 2rem;
+        width: auto;
+        max-height: 2rem;
+        object-fit: contain;
+        object-position: left;
+        mix-blend-mode: screen;
+    }
+    .mc-hostoo-card__wordmark {
+        font-size: 1.125rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #fff;
+    }
+    .mc-hostoo-card__badge {
+        display: inline-flex;
+        margin-top: 0.75rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 0.25rem 0.75rem;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #fff;
+    }
+    .mc-hostoo-card__title {
+        margin-top: 0.75rem;
+        font-size: 1.35rem;
+        line-height: 1.25;
+        font-weight: 700;
+        color: #fff;
+    }
+    .mc-hostoo-card__blurb {
+        margin-top: 0.5rem;
+        font-size: 0.925rem;
+        line-height: 1.55;
+        color: #dbeafe;
+    }
+    .mc-hostoo-card__cta {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        margin-top: 1.15rem;
+        border-radius: 0.75rem;
+        background: #fff;
+        color: #1e3a8a;
+        font-size: 0.875rem;
+        font-weight: 700;
+        padding: 0.65rem 1.35rem;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+        text-decoration: none;
+    }
+    .mc-hostoo-card__cta:hover { background: #eff6ff; color: #1e3a8a; }
+    @media (min-width: 640px) {
+        .mc-hostoo-card { padding: 1.5rem; }
+        .mc-hostoo-card__title { font-size: 1.5rem; }
+    }
+</style>
+<article aria-label="Parceiro Hostoo">
+    <div class="mc-hostoo-card">
         <div>
             <a href="{{ $url }}" target="_blank" rel="sponsored nofollow" class="inline-flex items-center gap-2">
                 <img
@@ -19,23 +92,16 @@
                     alt="Hostoo"
                     width="160"
                     height="40"
-                    class="h-8 w-auto max-h-8 object-contain object-left mix-blend-screen"
+                    class="mc-hostoo-card__logo"
                     onerror="this.remove()"
                 >
-                <span class="text-lg font-extrabold tracking-tight text-white" style="font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;">hostoo</span>
+                <span class="mc-hostoo-card__wordmark">hostoo</span>
             </a>
-            <p class="mt-3 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
-                Parceiro oficial de infraestrutura
-            </p>
-            <h3 class="mt-3 text-xl font-bold leading-snug text-white sm:text-2xl">{{ $title }}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-blue-100">{{ $blurb }}</p>
+            <p class="mc-hostoo-card__badge">Parceiro oficial de infraestrutura</p>
+            <h3 class="mc-hostoo-card__title">{{ $title }}</h3>
+            <p class="mc-hostoo-card__blurb">{{ $blurb }}</p>
         </div>
-        <a
-            href="{{ $url }}"
-            target="_blank"
-            rel="sponsored nofollow"
-            class="mt-5 inline-flex w-fit items-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-blue-900 shadow-md transition-all hover:bg-blue-50"
-        >
+        <a href="{{ $url }}" target="_blank" rel="sponsored nofollow" class="mc-hostoo-card__cta">
             {{ $cta }}
         </a>
     </div>

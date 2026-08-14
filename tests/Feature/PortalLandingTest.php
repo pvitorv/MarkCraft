@@ -29,7 +29,7 @@ class PortalLandingTest extends TestCase
             ->assertSee('Quero Receber', false)
             ->assertSee('Precisa de Hospedagem Rápida para Seus Projetos?', false)
             ->assertSee('Parceiro oficial de infraestrutura', false)
-            ->assertSee('from-blue-600', false)
+            ->assertSee('linear-gradient(90deg, #2563eb', false)
             ->assertSee('https://hostoo.io/?ref=8pLhQonM', false)
             ->assertSee('https://hostoo.io/images/logo.png', false)
             ->assertSee('rel="sponsored nofollow"', false)
